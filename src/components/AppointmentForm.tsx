@@ -55,9 +55,6 @@ const appointmentSchema = z.object({
   time: z.string({
     required_error: "Veuillez sélectionner une heure de rendez-vous.",
   }),
-  service: z.string({
-    required_error: "Veuillez sélectionner un service.",
-  }),
   notes: z.string().optional(),
 });
 
@@ -115,11 +112,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   const selectedDate = form.watch("date");
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
-
-  const services = [
-    "Vaccin Covid",
-    "Cosmétique"
-  ];
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -194,33 +186,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                         {...field} 
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="service"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez un service" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {services.map((service) => (
-                          <SelectItem key={service} value={service}>
-                            {service}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
