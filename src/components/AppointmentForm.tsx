@@ -115,7 +115,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const services = [
-    "Vaccin",
+    "Vaccin Covid",
     "Cosmétique"
   ];
 

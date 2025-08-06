@@ -270,7 +270,7 @@ const PatientBooking = () => {
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span><strong>Vaccin:</strong> Immunisations et soins préventifs</span>
+                  <span><strong>Vaccin Covid:</strong> Vaccination contre le COVID-19</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>

@@ -11,7 +11,7 @@ interface Appointment {
   id: string;
   time: string;
   patientName: string;
-  service: "Vaccine" | "Cosmetic";
+  service: "Vaccin Covid" | "Cosmétique";
   date: Date;
 }
 
@@ -21,21 +21,21 @@ const mockAppointments: Appointment[] = [
     id: "1",
     time: "09:00",
     patientName: "John Doe",
-    service: "Vaccine",
+    service: "Vaccin Covid",
     date: new Date()
   },
   {
     id: "2",
     time: "10:30",
     patientName: "Jane Smith",
-    service: "Cosmetic",
+    service: "Cosmétique",
     date: new Date()
   },
   {
     id: "3",
     time: "14:00",
     patientName: "Mike Johnson",
-    service: "Vaccine",
+    service: "Vaccin Covid",
     date: addDays(new Date(), 1)
   }
 ];
@@ -97,7 +97,7 @@ const CalendarPage = () => {
                 <div className="flex-1 flex items-center justify-between bg-primary/10 p-2 rounded">
                   <div>
                     <div className="font-medium">{appointment.patientName}</div>
-                    <Badge variant={appointment.service === "Vaccine" ? "default" : "secondary"}>
+                    <Badge variant={appointment.service === "Vaccin Covid" ? "default" : "secondary"}>
                       {appointment.service}
                     </Badge>
                   </div>
@@ -132,7 +132,7 @@ const CalendarPage = () => {
                   <div key={apt.id} className="text-xs p-1 bg-primary/10 rounded">
                     <div className="font-medium">{apt.time}</div>
                     <div className="truncate">{apt.patientName}</div>
-                    <Badge variant={apt.service === "Vaccine" ? "default" : "secondary"}>
+                    <Badge variant={apt.service === "Vaccin Covid" ? "default" : "secondary"}>
                       {apt.service}
                     </Badge>
                   </div>
@@ -188,7 +188,7 @@ const CalendarPage = () => {
                       <div className="font-medium">{apt.patientName}</div>
                       <div className="text-sm text-muted-foreground">{apt.time}</div>
                     </div>
-                    <Badge variant={apt.service === "Vaccine" ? "default" : "secondary"}>
+                    <Badge variant={apt.service === "Vaccin Covid" ? "default" : "secondary"}>
                       {apt.service}
                     </Badge>
                   </div>

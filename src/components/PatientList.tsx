@@ -14,7 +14,7 @@ export interface Patient {
   phone: string;
   lastAppointment: Date | null;
   nextAppointment: Date | null;
-  service: "Vaccine" | "Cosmetic" | null;
+  service: "Vaccin Covid" | "Cosmétique" | null;
   notes: string;
   status: "Active" | "Inactive";
 }
@@ -28,7 +28,7 @@ const mockPatients: Patient[] = [
     phone: "+1234567890",
     lastAppointment: new Date("2024-01-15"),
     nextAppointment: new Date("2024-02-15"),
-    service: "Vaccine",
+    service: "Vaccin Covid",
     notes: "Regular checkup patient",
     status: "Active"
   },
@@ -39,7 +39,7 @@ const mockPatients: Patient[] = [
     phone: "+1234567891",
     lastAppointment: new Date("2024-01-20"),
     nextAppointment: null,
-    service: "Cosmetic",
+    service: "Cosmétique",
     notes: "Consultation completed",
     status: "Active"
   },
@@ -50,7 +50,7 @@ const mockPatients: Patient[] = [
     phone: "+1234567892",
     lastAppointment: null,
     nextAppointment: new Date("2024-02-10"),
-    service: "Vaccine",
+    service: "Vaccin Covid",
     notes: "New patient",
     status: "Active"
   },
@@ -61,7 +61,7 @@ const mockPatients: Patient[] = [
     phone: "+1234567893",
     lastAppointment: new Date("2023-12-10"),
     nextAppointment: null,
-    service: "Cosmetic",
+    service: "Cosmétique",
     notes: "Treatment series completed",
     status: "Inactive"
   }
@@ -210,16 +210,16 @@ export function PatientList() {
                     {editingId === patient.id ? (
                       <select
                         value={editedPatient?.service || ""}
-                        onChange={(e) => updateEditedField("service", e.target.value as "Vaccine" | "Cosmetic" | null)}
+                        onChange={(e) => updateEditedField("service", e.target.value as "Vaccin Covid" | "Cosmétique" | null)}
                         className="w-full p-2 border border-input rounded-md bg-background"
                       >
                         <option value="">Select service</option>
-                        <option value="Vaccine">Vaccine</option>
-                        <option value="Cosmetic">Cosmetic</option>
+                        <option value="Vaccin Covid">Vaccin Covid</option>
+                        <option value="Cosmétique">Cosmétique</option>
                       </select>
                     ) : (
                       patient.service && (
-                        <Badge variant={patient.service === "Vaccine" ? "default" : "secondary"}>
+                        <Badge variant={patient.service === "Vaccin Covid" ? "default" : "secondary"}>
                           {patient.service}
                         </Badge>
                       )
