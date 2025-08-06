@@ -17,12 +17,20 @@ const Index = () => {
             <h1 className="text-4xl font-bold mb-4">Appointment Management</h1>
             <p className="text-xl text-muted-foreground">Manage availability and patient bookings</p>
           </div>
-          <Link to="/calendar">
-            <Button variant="outline" className="flex items-center space-x-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span>View Calendar</span>
-            </Button>
-          </Link>
+          <div className="flex space-x-3">
+            <Link to="/book">
+              <Button variant="default" className="flex items-center space-x-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span>Patient Booking</span>
+              </Button>
+            </Link>
+            <Link to="/calendar">
+              <Button variant="outline" className="flex items-center space-x-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span>View Calendar</span>
+              </Button>
+            </Link>
+          </div>
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
