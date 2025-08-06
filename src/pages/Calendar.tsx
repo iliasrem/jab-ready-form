@@ -106,9 +106,6 @@ const CalendarPage = () => {
                 <div className="flex-1 flex items-center justify-between bg-primary/10 p-2 rounded">
                   <div>
                     <div className="font-medium">{appointment.patientName}</div>
-                    <Badge variant={appointment.service === "Vaccin Covid" ? "default" : "secondary"}>
-                      {appointment.service}
-                    </Badge>
                   </div>
                 </div>
               ) : (
@@ -142,9 +139,6 @@ const CalendarPage = () => {
                   <div key={apt.id} className="text-xs p-1 bg-primary/10 rounded">
                     <div className="font-medium">{apt.time}</div>
                     <div className="truncate">{apt.patientName}</div>
-                    <Badge variant={apt.service === "Vaccin Covid" ? "default" : "secondary"}>
-                      {apt.service}
-                    </Badge>
                   </div>
                 ))}
               </CardContent>
@@ -200,14 +194,6 @@ const CalendarPage = () => {
                                 <div className="font-medium text-[10px]">{apt.time}</div>
                                 <div className="truncate text-[10px]" title={apt.patientName}>
                                   {apt.patientName}
-                                </div>
-                                <div className="mt-1">
-                                  <Badge 
-                                    variant={apt.service === "Vaccin Covid" ? "default" : "secondary"}
-                                    className="text-[8px] h-4 px-1"
-                                  >
-                                    {apt.service === "Vaccin Covid" ? "Vaccin" : "Cosmé"}
-                                  </Badge>
                                 </div>
                               </div>
                             ))
@@ -272,9 +258,6 @@ const CalendarPage = () => {
                       <div className="font-medium">{apt.patientName}</div>
                       <div className="text-sm text-muted-foreground">{apt.time}</div>
                     </div>
-                    <Badge variant={apt.service === "Vaccin Covid" ? "default" : "secondary"}>
-                      {apt.service}
-                    </Badge>
                   </div>
                 ))}
               </div>
