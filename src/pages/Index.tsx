@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { AvailabilityManager, DayAvailability } from "@/components/AvailabilityManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 const Index = () => {
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
@@ -9,9 +12,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="container mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Appointment Management</h1>
-          <p className="text-xl text-muted-foreground">Manage availability and patient bookings</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold mb-4">Appointment Management</h1>
+            <p className="text-xl text-muted-foreground">Manage availability and patient bookings</p>
+          </div>
+          <Link to="/calendar">
+            <Button variant="outline" className="flex items-center space-x-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>View Calendar</span>
+            </Button>
+          </Link>
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
