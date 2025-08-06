@@ -39,15 +39,16 @@ interface AppointmentFormProps {
 }
 
 const appointmentSchema = z.object({
-  name: z.string().min(2, {
+  firstName: z.string().min(2, {
+    message: "Le prénom doit contenir au moins 2 caractères.",
+  }),
+  lastName: z.string().min(2, {
     message: "Le nom doit contenir au moins 2 caractères.",
   }),
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
-  }),
-  phone: z.string().min(10, {
-    message: "Veuillez entrer un numéro de téléphone valide.",
-  }),
+  }).optional().or(z.literal("")),
+  phone: z.string().optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -68,7 +69,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
       notes: "",
@@ -78,7 +80,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   function onSubmit(data: AppointmentFormValues) {
     toast({
       title: "Rendez-vous demandé",
-      description: `Merci ${data.name} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis.`,
+      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis.`,
     });
     form.reset();
   }
@@ -133,12 +135,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom complet</FormLabel>
+                    <FormLabel>Prénom</FormLabel>
                     <FormControl>
-                      <Input placeholder="Entrez votre nom complet" {...field} />
+                      <Input placeholder="Entrez votre prénom" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,10 +149,26 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               
               <FormField
                 control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Entrez votre nom" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
@@ -162,15 +180,13 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormLabel>Numéro de téléphone <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
                       <Input
                         type="tel" 
@@ -182,7 +198,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="service"
