@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Save, X, Trash2 } from "lucide-react";
+import { Edit, Save, X, Trash2, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 
 export interface Patient {
   id: string;
   name: string;
   email: string;
   phone: string;
+  birthDate: Date | null;
   lastAppointment: Date | null;
   nextAppointment: Date | null;
   notes: string;
@@ -25,6 +27,7 @@ const mockPatients: Patient[] = [
     name: "John Doe",
     email: "john.doe@email.com",
     phone: "+1234567890",
+    birthDate: new Date("1985-03-15"),
     lastAppointment: new Date("2024-01-15"),
     nextAppointment: new Date("2024-02-15"),
     notes: "Regular checkup patient",
@@ -35,6 +38,7 @@ const mockPatients: Patient[] = [
     name: "Jane Smith",
     email: "jane.smith@email.com",
     phone: "+1234567891",
+    birthDate: new Date("1990-07-22"),
     lastAppointment: new Date("2024-01-20"),
     nextAppointment: null,
     notes: "Consultation completed",
@@ -45,6 +49,7 @@ const mockPatients: Patient[] = [
     name: "Mike Johnson",
     email: "mike.johnson@email.com",
     phone: "+1234567892",
+    birthDate: new Date("1978-11-08"),
     lastAppointment: null,
     nextAppointment: new Date("2024-02-10"),
     notes: "New patient",
@@ -55,6 +60,7 @@ const mockPatients: Patient[] = [
     name: "Sarah Wilson",
     email: "sarah.wilson@email.com",
     phone: "+1234567893",
+    birthDate: new Date("1982-09-14"),
     lastAppointment: new Date("2023-12-10"),
     nextAppointment: null,
     notes: "Treatment series completed",
@@ -67,6 +73,7 @@ export function PatientList() {
   const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedPatient, setEditedPatient] = useState<Patient | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startEditing = (patient: Patient) => {
     setEditingId(patient.id);
@@ -113,25 +120,127 @@ export function PatientList() {
     setEditedPatient({ ...editedPatient, [field]: value });
   };
 
+  const exportToExcel = () => {
+    const exportData = patients.map(patient => ({
+      Nom: patient.name,
+      Email: patient.email,
+      Téléphone: patient.phone,
+      "Date de naissance": patient.birthDate ? format(patient.birthDate, "dd/MM/yyyy") : "",
+      "Dernière visite": patient.lastAppointment ? format(patient.lastAppointment, "dd/MM/yyyy") : "",
+      "Prochain RDV": patient.nextAppointment ? format(patient.nextAppointment, "dd/MM/yyyy") : "",
+      Statut: patient.status,
+      Notes: patient.notes
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Patients");
+    XLSX.writeFile(wb, "patients.xlsx");
+
+    toast({
+      title: "Export réussi",
+      description: "La liste des patients a été exportée avec succès.",
+    });
+  };
+
+  const importFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const importedPatients: Patient[] = jsonData.map((row: any, index: number) => ({
+          id: `imported-${Date.now()}-${index}`,
+          name: row.Nom || row.Name || "",
+          email: row.Email || "",
+          phone: row.Téléphone || row.Phone || "",
+          birthDate: row["Date de naissance"] || row.BirthDate ? new Date(row["Date de naissance"] || row.BirthDate) : null,
+          lastAppointment: null,
+          nextAppointment: null,
+          notes: row.Notes || "",
+          status: "Active" as const
+        }));
+
+        setPatients(prev => [...prev, ...importedPatients]);
+
+        toast({
+          title: "Import réussi",
+          description: `${importedPatients.length} patients ont été importés avec succès.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Erreur d'import",
+          description: "Le fichier n'a pas pu être traité. Vérifiez le format.",
+          variant: "destructive"
+        });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Patient Management</CardTitle>
-        <CardDescription>
-          View and edit patient details. Click the edit icon to modify information.
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Gestion des Patients</CardTitle>
+            <CardDescription>
+              Consultez et modifiez les détails des patients. Cliquez sur l'icône d'édition pour modifier les informations.
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={importFromExcel}
+              ref={fileInputRef}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcel}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exporter
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b">
-                <th className="text-left p-3 font-medium">Name</th>
+                <th className="text-left p-3 font-medium">Nom</th>
                 <th className="text-left p-3 font-medium">Email</th>
-                <th className="text-left p-3 font-medium">Phone</th>
-                <th className="text-left p-3 font-medium">Last Visit</th>
-                <th className="text-left p-3 font-medium">Next Appointment</th>
-                <th className="text-left p-3 font-medium">Status</th>
+                <th className="text-left p-3 font-medium">Téléphone</th>
+                <th className="text-left p-3 font-medium">Date de naissance</th>
+                <th className="text-left p-3 font-medium">Dernière visite</th>
+                <th className="text-left p-3 font-medium">Prochain RDV</th>
+                <th className="text-left p-3 font-medium">Statut</th>
                 <th className="text-left p-3 font-medium">Notes</th>
                 <th className="text-left p-3 font-medium">Actions</th>
               </tr>
@@ -176,6 +285,25 @@ export function PatientList() {
                       />
                     ) : (
                       <span className="text-sm">{patient.phone}</span>
+                    )}
+                  </td>
+
+                  {/* Birth Date */}
+                  <td className="p-3">
+                    {editingId === patient.id ? (
+                      <Input
+                        type="date"
+                        value={editedPatient?.birthDate ? format(editedPatient.birthDate, "yyyy-MM-dd") : ""}
+                        onChange={(e) => updateEditedField("birthDate", e.target.value ? new Date(e.target.value) : null)}
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        {patient.birthDate 
+                          ? format(patient.birthDate, "dd/MM/yyyy")
+                          : "Non renseigné"
+                        }
+                      </span>
                     )}
                   </td>
 
