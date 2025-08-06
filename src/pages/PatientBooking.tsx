@@ -144,8 +144,8 @@ const PatientBooking = () => {
       {/* Header */}
       <div className="bg-primary text-primary-foreground py-8">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-2">Book Your Appointment</h1>
-          <p className="text-xl opacity-90">Schedule your visit with our medical team</p>
+          <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
+          <p className="text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
         </div>
       </div>
 
@@ -154,28 +154,28 @@ const PatientBooking = () => {
         <div className="container mx-auto max-w-3xl">
           {/* Instructions */}
           <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold mb-4">Easy Online Booking</h2>
+            <h2 className="text-2xl font-semibold mb-4">Réservation en ligne facile</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="text-center">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-primary font-bold">1</span>
                 </div>
-                <h3 className="font-medium mb-2">Fill Information</h3>
-                <p className="text-sm text-muted-foreground">Enter your personal details and contact information</p>
+                <h3 className="font-medium mb-2">Remplir les informations</h3>
+                <p className="text-sm text-muted-foreground">Entrez vos coordonnées et informations de contact</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-primary font-bold">2</span>
                 </div>
-                <h3 className="font-medium mb-2">Choose Date & Time</h3>
-                <p className="text-sm text-muted-foreground">Select your preferred appointment date and time slot</p>
+                <h3 className="font-medium mb-2">Choisir Date et Heure</h3>
+                <p className="text-sm text-muted-foreground">Sélectionnez votre date et créneau horaire préférés</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-primary font-bold">3</span>
                 </div>
-                <h3 className="font-medium mb-2">Confirm Booking</h3>
-                <p className="text-sm text-muted-foreground">Review and submit your appointment request</p>
+                <h3 className="font-medium mb-2">Confirmer la Réservation</h3>
+                <p className="text-sm text-muted-foreground">Vérifiez et soumettez votre demande de rendez-vous</p>
               </div>
             </div>
           </div>
@@ -186,26 +186,26 @@ const PatientBooking = () => {
           {/* Additional Information */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-3">Our Services</h3>
+              <h3 className="font-semibold mb-3">Nos Services</h3>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span><strong>Vaccine:</strong> Immunizations and preventive care</span>
+                  <span><strong>Vaccin:</strong> Immunisations et soins préventifs</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span><strong>Cosmetic:</strong> Aesthetic treatments and procedures</span>
+                  <span><strong>Cosmétique:</strong> Traitements et procédures esthétiques</span>
                 </li>
               </ul>
             </div>
             
             <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-3">Important Notes</h3>
+              <h3 className="font-semibold mb-3">Notes importantes</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Please arrive 15 minutes before your appointment</li>
-                <li>• Bring a valid ID and insurance card</li>
-                <li>• Cancellations must be made 24 hours in advance</li>
-                <li>• We'll send a confirmation email after booking</li>
+                <li>• Veuillez arriver 15 minutes avant votre rendez-vous</li>
+                <li>• Apportez une pièce d&apos;identité valide et votre carte d&apos;assurance</li>
+                <li>• Les annulations doivent être faites 24 heures à l&apos;avance</li>
+                <li>• Nous vous enverrons un e-mail de confirmation après la réservation</li>
               </ul>
             </div>
           </div>
@@ -216,13 +216,13 @@ const PatientBooking = () => {
       <div className="bg-muted/30 py-8 mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground">
-            Need help? Contact us at{" "}
-            <a href="tel:+1234567890" className="text-primary hover:underline">
-              (123) 456-7890
+            Besoin d&apos;aide ? Contactez-nous au{" "}
+            <a href="tel:+32064442253" className="text-primary hover:underline">
+              064 44 22 53
             </a>{" "}
-            or{" "}
-            <a href="mailto:appointments@clinic.com" className="text-primary hover:underline">
-              appointments@clinic.com
+            ou{" "}
+            <a href="mailto:info@remili.be" className="text-primary hover:underline">
+              info@remili.be
             </a>
           </p>
         </div>

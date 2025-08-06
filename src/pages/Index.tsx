@@ -15,20 +15,20 @@ const Index = () => {
       <div className="container mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="text-center flex-1">
-            <h1 className="text-4xl font-bold mb-4">Appointment Management</h1>
-            <p className="text-xl text-muted-foreground">Manage availability and patient bookings</p>
+            <h1 className="text-4xl font-bold mb-4">Gestion des Rendez-vous</h1>
+            <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
           </div>
           <div className="flex space-x-3">
             <Link to="/book">
               <Button variant="default" className="flex items-center space-x-2">
                 <CalendarIcon className="h-4 w-4" />
-                <span>Patient Booking</span>
+                <span>Réservation Patient</span>
               </Button>
             </Link>
             <Link to="/calendar">
               <Button variant="outline" className="flex items-center space-x-2">
                 <CalendarIcon className="h-4 w-4" />
-                <span>View Calendar</span>
+                <span>Voir le Calendrier</span>
               </Button>
             </Link>
           </div>
@@ -36,15 +36,15 @@ const Index = () => {
         
         <Tabs defaultValue="booking" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="booking">Patient Booking</TabsTrigger>
-            <TabsTrigger value="availability">Manage Availability</TabsTrigger>
-            <TabsTrigger value="patients">Patient List</TabsTrigger>
+            <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
+            <TabsTrigger value="availability">Gérer la Disponibilité</TabsTrigger>
+            <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
           </TabsList>
           
           <TabsContent value="booking" className="mt-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-semibold mb-2">Book Your Appointment</h2>
-              <p className="text-muted-foreground">Schedule your visit with our professional team</p>
+              <h2 className="text-2xl font-semibold mb-2">Réserver votre Rendez-vous</h2>
+              <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
             </div>
             <AppointmentForm availability={availability} />
           </TabsContent>

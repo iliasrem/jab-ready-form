@@ -40,22 +40,22 @@ interface AppointmentFormProps {
 
 const appointmentSchema = z.object({
   name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
+    message: "Le nom doit contenir au moins 2 caractères.",
   }),
   email: z.string().email({
-    message: "Please enter a valid email address.",
+    message: "Veuillez entrer une adresse e-mail valide.",
   }),
   phone: z.string().min(10, {
-    message: "Please enter a valid phone number.",
+    message: "Veuillez entrer un numéro de téléphone valide.",
   }),
   date: z.date({
-    required_error: "Please select an appointment date.",
+    required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
   time: z.string({
-    required_error: "Please select an appointment time.",
+    required_error: "Veuillez sélectionner une heure de rendez-vous.",
   }),
   service: z.string({
-    required_error: "Please select a service.",
+    required_error: "Veuillez sélectionner un service.",
   }),
   notes: z.string().optional(),
 });
@@ -77,8 +77,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   function onSubmit(data: AppointmentFormValues) {
     toast({
-      title: "Appointment Requested",
-      description: `Thank you ${data.name}! Your appointment for ${format(data.date, "PPP")} at ${data.time} has been submitted.`,
+      title: "Rendez-vous demandé",
+      description: `Merci ${data.name} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis.`,
     });
     form.reset();
   }
@@ -115,16 +115,16 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const services = [
-    "Vaccine",
-    "Cosmetic"
+    "Vaccin",
+    "Cosmétique"
   ];
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Book an Appointment</CardTitle>
+        <CardTitle>Réserver un Rendez-vous</CardTitle>
         <CardDescription>
-          Fill out the form below to schedule your appointment with us.
+          Remplissez le formulaire ci-dessous pour planifier votre rendez-vous avec nous.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -136,9 +136,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>Nom complet</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
+                      <Input placeholder="Entrez votre nom complet" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,7 +154,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                     <FormControl>
                       <Input 
                         type="email" 
-                        placeholder="Enter your email" 
+                        placeholder="Entrez votre e-mail" 
                         {...field} 
                       />
                     </FormControl>
@@ -170,11 +170,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Numéro de téléphone</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         type="tel" 
-                        placeholder="Enter your phone number" 
+                        placeholder="Entrez votre numéro de téléphone" 
                         {...field} 
                       />
                     </FormControl>
@@ -192,7 +192,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a service" />
+                          <SelectValue placeholder="Sélectionnez un service" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -215,7 +215,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Appointment Date</FormLabel>
+                    <FormLabel>Date du rendez-vous</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -228,9 +228,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           >
                             {field.value ? (
                               format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
+                              ) : (
+                                <span>Choisir une date</span>
+                              )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -260,11 +260,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Time</FormLabel>
+                    <FormLabel>Heure préférée</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a time" />
+                          <SelectValue placeholder="Sélectionnez une heure" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -276,7 +276,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           ))
                         ) : (
                           <div className="p-2 text-center text-muted-foreground">
-                            {selectedDate ? "No available time slots for this date" : "Please select a date first"}
+                            {selectedDate ? "Aucun créneau disponible pour cette date" : "Veuillez d'abord sélectionner une date"}
                           </div>
                         )}
                       </SelectContent>
@@ -292,16 +292,16 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Notes supplémentaires</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional information or special requests..."
+                      placeholder="Toute information supplémentaire ou demande spéciale..."
                       className="resize-none"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Optional: Include any specific requirements or notes for your appointment.
+                    Optionnel : Incluez toute exigence spécifique ou note pour votre rendez-vous.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -309,7 +309,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
             />
 
             <Button type="submit" className="w-full">
-              Book Appointment
+              Réserver le rendez-vous
             </Button>
           </form>
         </Form>
