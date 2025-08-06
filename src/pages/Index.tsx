@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
+import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,9 @@ const Index = () => {
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
+            <TabsTrigger value="appointments">Rendez-vous</TabsTrigger>
             <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
           </TabsList>
@@ -47,6 +49,10 @@ const Index = () => {
               <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
             </div>
             <AppointmentForm />
+          </TabsContent>
+          
+          <TabsContent value="appointments" className="mt-6">
+            <AppointmentsList />
           </TabsContent>
           
           <TabsContent value="availability" className="mt-6">
