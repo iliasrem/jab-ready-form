@@ -81,7 +81,7 @@ const CalendarPage = () => {
     } else if (currentView === "4weeks") {
       const week1Start = startOfWeek(selectedDate, { weekStartsOn: 1 });
       const week4End = addDays(week1Start, 27); // 4 semaines = 28 jours
-      return `4 semaines : ${format(week1Start, "d MMM", { locale: fr })} - ${format(week4End, "d MMM yyyy", { locale: fr })}`;
+      return `${format(week1Start, "d MMM", { locale: fr })} - ${format(week4End, "d MMM yyyy", { locale: fr })}`;
     } else {
       return format(selectedDate, "MMMM yyyy", { locale: fr });
     }
@@ -170,16 +170,6 @@ const CalendarPage = () => {
           const weekDays = eachDayOfInterval({ start: week.start, end: week.end });
           return (
             <div key={weekIndex} className="space-y-2">
-              {/* En-tête de la semaine */}
-              <div className="text-center">
-                <h3 className="font-semibold text-sm mb-2">
-                  Semaine {weekIndex + 1}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {format(week.start, "d MMM", { locale: fr })} - {format(week.end, "d MMM", { locale: fr })}
-                </p>
-              </div>
-              
               {/* Jours de la semaine */}
               <div className="space-y-2">
                 {weekDays.map(day => {
