@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { AvailabilityManager, DayAvailability } from "@/components/AvailabilityManager";
+import { PatientList } from "@/components/PatientList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -34,9 +35,10 @@ const Index = () => {
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="booking">Patient Booking</TabsTrigger>
             <TabsTrigger value="availability">Manage Availability</TabsTrigger>
+            <TabsTrigger value="patients">Patient List</TabsTrigger>
           </TabsList>
           
           <TabsContent value="booking" className="mt-6">
@@ -49,6 +51,10 @@ const Index = () => {
           
           <TabsContent value="availability" className="mt-6">
             <AvailabilityManager onAvailabilityChange={setAvailability} />
+          </TabsContent>
+          
+          <TabsContent value="patients" className="mt-6">
+            <PatientList />
           </TabsContent>
         </Tabs>
       </div>
