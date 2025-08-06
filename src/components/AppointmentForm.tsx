@@ -32,6 +32,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { DayAvailability } from "./AvailabilityManager";
+
+interface AppointmentFormProps {
+  availability?: DayAvailability[];
+}
 
 const appointmentSchema = z.object({
   name: z.string().min(2, {
@@ -57,7 +62,7 @@ const appointmentSchema = z.object({
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
-export function AppointmentForm() {
+export function AppointmentForm({ availability }: AppointmentFormProps) {
   const { toast } = useToast();
   
   const form = useForm<AppointmentFormValues>({
@@ -78,11 +83,36 @@ export function AppointmentForm() {
     form.reset();
   }
 
-  const timeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-    "15:00", "15:30", "16:00", "16:30", "17:00"
-  ];
+  // Get available time slots based on selected date
+  const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
+    if (!selectedDate || !availability) {
+      return []; // No slots available if no date selected or no availability configured
+    }
+    
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayAvailability = availability.find(day => day.day === dayName);
+    
+    if (!dayAvailability || !dayAvailability.enabled) {
+      return []; // Day not available
+    }
+    
+    return dayAvailability.timeSlots
+      .filter(slot => slot.available)
+      .map(slot => slot.time);
+  };
+
+  const isDateAvailable = (date: Date) => {
+    if (!availability) return false;
+    
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayAvailability = availability.find(day => day.day === dayName);
+    
+    return dayAvailability?.enabled && 
+           dayAvailability.timeSlots.some(slot => slot.available);
+  };
+
+  const selectedDate = form.watch("date");
+  const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const services = [
     "General Consultation",
@@ -216,7 +246,9 @@ export function AppointmentForm() {
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
+                            date < new Date() || 
+                            date < new Date("1900-01-01") ||
+                            !isDateAvailable(date)
                           }
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
@@ -241,11 +273,17 @@ export function AppointmentForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
+                        {availableTimeSlots.length > 0 ? (
+                          availableTimeSlots.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-center text-muted-foreground">
+                            {selectedDate ? "No available time slots for this date" : "Please select a date first"}
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
