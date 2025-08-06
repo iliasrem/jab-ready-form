@@ -112,7 +112,7 @@ const CalendarPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 text-muted-foreground text-sm">Available</div>
+                <div className="flex-1 text-muted-foreground text-sm">Disponible</div>
               )}
             </div>
           );
@@ -133,7 +133,7 @@ const CalendarPage = () => {
             <Card key={day.toString()} className="min-h-32">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-center">
-                  {format(day, "EEE d")}
+                  {format(day, "EEE d", { locale: fr })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-1">
@@ -291,8 +291,8 @@ const CalendarPage = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Calendar</h1>
-            <p className="text-muted-foreground">View and manage your appointments</p>
+            <h1 className="text-3xl font-bold mb-2">Calendrier</h1>
+            <p className="text-muted-foreground">Visualisez et gérez vos rendez-vous</p>
           </div>
           <Button 
             variant="outline" 
@@ -300,7 +300,7 @@ const CalendarPage = () => {
             className="flex items-center space-x-2"
           >
             <CalendarIcon className="h-4 w-4" />
-            <span>Back to Booking</span>
+            <span>Retour aux Réservations</span>
           </Button>
         </div>
 
