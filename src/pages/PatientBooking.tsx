@@ -266,17 +266,13 @@ const PatientBooking = () => {
           {/* Additional Information */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-3">Nos Services</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center space-x-2">
+              <h3 className="font-semibold mb-3">Notre Service</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   <span><strong>Vaccin Covid:</strong> Vaccination contre le COVID-19</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span><strong>Cosmétique:</strong> Traitements et procédures esthétiques</span>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
             
             <div className="bg-muted/50 p-6 rounded-lg">

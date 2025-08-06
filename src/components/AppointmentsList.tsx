@@ -15,7 +15,6 @@ export interface Appointment {
   phone?: string;
   date: string; // ISO date string
   time: string;
-  service: string;
   notes?: string;
   status: "confirmed" | "pending" | "cancelled";
   createdAt: string; // ISO date string
@@ -31,7 +30,6 @@ const mockAppointments: Appointment[] = [
     phone: "0123456789",
     date: "2024-08-15",
     time: "09:00",
-    service: "Vaccin Covid",
     notes: "Première dose",
     status: "confirmed",
     createdAt: "2024-08-10T10:30:00Z"
@@ -43,7 +41,6 @@ const mockAppointments: Appointment[] = [
     email: "pierre.martin@email.com",
     date: "2024-08-15",
     time: "10:30",
-    service: "Cosmétique",
     status: "pending",
     createdAt: "2024-08-12T14:20:00Z"
   },
@@ -54,7 +51,6 @@ const mockAppointments: Appointment[] = [
     phone: "0987654321",
     date: "2024-08-16",
     time: "14:15",
-    service: "Vaccin Covid",
     notes: "Rappel",
     status: "confirmed",
     createdAt: "2024-08-11T09:15:00Z"
@@ -67,7 +63,6 @@ const mockAppointments: Appointment[] = [
     phone: "0147258369",
     date: "2024-08-14",
     time: "16:00",
-    service: "Cosmétique",
     status: "cancelled",
     createdAt: "2024-08-08T16:45:00Z"
   },
@@ -78,7 +73,6 @@ const mockAppointments: Appointment[] = [
     email: "claire.dubois@email.com",
     date: "2024-08-17",
     time: "11:30",
-    service: "Vaccin Covid",
     status: "pending",
     createdAt: "2024-08-13T11:10:00Z"
   },
@@ -89,7 +83,6 @@ const mockAppointments: Appointment[] = [
     phone: "0567891234",
     date: "2024-08-18",
     time: "15:45",
-    service: "Cosmétique",
     notes: "Consultation préalable nécessaire",
     status: "confirmed",
     createdAt: "2024-08-12T13:30:00Z"
@@ -214,7 +207,6 @@ export function AppointmentsList() {
                   <TableHead>Patient</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Date & Heure</TableHead>
-                  <TableHead>Service</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Actions</TableHead>
@@ -264,9 +256,6 @@ export function AppointmentsList() {
                           </div>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{appointment.service}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">

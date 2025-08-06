@@ -12,35 +12,34 @@ interface Appointment {
   id: string;
   time: string;
   patientName: string;
-  service: "Vaccin Covid" | "Cosmétique";
   date: Date;
 }
 
 // Mock appointments data avec plus de données pour 4 semaines
 const mockAppointments: Appointment[] = [
   // Semaine 1
-  { id: "1", time: "09:00", patientName: "Marie Dupont", service: "Vaccin Covid", date: new Date() },
-  { id: "2", time: "10:30", patientName: "Pierre Martin", service: "Cosmétique", date: new Date() },
-  { id: "3", time: "14:00", patientName: "Sophie Bernard", service: "Vaccin Covid", date: addDays(new Date(), 1) },
-  { id: "4", time: "11:15", patientName: "Jean Moreau", service: "Cosmétique", date: addDays(new Date(), 2) },
+  { id: "1", time: "09:00", patientName: "Marie Dupont", date: new Date() },
+  { id: "2", time: "10:30", patientName: "Pierre Martin", date: new Date() },
+  { id: "3", time: "14:00", patientName: "Sophie Bernard", date: addDays(new Date(), 1) },
+  { id: "4", time: "11:15", patientName: "Jean Moreau", date: addDays(new Date(), 2) },
   
   // Semaine 2
-  { id: "5", time: "09:30", patientName: "Claire Dubois", service: "Vaccin Covid", date: addDays(new Date(), 7) },
-  { id: "6", time: "15:45", patientName: "Marc Leroy", service: "Cosmétique", date: addDays(new Date(), 8) },
-  { id: "7", time: "10:00", patientName: "Anne Petit", service: "Vaccin Covid", date: addDays(new Date(), 9) },
-  { id: "8", time: "16:30", patientName: "Paul Roux", service: "Cosmétique", date: addDays(new Date(), 10) },
+  { id: "5", time: "09:30", patientName: "Claire Dubois", date: addDays(new Date(), 7) },
+  { id: "6", time: "15:45", patientName: "Marc Leroy", date: addDays(new Date(), 8) },
+  { id: "7", time: "10:00", patientName: "Anne Petit", date: addDays(new Date(), 9) },
+  { id: "8", time: "16:30", patientName: "Paul Roux", date: addDays(new Date(), 10) },
   
   // Semaine 3
-  { id: "9", time: "09:15", patientName: "Lucie Blanc", service: "Vaccin Covid", date: addDays(new Date(), 14) },
-  { id: "10", time: "14:30", patientName: "Thomas Noir", service: "Cosmétique", date: addDays(new Date(), 15) },
-  { id: "11", time: "11:00", patientName: "Emma Vert", service: "Vaccin Covid", date: addDays(new Date(), 16) },
-  { id: "12", time: "15:15", patientName: "Louis Bleu", service: "Cosmétique", date: addDays(new Date(), 17) },
+  { id: "9", time: "09:15", patientName: "Lucie Blanc", date: addDays(new Date(), 14) },
+  { id: "10", time: "14:30", patientName: "Thomas Noir", date: addDays(new Date(), 15) },
+  { id: "11", time: "11:00", patientName: "Emma Vert", date: addDays(new Date(), 16) },
+  { id: "12", time: "15:15", patientName: "Louis Bleu", date: addDays(new Date(), 17) },
   
   // Semaine 4
-  { id: "13", time: "10:45", patientName: "Julie Rose", service: "Vaccin Covid", date: addDays(new Date(), 21) },
-  { id: "14", time: "16:00", patientName: "Hugo Gris", service: "Cosmétique", date: addDays(new Date(), 22) },
-  { id: "15", time: "09:45", patientName: "Léa Violet", service: "Vaccin Covid", date: addDays(new Date(), 23) },
-  { id: "16", time: "14:45", patientName: "Nathan Orange", service: "Cosmétique", date: addDays(new Date(), 24) },
+  { id: "13", time: "10:45", patientName: "Julie Rose", date: addDays(new Date(), 21) },
+  { id: "14", time: "16:00", patientName: "Hugo Gris", date: addDays(new Date(), 22) },
+  { id: "15", time: "09:45", patientName: "Léa Violet", date: addDays(new Date(), 23) },
+  { id: "16", time: "14:45", patientName: "Nathan Orange", date: addDays(new Date(), 24) },
 ];
 
 const CalendarPage = () => {
