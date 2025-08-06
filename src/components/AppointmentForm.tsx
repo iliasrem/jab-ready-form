@@ -135,12 +135,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="firstName"
+                name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom</FormLabel>
+                    <FormLabel>Nom</FormLabel>
                     <FormControl>
-                      <Input placeholder="Entrez votre prénom" {...field} />
+                      <Input placeholder="Entrez votre nom" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -149,12 +149,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               
               <FormField
                 control={form.control}
-                name="lastName"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel>Prénom</FormLabel>
                     <FormControl>
-                      <Input placeholder="Entrez votre nom" {...field} />
+                      <Input placeholder="Entrez votre prénom" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
