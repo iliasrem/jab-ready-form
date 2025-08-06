@@ -4,6 +4,7 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
+import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -49,18 +50,7 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="calendar" className="mt-6">
-            <div className="space-y-4">
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold mb-2">Calendrier des Rendez-vous</h2>
-                <p className="text-muted-foreground">Visualisez et gérez vos rendez-vous</p>
-              </div>
-              <Link to="/calendar" className="block">
-                <Button variant="outline" className="w-full flex items-center justify-center space-x-2 h-20">
-                  <CalendarIcon className="h-6 w-6" />
-                  <span className="text-lg">Ouvrir le Calendrier Complet</span>
-                </Button>
-              </Link>
-            </div>
+            <Calendar />
           </TabsContent>
         </Tabs>
       </div>
