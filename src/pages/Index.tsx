@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
-import { AvailabilityManager, DayAvailability } from "@/components/AvailabilityManager";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { PatientList } from "@/components/PatientList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 const Index = () => {
-  const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
 
   return (
@@ -37,10 +35,9 @@ const Index = () => {
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilité Simple</TabsTrigger>
-            <TabsTrigger value="advanced-availability">Disponibilité Avancée</TabsTrigger>
+            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
           </TabsList>
           
@@ -49,14 +46,10 @@ const Index = () => {
               <h2 className="text-2xl font-semibold mb-2">Réserver votre Rendez-vous</h2>
               <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
             </div>
-            <AppointmentForm availability={availability} />
+            <AppointmentForm />
           </TabsContent>
           
           <TabsContent value="availability" className="mt-6">
-            <AvailabilityManager onAvailabilityChange={setAvailability} />
-          </TabsContent>
-          
-          <TabsContent value="advanced-availability" className="mt-6">
             <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
           </TabsContent>
           
