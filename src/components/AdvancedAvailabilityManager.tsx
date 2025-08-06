@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Save, X } from "lucide-react";
-import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { ChevronLeft, ChevronRight, Save, X, Calendar as CalendarIcon } from "lucide-react";
+import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export interface SpecificDateAvailability {
@@ -30,6 +32,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange }: AdvancedAv
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<string>("");
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
 
   // Générer les disponibilités par défaut pour un jour
@@ -116,6 +119,44 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange }: AdvancedAv
     toast({
       title: "Modèle appliqué",
       description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués à tout le mois.`,
+    });
+  };
+
+  // Appliquer un modèle à une plage de dates
+  const applyTemplateToDateRange = () => {
+    if (!selectedDate || !endDate) return;
+    
+    const template = getAvailabilityForDate(selectedDate);
+    const endDateObj = new Date(endDate);
+    
+    if (isAfter(selectedDate, endDateObj)) {
+      toast({
+        title: "Erreur",
+        description: "La date de fin doit être postérieure à la date de début.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const allDaysInRange = eachDayOfInterval({ start: selectedDate, end: endDateObj });
+    
+    const newAvailabilities = allDaysInRange.map(date => ({
+      ...template,
+      date: new Date(date),
+      enabled: template.enabled && date.getDay() !== 0 && date.getDay() !== 6 // Garde les weekends fermés
+    }));
+    
+    const updatedAvailability = [
+      ...specificAvailability.filter(av => !allDaysInRange.some(day => isSameDay(av.date, day))),
+      ...newAvailabilities
+    ];
+    
+    setSpecificAvailability(updatedAvailability);
+    onAvailabilityChange(updatedAvailability);
+    
+    toast({
+      title: "Modèle appliqué",
+      description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués du ${format(selectedDate, "d MMMM", { locale: fr })} au ${format(endDateObj, "d MMMM yyyy", { locale: fr })}.`,
     });
   };
 
@@ -260,7 +301,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange }: AdvancedAv
                   
                   {selectedDayAvailability.enabled && (
                     <CardContent className="space-y-4">
-                      <div className="flex space-x-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -282,6 +323,31 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange }: AdvancedAv
                         >
                           Appliquer au mois
                         </Button>
+                      </div>
+
+                      {/* Application à une plage de dates */}
+                      <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                        <Label className="text-sm font-medium">Appliquer à une plage de dates</Label>
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor="endDate" className="text-sm">Date de fin :</Label>
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-auto"
+                          />
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={applyTemplateToDateRange}
+                            disabled={!endDate}
+                            className="flex items-center space-x-1"
+                          >
+                            <CalendarIcon className="h-4 w-4" />
+                            <span>Appliquer</span>
+                          </Button>
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
