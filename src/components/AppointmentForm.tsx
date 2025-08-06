@@ -115,13 +115,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const services = [
-    "General Consultation",
-    "Medical Check-up",
-    "Dental Cleaning",
-    "Eye Examination",
-    "Physical Therapy",
-    "Vaccination",
-    "Follow-up Visit"
+    "Vaccine",
+    "Cosmetic"
   ];
 
   return (
