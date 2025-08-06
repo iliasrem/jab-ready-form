@@ -170,6 +170,13 @@ const CalendarPage = () => {
           const weekDays = eachDayOfInterval({ start: week.start, end: week.end });
           return (
             <div key={weekIndex} className="space-y-2">
+              {/* En-tête avec dates de la semaine */}
+              <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {format(week.start, "d MMM", { locale: fr })} - {format(week.end, "d MMM", { locale: fr })}
+                </p>
+              </div>
+              
               {/* Jours de la semaine */}
               <div className="space-y-2">
                 {weekDays.map(day => {
