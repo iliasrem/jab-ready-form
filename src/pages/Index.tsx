@@ -14,33 +14,18 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="container mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="text-center flex-1">
-            <h1 className="text-4xl font-bold mb-4">Gestion des Rendez-vous</h1>
-            <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
-          </div>
-          <div className="flex space-x-3">
-            <Link to="/book">
-              <Button variant="default" className="flex items-center space-x-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>Réservation Patient</span>
-              </Button>
-            </Link>
-            <Link to="/calendar">
-              <Button variant="outline" className="flex items-center space-x-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>Voir le Calendrier</span>
-              </Button>
-            </Link>
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">Gestion des Rendez-vous</h1>
+          <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
         </div>
         
         <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Rendez-vous</TabsTrigger>
             <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
+            <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           </TabsList>
           
           <TabsContent value="booking" className="mt-6">
@@ -61,6 +46,21 @@ const Index = () => {
           
           <TabsContent value="patients" className="mt-6">
             <PatientList />
+          </TabsContent>
+          
+          <TabsContent value="calendar" className="mt-6">
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">Calendrier des Rendez-vous</h2>
+                <p className="text-muted-foreground">Visualisez et gérez vos rendez-vous</p>
+              </div>
+              <Link to="/calendar" className="block">
+                <Button variant="outline" className="w-full flex items-center justify-center space-x-2 h-20">
+                  <CalendarIcon className="h-6 w-6" />
+                  <span className="text-lg">Ouvrir le Calendrier Complet</span>
+                </Button>
+              </Link>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
