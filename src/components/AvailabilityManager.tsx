@@ -40,7 +40,7 @@ export function AvailabilityManager({ onAvailabilityChange }: AvailabilityManage
       enabled: day !== "Saturday" && day !== "Sunday", // Weekdays enabled by default
       timeSlots: defaultTimeSlots.map(time => ({
         time,
-        available: !["12:00", "12:15", "12:30", "12:45"].includes(time) // Pause déjeuner désactivée par défaut
+        available: !["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45"].includes(time) // Pause déjeuner de 12h00 à 14h00
       }))
     }))
   );
