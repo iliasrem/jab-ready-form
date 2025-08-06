@@ -123,10 +123,11 @@ const CalendarPage = () => {
 
   const WeekView = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(selectedDate, { weekStartsOn: 1 }) });
+    // Prendre seulement du lundi au samedi (6 jours)
+    const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 5) });
 
     return (
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-6 gap-2">
         {weekDays.map(day => {
           const appointments = getAppointmentsForDate(day);
           return (
