@@ -14,7 +14,6 @@ export interface Patient {
   email: string;
   phone: string;
   birthDate: Date | null;
-  lastAppointment: Date | null;
   nextAppointment: Date | null;
   notes: string;
   status: "Active" | "Inactive";
@@ -28,7 +27,6 @@ const mockPatients: Patient[] = [
     email: "john.doe@email.com",
     phone: "+1234567890",
     birthDate: new Date("1985-03-15"),
-    lastAppointment: new Date("2024-01-15"),
     nextAppointment: new Date("2024-02-15"),
     notes: "Regular checkup patient",
     status: "Active"
@@ -39,7 +37,6 @@ const mockPatients: Patient[] = [
     email: "jane.smith@email.com",
     phone: "+1234567891",
     birthDate: new Date("1990-07-22"),
-    lastAppointment: new Date("2024-01-20"),
     nextAppointment: null,
     notes: "Consultation completed",
     status: "Active"
@@ -50,7 +47,6 @@ const mockPatients: Patient[] = [
     email: "mike.johnson@email.com",
     phone: "+1234567892",
     birthDate: new Date("1978-11-08"),
-    lastAppointment: null,
     nextAppointment: new Date("2024-02-10"),
     notes: "New patient",
     status: "Active"
@@ -61,7 +57,6 @@ const mockPatients: Patient[] = [
     email: "sarah.wilson@email.com",
     phone: "+1234567893",
     birthDate: new Date("1982-09-14"),
-    lastAppointment: new Date("2023-12-10"),
     nextAppointment: null,
     notes: "Treatment series completed",
     status: "Inactive"
@@ -126,7 +121,6 @@ export function PatientList() {
       Email: patient.email,
       Téléphone: patient.phone,
       "Date de naissance": patient.birthDate ? format(patient.birthDate, "dd/MM/yyyy") : "",
-      "Dernière visite": patient.lastAppointment ? format(patient.lastAppointment, "dd/MM/yyyy") : "",
       "Prochain RDV": patient.nextAppointment ? format(patient.nextAppointment, "dd/MM/yyyy") : "",
       Statut: patient.status,
       Notes: patient.notes
@@ -162,7 +156,6 @@ export function PatientList() {
           email: row.Email || "",
           phone: row.Téléphone || row.Phone || "",
           birthDate: row["Date de naissance"] || row.BirthDate ? new Date(row["Date de naissance"] || row.BirthDate) : null,
-          lastAppointment: null,
           nextAppointment: null,
           notes: row.Notes || "",
           status: "Active" as const
@@ -238,7 +231,6 @@ export function PatientList() {
                 <th className="text-left p-3 font-medium">Email</th>
                 <th className="text-left p-3 font-medium">Téléphone</th>
                 <th className="text-left p-3 font-medium">Date de naissance</th>
-                <th className="text-left p-3 font-medium">Dernière visite</th>
                 <th className="text-left p-3 font-medium">Prochain RDV</th>
                 <th className="text-left p-3 font-medium">Statut</th>
                 <th className="text-left p-3 font-medium">Notes</th>
@@ -307,22 +299,12 @@ export function PatientList() {
                     )}
                   </td>
 
-                  {/* Last Visit */}
-                  <td className="p-3">
-                    <span className="text-sm text-muted-foreground">
-                      {patient.lastAppointment 
-                        ? format(patient.lastAppointment, "MMM d, yyyy")
-                        : "Never"
-                      }
-                    </span>
-                  </td>
-
                   {/* Next Appointment */}
                   <td className="p-3">
                     <span className="text-sm text-muted-foreground">
                       {patient.nextAppointment 
-                        ? format(patient.nextAppointment, "MMM d, yyyy")
-                        : "None scheduled"
+                        ? format(patient.nextAppointment, "dd/MM/yyyy")
+                        : "Aucun prévu"
                       }
                     </span>
                   </td>
