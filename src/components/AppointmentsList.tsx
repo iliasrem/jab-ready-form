@@ -13,6 +13,7 @@ export interface Appointment {
   phone?: string;
   date: string; // ISO date string
   time: string;
+  services?: string[]; // Array of service IDs
   notes?: string;
   createdAt: string; // ISO date string
 }
@@ -27,6 +28,7 @@ const mockAppointments: Appointment[] = [
     phone: "0123456789",
     date: "2024-08-15",
     time: "09:00",
+    services: ["covid"],
     notes: "Première dose",
     createdAt: "2024-08-10T10:30:00Z"
   },
@@ -37,6 +39,7 @@ const mockAppointments: Appointment[] = [
     email: "pierre.martin@email.com",
     date: "2024-08-15",
     time: "10:30",
+    services: ["grippe"],
     createdAt: "2024-08-12T14:20:00Z"
   },
   {
@@ -46,6 +49,7 @@ const mockAppointments: Appointment[] = [
     phone: "0987654321",
     date: "2024-08-16",
     time: "14:15",
+    services: ["covid", "grippe"],
     notes: "Rappel",
     createdAt: "2024-08-11T09:15:00Z"
   },
@@ -57,6 +61,7 @@ const mockAppointments: Appointment[] = [
     phone: "0147258369",
     date: "2024-08-14",
     time: "16:00",
+    services: ["covid"],
     createdAt: "2024-08-08T16:45:00Z"
   },
   {
@@ -66,6 +71,7 @@ const mockAppointments: Appointment[] = [
     email: "claire.dubois@email.com",
     date: "2024-08-17",
     time: "11:30",
+    services: ["grippe"],
     createdAt: "2024-08-13T11:10:00Z"
   },
   {
@@ -75,11 +81,17 @@ const mockAppointments: Appointment[] = [
     phone: "0567891234",
     date: "2024-08-18",
     time: "15:45",
+    services: ["covid", "grippe"],
     notes: "Consultation préalable nécessaire",
     createdAt: "2024-08-12T13:30:00Z"
   }
 ];
 
+
+const serviceLabels: { [key: string]: string } = {
+  covid: "Vaccin COVID",
+  grippe: "Vaccin Grippe"
+};
 
 export function AppointmentsList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -116,6 +128,7 @@ export function AppointmentsList() {
                   <TableHead>Patient</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Date & Heure</TableHead>
+                  <TableHead>Services</TableHead>
                   <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,6 +176,17 @@ export function AppointmentsList() {
                           </div>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {appointment.services && appointment.services.length > 0 && (
+                        <div className="space-y-1">
+                          {appointment.services.map((serviceId, index) => (
+                            <div key={index} className="text-sm bg-primary/10 text-primary px-2 py-1 rounded inline-block mr-1">
+                              {serviceLabels[serviceId] || serviceId}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       {appointment.notes && (
