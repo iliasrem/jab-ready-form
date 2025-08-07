@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,11 @@ const appointmentSchema = z.object({
   time: z.string({
     required_error: "Veuillez sélectionner une heure de rendez-vous.",
   }),
+  services: z.array(z.string()).min(1, {
+    message: "Veuillez sélectionner au moins un service.",
+  }).max(2, {
+    message: "Vous pouvez sélectionner maximum 2 services.",
+  }),
   notes: z.string().optional(),
 });
 
@@ -73,6 +79,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       lastName: "",
       email: "",
       phone: "",
+      services: [],
       notes: "",
     },
   });
@@ -80,7 +87,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   function onSubmit(data: AppointmentFormValues) {
     toast({
       title: "Rendez-vous demandé",
-      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis.`,
+      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
     });
     form.reset();
   }
@@ -115,6 +122,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   const selectedDate = form.watch("date");
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
+
+  const services = [
+    { id: "covid", label: "Vaccin 2025-2026 contre le COVID" },
+    { id: "grippe", label: "Vaccin contre la grippe 2025-2026" }
+  ];
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -252,6 +264,56 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                       maxLength={10}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="services"
+              render={() => (
+                <FormItem>
+                  <div className="mb-4">
+                    <FormLabel className="text-base">Services</FormLabel>
+                    <FormDescription>
+                      Sélectionnez 1 ou 2 services pour votre rendez-vous.
+                    </FormDescription>
+                  </div>
+                  {services.map((service) => (
+                    <FormField
+                      key={service.id}
+                      control={form.control}
+                      name="services"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={service.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(service.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, service.id])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                          (value) => value !== service.id
+                                        )
+                                      )
+                                }}
+                                disabled={!field.value?.includes(service.id) && field.value?.length >= 2}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {service.label}
+                            </FormLabel>
+                          </FormItem>
+                        )
+                      }}
+                    />
+                  ))}
                   <FormMessage />
                 </FormItem>
               )}
