@@ -20,15 +20,25 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ProtectedRoute>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/book" element={<PatientBooking />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ProtectedRoute>
+          <Routes>
+            {/* Route publique pour les patients */}
+            <Route path="/book" element={<PatientBooking />} />
+            
+            {/* Routes protégées pour l'administration */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            } />
+            <Route path="/calendar" element={
+              <ProtectedRoute>
+                <Calendar />
+              </ProtectedRoute>
+            } />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
           <GdprBanner />
         </BrowserRouter>
       </TooltipProvider>
