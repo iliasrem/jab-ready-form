@@ -7,18 +7,35 @@ import { PatientList } from "@/components/PatientList";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Users } from "lucide-react";
 
 const Index = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
-      <div className="container mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Gestion des Rendez-vous</h1>
-          <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
+    <div className="min-h-screen bg-background">
+      {/* Header avec lien de réservation */}
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Gestion des Rendez-vous</h1>
+            <p className="text-sm text-muted-foreground">Interface d'administration</p>
+          </div>
+          <Button asChild variant="default" className="gap-2">
+            <Link to="/book">
+              <Users className="h-4 w-4" />
+              Réservation Patients
+            </Link>
+          </Button>
         </div>
+      </header>
+
+      <div className="py-12 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">Administration</h2>
+            <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
+          </div>
         
         <Tabs defaultValue="booking" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
@@ -53,6 +70,7 @@ const Index = () => {
             <Calendar />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
