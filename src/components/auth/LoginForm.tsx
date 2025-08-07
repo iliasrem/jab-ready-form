@@ -26,6 +26,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<LoginFormData>({
@@ -61,6 +62,37 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       setError('Une erreur est survenue lors de la connexion')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    const email = form.getValues('email')
+    if (!email) {
+      setError('Veuillez saisir votre email pour réinitialiser votre mot de passe')
+      return
+    }
+
+    setIsResettingPassword(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+
+      if (error) {
+        setError('Erreur lors de l\'envoi de l\'email de récupération')
+        return
+      }
+
+      toast({
+        title: 'Email envoyé',
+        description: 'Un lien de récupération a été envoyé à votre adresse email'
+      })
+    } catch (err) {
+      setError('Une erreur est survenue lors de l\'envoi de l\'email')
+    } finally {
+      setIsResettingPassword(false)
     }
   }
 
@@ -141,6 +173,19 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             </Button>
           </form>
         </Form>
+        
+        <div className="text-center mt-4">
+          <Button
+            type="button"
+            variant="link"
+            className="text-sm text-muted-foreground hover:text-primary"
+            onClick={handlePasswordReset}
+            disabled={isResettingPassword}
+          >
+            {isResettingPassword && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Mot de passe oublié ?
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
