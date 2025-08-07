@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { GdprBanner } from "@/components/gdpr/GdprBanner";
-import Index from "./pages/Index";
+import AdminDashboard from "./pages/AdminDashboard";
 import Calendar from "./pages/Calendar";
 import PatientBooking from "./pages/PatientBooking";
 import NotFound from "./pages/NotFound";
@@ -21,13 +21,13 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Route publique pour les patients */}
-            <Route path="/book" element={<PatientBooking />} />
+            {/* Route publique pour les patients - maintenant la page d'accueil */}
+            <Route path="/" element={<PatientBooking />} />
             
             {/* Routes protégées pour l'administration */}
-            <Route path="/" element={
+            <Route path="/admin" element={
               <ProtectedRoute>
-                <Index />
+                <AdminDashboard />
               </ProtectedRoute>
             } />
             <Route path="/calendar" element={

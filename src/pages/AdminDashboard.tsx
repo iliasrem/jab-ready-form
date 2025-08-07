@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Users } from "lucide-react";
 
-const Index = () => {
+const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
 
   return (
@@ -22,9 +22,9 @@ const Index = () => {
             <p className="text-sm text-muted-foreground">Interface d'administration</p>
           </div>
           <Button asChild variant="default" className="gap-2">
-            <Link to="/book">
+            <Link to="/">
               <Users className="h-4 w-4" />
-              Réservation Patients
+              Page Patients
             </Link>
           </Button>
         </div>
@@ -76,4 +76,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default AdminDashboard;

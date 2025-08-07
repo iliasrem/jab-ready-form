@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { DayAvailability } from "@/components/AvailabilityManager";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 // Mock availability data - in a real app this would come from your backend
 const defaultAvailability: DayAvailability[] = [
@@ -223,9 +226,17 @@ const PatientBooking = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary text-primary-foreground py-8">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
-          <p className="text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
+        <div className="container mx-auto px-4 flex justify-between items-center">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
+            <p className="text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
+          </div>
+          <Button asChild variant="secondary" size="sm" className="gap-2">
+            <Link to="/admin">
+              <Settings className="h-4 w-4" />
+              Administration
+            </Link>
+          </Button>
         </div>
       </div>
 
