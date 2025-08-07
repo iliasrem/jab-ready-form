@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isSameMonth, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -13,33 +13,34 @@ interface Appointment {
   time: string;
   patientName: string;
   date: Date;
+  services?: string[];
 }
 
 // Mock appointments data avec plus de données pour 4 semaines
 const mockAppointments: Appointment[] = [
   // Semaine 1
-  { id: "1", time: "09:00", patientName: "Marie Dupont", date: new Date() },
-  { id: "2", time: "10:30", patientName: "Pierre Martin", date: new Date() },
-  { id: "3", time: "14:00", patientName: "Sophie Bernard", date: addDays(new Date(), 1) },
-  { id: "4", time: "11:15", patientName: "Jean Moreau", date: addDays(new Date(), 2) },
+  { id: "1", time: "09:00", patientName: "Marie Dupont", date: new Date(), services: ["covid"] },
+  { id: "2", time: "10:30", patientName: "Pierre Martin", date: new Date(), services: ["grippe"] },
+  { id: "3", time: "14:00", patientName: "Sophie Bernard", date: addDays(new Date(), 1), services: ["covid", "grippe"] },
+  { id: "4", time: "11:15", patientName: "Jean Moreau", date: addDays(new Date(), 2), services: ["covid"] },
   
   // Semaine 2
-  { id: "5", time: "09:30", patientName: "Claire Dubois", date: addDays(new Date(), 7) },
-  { id: "6", time: "15:45", patientName: "Marc Leroy", date: addDays(new Date(), 8) },
-  { id: "7", time: "10:00", patientName: "Anne Petit", date: addDays(new Date(), 9) },
-  { id: "8", time: "16:30", patientName: "Paul Roux", date: addDays(new Date(), 10) },
+  { id: "5", time: "09:30", patientName: "Claire Dubois", date: addDays(new Date(), 7), services: ["grippe"] },
+  { id: "6", time: "15:45", patientName: "Marc Leroy", date: addDays(new Date(), 8), services: ["covid", "grippe"] },
+  { id: "7", time: "10:00", patientName: "Anne Petit", date: addDays(new Date(), 9), services: ["covid"] },
+  { id: "8", time: "16:30", patientName: "Paul Roux", date: addDays(new Date(), 10), services: ["grippe"] },
   
   // Semaine 3
-  { id: "9", time: "09:15", patientName: "Lucie Blanc", date: addDays(new Date(), 14) },
-  { id: "10", time: "14:30", patientName: "Thomas Noir", date: addDays(new Date(), 15) },
-  { id: "11", time: "11:00", patientName: "Emma Vert", date: addDays(new Date(), 16) },
-  { id: "12", time: "15:15", patientName: "Louis Bleu", date: addDays(new Date(), 17) },
+  { id: "9", time: "09:15", patientName: "Lucie Blanc", date: addDays(new Date(), 14), services: ["covid"] },
+  { id: "10", time: "14:30", patientName: "Thomas Noir", date: addDays(new Date(), 15), services: ["covid", "grippe"] },
+  { id: "11", time: "11:00", patientName: "Emma Vert", date: addDays(new Date(), 16), services: ["grippe"] },
+  { id: "12", time: "15:15", patientName: "Louis Bleu", date: addDays(new Date(), 17), services: ["covid"] },
   
   // Semaine 4
-  { id: "13", time: "10:45", patientName: "Julie Rose", date: addDays(new Date(), 21) },
-  { id: "14", time: "16:00", patientName: "Hugo Gris", date: addDays(new Date(), 22) },
-  { id: "15", time: "09:45", patientName: "Léa Violet", date: addDays(new Date(), 23) },
-  { id: "16", time: "14:45", patientName: "Nathan Orange", date: addDays(new Date(), 24) },
+  { id: "13", time: "10:45", patientName: "Julie Rose", date: addDays(new Date(), 21), services: ["covid", "grippe"] },
+  { id: "14", time: "16:00", patientName: "Hugo Gris", date: addDays(new Date(), 22), services: ["grippe"] },
+  { id: "15", time: "09:45", patientName: "Léa Violet", date: addDays(new Date(), 23), services: ["covid"] },
+  { id: "16", time: "14:45", patientName: "Nathan Orange", date: addDays(new Date(), 24), services: ["covid", "grippe"] },
 ];
 
 const CalendarPage = () => {
@@ -68,6 +69,23 @@ const CalendarPage = () => {
     } else {
       setSelectedDate(direction === "next" ? addMonths(selectedDate, 1) : subMonths(selectedDate, 1));
     }
+  };
+
+  const getVaccineCountForDay = (date: Date) => {
+    const appointments = getAppointmentsForDate(date);
+    let covidCount = 0;
+    let grippeCount = 0;
+
+    appointments.forEach(apt => {
+      if (apt.services) {
+        apt.services.forEach(service => {
+          if (service === "covid") covidCount++;
+          if (service === "grippe") grippeCount++;
+        });
+      }
+    });
+
+    return { covid: covidCount, grippe: grippeCount };
   };
 
   const getViewTitle = () => {
@@ -286,6 +304,29 @@ const CalendarPage = () => {
             <span>Retour aux Réservations</span>
           </Button>
         </div>
+
+        {/* Compteur de vaccins pour la journée */}
+        {currentView === "day" && (
+          <Card className="mb-4">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center space-x-8">
+                <div className="flex items-center space-x-2">
+                  <Syringe className="h-5 w-5 text-blue-600" />
+                  <span className="text-lg font-semibold">
+                    {getVaccineCountForDay(selectedDate).covid} vaccin(s) COVID
+                  </span>
+                </div>
+                <div className="w-px h-8 bg-border"></div>
+                <div className="flex items-center space-x-2">
+                  <Syringe className="h-5 w-5 text-orange-600" />
+                  <span className="text-lg font-semibold">
+                    {getVaccineCountForDay(selectedDate).grippe} vaccin(s) grippe
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
