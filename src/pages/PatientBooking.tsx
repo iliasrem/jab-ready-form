@@ -272,6 +272,10 @@ const PatientBooking = () => {
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   <span><strong>Vaccin :</strong> nouveau vaccin 2025-2026 contre le COVID</span>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span><strong>Vaccin grippe :</strong> vaccin contre la grippe 2025-2026</span>
+                </div>
               </div>
             </div>
             
