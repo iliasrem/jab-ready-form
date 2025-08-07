@@ -279,7 +279,7 @@ const PatientBooking = () => {
               <h3 className="font-semibold mb-3">Notes importantes</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Veuillez arriver 15 minutes avant votre rendez-vous</li>
-                <li>• Apportez une pièce d&apos;identité valide et votre carte d&apos;assurance</li>
+                <li>• Apportez une pièce d&apos;identité valide</li>
                 <li>• Les annulations doivent être faites 24 heures à l&apos;avance</li>
                 <li>• Nous vous enverrons un e-mail de confirmation après la réservation</li>
               </ul>
