@@ -43,6 +43,11 @@ const mockAppointments: Appointment[] = [
   { id: "16", time: "14:45", patientName: "Nathan Orange", date: addDays(new Date(), 24), services: ["covid", "grippe"] },
 ];
 
+const serviceLabels: { [key: string]: string } = {
+  covid: "COVID",
+  grippe: "Grippe"
+};
+
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "4weeks">("4weeks");
@@ -123,6 +128,11 @@ const CalendarPage = () => {
                 <div className="flex-1 flex items-center justify-between bg-primary/10 p-2 rounded">
                   <div>
                     <div className="font-medium">{appointment.patientName}</div>
+                    {appointment.services && appointment.services.length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {appointment.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -156,6 +166,11 @@ const CalendarPage = () => {
                   <div key={apt.id} className="text-xs p-1 bg-primary/10 rounded">
                     <div className="font-medium">{apt.time}</div>
                     <div className="truncate">{apt.patientName}</div>
+                    {apt.services && apt.services.length > 0 && (
+                      <div className="text-[10px] text-muted-foreground">
+                        {apt.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
+                      </div>
+                    )}
                   </div>
                 ))}
               </CardContent>
@@ -212,6 +227,11 @@ const CalendarPage = () => {
                                 <div className="truncate text-[10px]" title={apt.patientName}>
                                   {apt.patientName}
                                 </div>
+                                {apt.services && apt.services.length > 0 && (
+                                  <div className="text-[9px] text-muted-foreground">
+                                    {apt.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
+                                  </div>
+                                )}
                               </div>
                             ))
                           ) : (
@@ -274,6 +294,11 @@ const CalendarPage = () => {
                     <div>
                       <div className="font-medium">{apt.patientName}</div>
                       <div className="text-sm text-muted-foreground">{apt.time}</div>
+                      {apt.services && apt.services.length > 0 && (
+                        <div className="text-sm text-primary mt-1">
+                          {apt.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
