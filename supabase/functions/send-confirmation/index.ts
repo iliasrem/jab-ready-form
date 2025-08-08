@@ -108,7 +108,7 @@ serve(async (req) => {
       <p>🗓 Date : <strong>${dateText}</strong><br/>
       🕒 Heure : <strong>${timeText}</strong><br/>
       📍 Adresse : <strong>${address}</strong></p>
-      <p>Merci de vous présenter quelques minutes à l’avance, muni(e) de votre carte d’identité et, si nécessaire, de votre carte de mutuelle.</p>
+      <p>Merci de vous présenter quelques minutes à l’avance, muni(e) de votre carte d’identité.</p>
       <p>Si vous avez un empêchement ou si vous souhaitez modifier votre rendez-vous, n’hésitez pas à nous contacter au <strong>064 44 22 53</strong> ou par retour de mail.</p>
       <p>À très bientôt,<br/>Pharmacie Remili-Bastin<br/>Rue Solvay 64 à 7160 Chapelle-lez-Herlaimont</p>
     `;
