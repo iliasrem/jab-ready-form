@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { DayAvailability } from "./AvailabilityManager";
 
 interface AppointmentFormProps {
@@ -123,6 +124,14 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const selectedDate = form.watch("date");
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
+  const [phonePrefix, setPhonePrefix] = useState<string>("+32 ");
+  const countryOptions = [
+    { code: "BE", label: "Belgique (+32)", prefix: "+32 " },
+    { code: "FR", label: "France (+33)", prefix: "+33 " },
+    { code: "LU", label: "Luxembourg (+352)", prefix: "+352 " },
+    { code: "NL", label: "Pays-Bas (+31)", prefix: "+31 " },
+    { code: "DE", label: "Allemagne (+49)", prefix: "+49 " },
+  ];
   const services = [
     { id: "covid", label: "Vaccin 2025-2026 contre le COVID" },
     { id: "grippe", label: "Vaccin contre la grippe 2025-2026" }
@@ -195,49 +204,72 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   <FormItem>
                     <FormLabel>Numéro de téléphone <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
-                      <Input
-                        type="tel"
-                        inputMode="tel"
-                        placeholder="Ex: +32 4xx xx xx xx"
-                        {...field}
-                        value={field.value ?? ""}
-                        onFocus={(e) => {
-                          if (!field.value) {
-                            field.onChange("+32 ");
-                            // Place cursor at end
-                            requestAnimationFrame(() => {
-                              const el = e.target as HTMLInputElement;
-                              el.setSelectionRange(el.value.length, el.value.length);
-                            });
-                          }
-                        }}
-                        onChange={(e) => {
-                          const el = e.target as HTMLInputElement;
-                          let v = el.value || "";
-                          // Always enforce +32 prefix with a space
-                          if (!v.startsWith("+32 ")) {
-                            // Remove any leading + or 32 and spaces then add canonical prefix
-                            v = v.replace(/^\+?\s*32?\s*/, "");
-                            v = "+32 " + v;
-                          }
-                          // Allow only digits and spaces after the prefix
-                          v = "+32 " + v.slice(4).replace(/[^\d\s]/g, "");
-                          field.onChange(v);
-                        }}
-                        onKeyDown={(e) => {
-                          const el = e.currentTarget as HTMLInputElement;
-                          const prefixLen = 4; // "+32 "
-                          // Prevent deleting characters within the prefix
-                          if ((e.key === "Backspace" && el.selectionStart !== null && el.selectionStart <= prefixLen) ||
-                              (e.key === "Delete" && el.selectionStart !== null && el.selectionStart < prefixLen)) {
-                            e.preventDefault();
-                            // Ensure prefix stays intact
-                            if (!el.value.startsWith("+32 ")) {
-                              field.onChange("+32 ");
+                      <div className="flex gap-2">
+                        <Select
+                          onValueChange={(val) => {
+                            const newPrefix = val;
+                            const current = field.value ?? "";
+                            const rest = current.startsWith(phonePrefix)
+                              ? current.slice(phonePrefix.length)
+                              : current.replace(/^[+\d\s]*/, "");
+                            const next = newPrefix + rest.replace(/[^\d\s]/g, "");
+                            setPhonePrefix(newPrefix);
+                            field.onChange(next);
+                          }}
+                          defaultValue={phonePrefix}
+                          value={phonePrefix}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Indicatif" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countryOptions.map((opt) => (
+                              <SelectItem key={opt.code} value={opt.prefix}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="tel"
+                          inputMode="tel"
+                          placeholder="4xx xx xx xx"
+                          {...field}
+                          value={field.value ?? ""}
+                          onFocus={(e) => {
+                            if (!field.value || !field.value.startsWith(phonePrefix)) {
+                              field.onChange(phonePrefix);
+                              requestAnimationFrame(() => {
+                                const el = e.target as HTMLInputElement;
+                                el.setSelectionRange(el.value.length, el.value.length);
+                              });
                             }
-                          }
-                        }}
-                      />
+                          }}
+                          onChange={(e) => {
+                            const el = e.target as HTMLInputElement;
+                            let v = el.value || "";
+                            if (!v.startsWith(phonePrefix)) {
+                              v = v.replace(/^\+?\d*\s*/, "");
+                              v = phonePrefix + v;
+                            }
+                            v = phonePrefix + v.slice(phonePrefix.length).replace(/[^\d\s]/g, "");
+                            field.onChange(v);
+                          }}
+                          onKeyDown={(e) => {
+                            const el = e.currentTarget as HTMLInputElement;
+                            const prefixLen = phonePrefix.length;
+                            if (
+                              (e.key === "Backspace" && el.selectionStart !== null && el.selectionStart <= prefixLen) ||
+                              (e.key === "Delete" && el.selectionStart !== null && el.selectionStart < prefixLen)
+                            ) {
+                              e.preventDefault();
+                              if (!el.value.startsWith(phonePrefix)) {
+                                field.onChange(phonePrefix);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
