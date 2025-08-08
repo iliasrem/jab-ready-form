@@ -318,12 +318,10 @@ const PatientBooking = () => {
           </p>
           <p>
             <a
-              href="https://www.dropbox.com/scl/fi/xewf8cdmmhx1pvox3f1b0/POLITIQUE-DE-PROTECTION-DES-DONNEES-A-CARACTERE-PERSONNEL.pdf?rlkey=s927wmkpan4olwdkhe2rex5pk&dl=0"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/politique-de-confidentialite"
               className="text-primary hover:underline"
             >
-              Politique de confidentialité (PDF)
+              Politique de confidentialité
             </a>
           </p>
         </div>
