@@ -318,10 +318,12 @@ const PatientBooking = () => {
           </p>
           <p>
             <a
-              href="/politique-de-confidentialite"
+              href="/documents/politique-de-confidentialite.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              Politique de confidentialité
+              Politique de confidentialité (PDF)
             </a>
           </p>
         </div>
