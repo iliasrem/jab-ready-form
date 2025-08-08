@@ -225,7 +225,7 @@ const PatientBooking = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-primary text-primary-foreground py-8">
+      <div className="bg-brand text-brand-foreground py-8">
         <div className="container mx-auto px-4 flex flex-col items-center gap-4">
           <div className="text-center flex-1">
             <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
