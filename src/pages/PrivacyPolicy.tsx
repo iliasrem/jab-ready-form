@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
         <h1 className="text-3xl font-bold mb-6">Politique de confidentialité</h1>
 
         <article className="prose prose-sm md:prose-base max-w-none text-foreground">
-          <div className="whitespace-pre-line">
+          <div className="whitespace-pre-line text-justify leading-relaxed">
 Privacy policy
 POLITIQUE DE PROTECTION DES DONNEES A CARACTERE PERSONNEL
 
