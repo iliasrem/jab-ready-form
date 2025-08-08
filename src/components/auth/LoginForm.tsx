@@ -167,7 +167,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
               )}
             />
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="brand" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Se connecter
             </Button>
