@@ -91,8 +91,8 @@ serve(async (req) => {
 
     const resend = new Resend(RESEND_API_KEY);
 
-    const subject = body.summary ?? "Confirmation de rendez-vous";
-    const from = "Pharmacie Remili-Bastin <onboarding@resend.dev>"; // Remplacez après validation du domaine
+    const subject = "Confirmation de votre rendez-vous pour la vaccination.";
+    const from = "info@remili.be";
 
     const html = `
       <h2>Confirmation de votre rendez-vous</h2>
