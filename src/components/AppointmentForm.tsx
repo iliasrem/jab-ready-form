@@ -196,9 +196,47 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                     <FormLabel>Numéro de téléphone <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
                       <Input
-                        type="tel" 
-                        placeholder="Entrez votre numéro de téléphone" 
-                        {...field} 
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="Ex: +32 4xx xx xx xx"
+                        {...field}
+                        value={field.value ?? ""}
+                        onFocus={(e) => {
+                          if (!field.value) {
+                            field.onChange("+32 ");
+                            // Place cursor at end
+                            requestAnimationFrame(() => {
+                              const el = e.target as HTMLInputElement;
+                              el.setSelectionRange(el.value.length, el.value.length);
+                            });
+                          }
+                        }}
+                        onChange={(e) => {
+                          const el = e.target as HTMLInputElement;
+                          let v = el.value || "";
+                          // Always enforce +32 prefix with a space
+                          if (!v.startsWith("+32 ")) {
+                            // Remove any leading + or 32 and spaces then add canonical prefix
+                            v = v.replace(/^\+?\s*32?\s*/, "");
+                            v = "+32 " + v;
+                          }
+                          // Allow only digits and spaces after the prefix
+                          v = "+32 " + v.slice(4).replace(/[^\d\s]/g, "");
+                          field.onChange(v);
+                        }}
+                        onKeyDown={(e) => {
+                          const el = e.currentTarget as HTMLInputElement;
+                          const prefixLen = 4; // "+32 "
+                          // Prevent deleting characters within the prefix
+                          if ((e.key === "Backspace" && el.selectionStart !== null && el.selectionStart <= prefixLen) ||
+                              (e.key === "Delete" && el.selectionStart !== null && el.selectionStart < prefixLen)) {
+                            e.preventDefault();
+                            // Ensure prefix stays intact
+                            if (!el.value.startsWith("+32 ")) {
+                              field.onChange("+32 ");
+                            }
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
