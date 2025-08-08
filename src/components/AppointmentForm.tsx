@@ -107,7 +107,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
             endISO: end.toISOString(),
             summary: "Rendez-vous Pharmacie Remili-Bastin",
             description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
-            location: "Pharmacie Remili-Bastin, Rue Solvay 62-64, 7160 Chapelle-lez-Herlaimont",
+            location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
+            displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
+            displayTime: data.time,
           },
         });
 
