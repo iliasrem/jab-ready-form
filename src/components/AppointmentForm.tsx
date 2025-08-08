@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { DayAvailability } from "./AvailabilityManager";
 
@@ -85,12 +86,55 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
     },
   });
 
-  function onSubmit(data: AppointmentFormValues) {
+  async function onSubmit(data: AppointmentFormValues) {
     toast({
       title: "Rendez-vous demandé",
       description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
     });
-    form.reset();
+
+    try {
+      if (data.email && data.email.includes("@")) {
+        const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
+        const start = new Date(data.date);
+        start.setHours(hh || 0, mm || 0, 0, 0);
+        const end = new Date(start.getTime() + 15 * 60 * 1000);
+
+        const { error } = await supabase.functions.invoke("send-confirmation", {
+          body: {
+            to: data.email,
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            startISO: start.toISOString(),
+            endISO: end.toISOString(),
+            summary: "Rendez-vous Pharmacie Remili-Bastin",
+            description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
+            location: "Pharmacie Remili-Bastin, Rue Solvay 62-64, 7160 Chapelle-lez-Herlaimont",
+          },
+        });
+
+        if (error) {
+          console.error("send-confirmation error", error);
+          toast({
+            title: "Email non envoyé",
+            description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Email envoyé",
+            description: "Un email de confirmation avec fichier calendrier a été envoyé.",
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'email de confirmation.",
+        variant: "destructive",
+      });
+    } finally {
+      form.reset();
+    }
   }
 
   // Get available time slots based on selected date
