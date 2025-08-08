@@ -318,7 +318,7 @@ const PatientBooking = () => {
           </p>
           <p>
             <a
-              href="/politique-de-confidentialite.pdf"
+              href="/lovable-uploads/politique-de-confidentialite.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
