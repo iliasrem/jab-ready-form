@@ -12,6 +12,7 @@ interface Appointment {
   id: string;
   time: string;
   patientName: string;
+  phone?: string;
   date: Date;
   services?: string[];
 }
@@ -151,6 +152,9 @@ const CalendarPage = () => {
                 <div className="flex-1 flex items-center justify-between bg-primary/10 p-2 rounded">
                   <div>
                     <div className="font-medium">{appointment.patientName}</div>
+                    {appointment.phone && (
+                      <div className="text-xs text-muted-foreground mt-1">{appointment.phone}</div>
+                    )}
                     {appointment.services && appointment.services.length > 0 && (
                       <div className="text-xs text-muted-foreground mt-1">
                         {appointment.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
