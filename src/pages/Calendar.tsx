@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isSameMonth, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -107,6 +107,29 @@ const CalendarPage = () => {
     } else {
       return format(selectedDate, "MMMM yyyy", { locale: fr });
     }
+  };
+
+  const printDayAppointments = () => {
+    const appts = getAppointmentsForDate(selectedDate)
+      .slice()
+      .sort((a, b) => a.time.localeCompare(b.time));
+    const dateLabel = format(selectedDate, "EEEE d MMMM yyyy", { locale: fr });
+    const rows = appts
+      .map(
+        (a) =>
+          `<tr><td>${a.time}</td><td>${a.patientName}</td><td>${(a.services || [])
+            .map((s) => serviceLabels[s] || s)
+            .join(", ")}</td></tr>`
+      )
+      .join("");
+
+    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>RDV ${dateLabel}</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:24px} h1{font-size:20px;margin:0 0 16px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:8px;font-size:12px} th{text-align:left;background:#f5f5f5}</style></head><body><h1>Rendez-vous du ${dateLabel}</h1><table><thead><tr><th>Heure</th><th>Patient</th><th>Services</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun rendez-vous</td></tr>'}</tbody></table></body></html>`;
+    const win = window.open("", "_blank", "width=900,height=900");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
   };
 
   const DayView = () => {
@@ -373,14 +396,22 @@ const CalendarPage = () => {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as "day" | "week" | "month" | "4weeks")}>
-                <TabsList>
-                  <TabsTrigger value="day">Jour</TabsTrigger>
-                  <TabsTrigger value="week">Semaine</TabsTrigger>
-                  <TabsTrigger value="4weeks">4 Semaines</TabsTrigger>
-                  <TabsTrigger value="month">Mois</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex items-center gap-2">
+                <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as "day" | "week" | "month" | "4weeks")}>
+                  <TabsList>
+                    <TabsTrigger value="day">Jour</TabsTrigger>
+                    <TabsTrigger value="week">Semaine</TabsTrigger>
+                    <TabsTrigger value="4weeks">4 Semaines</TabsTrigger>
+                    <TabsTrigger value="month">Mois</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                {currentView === "day" && (
+                  <Button variant="outline" size="sm" onClick={printDayAppointments} className="flex items-center gap-2">
+                    <Printer className="h-4 w-4" />
+                    Imprimer la journée
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
