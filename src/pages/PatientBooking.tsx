@@ -305,7 +305,7 @@ const PatientBooking = () => {
 
       {/* Footer */}
       <div className="bg-muted/30 py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center space-y-2">
           <p className="text-muted-foreground">
             Besoin d&apos;aide ? Contactez-nous au{" "}
             <a href="tel:+32064442253" className="text-primary hover:underline">
@@ -314,6 +314,16 @@ const PatientBooking = () => {
             ou{" "}
             <a href="mailto:info@remili.be" className="text-primary hover:underline">
               info@remili.be
+            </a>
+          </p>
+          <p>
+            <a
+              href="https://www.dropbox.com/scl/fi/xewf8cdmmhx1pvox3f1b0/POLITIQUE-DE-PROTECTION-DES-DONNEES-A-CARACTERE-PERSONNEL.pdf?rlkey=s927wmkpan4olwdkhe2rex5pk&dl=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Politique de confidentialité (PDF)
             </a>
           </p>
         </div>
