@@ -38,6 +38,12 @@ const AdminDashboard = () => {
                 Page Patients
               </Link>
             </Button>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/admin/disponibilites-vue">
+                <CalendarIcon className="h-4 w-4" />
+                Disponibilités
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
