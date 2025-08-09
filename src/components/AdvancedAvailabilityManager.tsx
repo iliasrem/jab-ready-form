@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,22 @@ const defaultTimeSlots = [
 
 interface AdvancedAvailabilityManagerProps {
   onAvailabilityChange: (availability: SpecificDateAvailability[]) => void;
+  initialAvailability?: SpecificDateAvailability[];
 }
 
-export function AdvancedAvailabilityManager({ onAvailabilityChange }: AdvancedAvailabilityManagerProps) {
+export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvailability }: AdvancedAvailabilityManagerProps) {
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<string>("");
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
+
+  // Synchroniser avec une disponibilité initiale éventuelle
+  useEffect(() => {
+    if (initialAvailability) {
+      setSpecificAvailability(initialAvailability);
+    }
+  }, [initialAvailability]);
 
   // Générer les disponibilités par défaut pour un jour
   const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {

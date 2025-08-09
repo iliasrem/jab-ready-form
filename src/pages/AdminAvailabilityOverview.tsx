@@ -7,6 +7,14 @@ import { Separator } from "@/components/ui/separator";
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 
+// créneaux par défaut (doit refléter le gestionnaire avancé)
+const defaultTimeSlots = [
+  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
+  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15", "12:30", "12:45",
+  "13:00", "13:15", "13:30", "13:45", "14:00", "14:15", "14:30", "14:45",
+  "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00"
+];
+
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition
 export default function AdminAvailabilityOverview() {
   type ViewMode = "week" | "month" | "quarter";
@@ -77,6 +85,54 @@ export default function AdminAvailabilityOverview() {
     return { label: `${open} créneau(x)`, tone: open === 0 ? ("destructive" as const) : ("default" as const) };
   };
 
+  // helpers pour créer / mettre à jour
+  const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    return {
+      date,
+      enabled: !isWeekend,
+      timeSlots: defaultTimeSlots.map((time) => ({
+        time,
+        available: !isWeekend && !["12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45"].includes(time)
+      }))
+    };
+  };
+
+  const getAvailabilityForDate = (date: Date): SpecificDateAvailability => {
+    const key = format(date, "yyyy-MM-dd");
+    const existing = byDate.get(key);
+    return existing ?? getDefaultDayAvailability(date);
+  };
+
+  const updateDateAvailability = (updated: SpecificDateAvailability) => {
+    setAvailability((prev) => {
+      const next = prev.filter((av) => format(av.date, "yyyy-MM-dd") !== format(updated.date, "yyyy-MM-dd"));
+      next.push(updated);
+      return next;
+    });
+  };
+
+  const openAll = (date: Date) => {
+    const current = getAvailabilityForDate(date);
+    const updated: SpecificDateAvailability = {
+      ...current,
+      enabled: true,
+      timeSlots: current.timeSlots.map((s) => ({ ...s, available: true }))
+    };
+    updateDateAvailability(updated);
+  };
+
+  const closeAll = (date: Date) => {
+    const current = getAvailabilityForDate(date);
+    const updated: SpecificDateAvailability = {
+      ...current,
+      enabled: false,
+      timeSlots: current.timeSlots.map((s) => ({ ...s, available: false }))
+    };
+    updateDateAvailability(updated);
+  };
+
   const goPrev = () => {
     if (viewMode === "week") setPeriodStart(addDays(periodStart, -7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, -1));
@@ -130,6 +186,10 @@ export default function AdminAvailabilityOverview() {
                         <span className="text-sm font-medium">{format(d, "EEE d MMM", { locale: fr })}</span>
                         <Badge variant={info.tone}>{info.label}</Badge>
                       </div>
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => openAll(d)} aria-label={`Ouvrir tous les créneaux du ${format(d, "P", { locale: fr })}`}>Ouvrir</Button>
+                        <Button size="sm" variant="outline" onClick={() => closeAll(d)} aria-label={`Fermer tous les créneaux du ${format(d, "P", { locale: fr })}`}>Fermer</Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -141,7 +201,7 @@ export default function AdminAvailabilityOverview() {
         <Separator />
 
         <aside aria-label="Édition des disponibilités">
-          <AdvancedAvailabilityManager onAvailabilityChange={setAvailability} />
+          <AdvancedAvailabilityManager initialAvailability={availability} onAvailabilityChange={setAvailability} />
         </aside>
       </main>
     </div>
