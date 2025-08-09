@@ -67,7 +67,21 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="availability" className="mt-6">
-            <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
+                  <p className="text-sm text-muted-foreground">Définir les créneaux disponibles</p>
+                </div>
+                <Button asChild variant="outline" className="gap-2">
+                  <Link to="/admin/disponibilites-vue">
+                    <CalendarIcon className="h-4 w-4" />
+                    Vue Administrateur Complète
+                  </Link>
+                </Button>
+              </div>
+              <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+            </div>
           </TabsContent>
           
           <TabsContent value="patients" className="mt-6">
