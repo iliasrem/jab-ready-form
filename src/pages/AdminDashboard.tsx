@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
@@ -11,6 +11,16 @@ import { Calendar as CalendarIcon, Users } from "lucide-react";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
+  const [activeTab, setActiveTab] = useState("booking");
+  const navigate = useNavigate();
+
+  const handleTabChange = (value: string) => {
+    if (value === "availability") {
+      navigate("/admin/disponibilites-vue");
+    } else {
+      setActiveTab(value);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,22 +55,14 @@ const AdminDashboard = () => {
             <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
           </div>
         
-        <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
+            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           </TabsList>
-          
-          <div className="mt-6 flex justify-center">
-            <Button asChild variant="default" size="lg" className="gap-2">
-              <Link to="/admin/disponibilites-vue">
-                <CalendarIcon className="h-5 w-5" />
-                Gestion des Disponibilités
-              </Link>
-            </Button>
-          </div>
           
           <TabsContent value="booking" className="mt-6">
             <div className="text-center mb-6">
