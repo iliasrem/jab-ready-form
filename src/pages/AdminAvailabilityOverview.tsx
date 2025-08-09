@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { fr } from "date-fns/locale";
 
 // créneaux par défaut (doit refléter le gestionnaire avancé)
@@ -133,6 +134,24 @@ export default function AdminAvailabilityOverview() {
     updateDateAvailability(updated);
   };
 
+  const closeAllInPeriod = () => {
+    setAvailability((prev) => {
+      const dates = period;
+      const updates = dates.map((d) => {
+        const current = getAvailabilityForDate(d);
+        return {
+          ...current,
+          enabled: false,
+          timeSlots: current.timeSlots.map((s) => ({ ...s, available: false })),
+        };
+      });
+      const other = prev.filter(
+        (av) => !dates.some((d) => format(av.date, "yyyy-MM-dd") === format(d, "yyyy-MM-dd"))
+      );
+      return [...other, ...updates];
+    });
+  };
+
   const goPrev = () => {
     if (viewMode === "week") setPeriodStart(addDays(periodStart, -7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, -1));
@@ -165,6 +184,23 @@ export default function AdminAvailabilityOverview() {
             <Button variant="outline" size="sm" onClick={goPrev}>Précédent</Button>
             <Button variant="outline" size="sm" onClick={goToday}>Aujourd'hui</Button>
             <Button variant="outline" size="sm" onClick={goNext}>Suivant</Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">Tout fermer</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tout fermer dans la période visible</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action va fermer tous les créneaux pour chaque jour actuellement affiché. Vous pourrez ré-ouvrir ensuite des jours ou des créneaux spécifiques.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={closeAllInPeriod}>Confirmer</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </section>
 
