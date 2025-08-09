@@ -326,6 +326,7 @@ const PatientBooking = () => {
               Politique de confidentialité
             </a>
           </p>
+          <p className="text-xs text-muted-foreground">Copyright : Pharmacie Remili Bastin - Remili I. - APB 521005</p>
         </div>
       </div>
     </div>
