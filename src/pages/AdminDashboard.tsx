@@ -15,11 +15,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleTabChange = (value: string) => {
-    if (value === "availability") {
-      navigate("/admin/disponibilites-vue");
-    } else {
-      setActiveTab(value);
-    }
+    setActiveTab(value);
   };
 
   return (
@@ -56,10 +52,9 @@ const AdminDashboard = () => {
           </div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           </TabsList>
