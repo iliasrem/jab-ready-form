@@ -7,7 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { fr } from "date-fns/locale";
-import { Star } from "lucide-react";
+import { Star, UploadCloud, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 // créneaux par défaut (doit refléter le gestionnaire avancé)
 const defaultTimeSlots = [
@@ -24,6 +26,8 @@ export default function AdminAvailabilityOverview() {
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
   const [availability, setAvailability] = useState<SpecificDateAvailability[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { toast } = useToast();
 
   // SEO: titre + meta description + canonical
   useEffect(() => {
@@ -213,6 +217,94 @@ export default function AdminAvailabilityOverview() {
   };
   const goToday = () => setPeriodStart(new Date());
 
+  // Helpers to work with time strings like "HH:mm"
+  const timeStrToMinutes = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const minutesToTimeStr = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(h)}:${pad(m)}:00`;
+  };
+  const addMinutesStr = (t: string, delta: number) => minutesToTimeStr(timeStrToMinutes(t) + delta);
+
+  const groupContiguous = (times: string[]) => {
+    if (times.length === 0) return [] as Array<{ start: string; end: string }>;
+    const sorted = [...times].sort((a, b) => timeStrToMinutes(a) - timeStrToMinutes(b));
+    const ranges: Array<{ start: string; end: string }> = [];
+    let start = sorted[0];
+    let prev = sorted[0];
+    for (let i = 1; i < sorted.length; i++) {
+      const cur = sorted[i];
+      if (timeStrToMinutes(cur) !== timeStrToMinutes(prev) + 15) {
+        // close current range -> end is prev + 15 minutes to cover the last slot
+        ranges.push({ start: `${start}:00`, end: addMinutesStr(prev, 15) });
+        start = cur;
+      }
+      prev = cur;
+    }
+    ranges.push({ start: `${start}:00`, end: addMinutesStr(prev, 15) });
+    return ranges;
+  };
+
+  const publishVisiblePeriod = async () => {
+    setIsPublishing(true);
+    try {
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !user) {
+        toast({ variant: "destructive", title: "Non connecté", description: "Veuillez vous connecter pour publier." });
+        return;
+      }
+      const userId = user.id;
+
+      // Dates de la période visible
+      const dates = period.map((d) => format(d, "yyyy-MM-dd"));
+
+      // Nettoyer toutes les dispos existantes sur la période
+      const { error: delErr } = await supabase
+        .from("specific_date_availability")
+        .delete()
+        .eq("user_id", userId)
+        .in("specific_date", dates);
+      if (delErr) throw delErr;
+
+      // Construire les nouveaux créneaux (regroupés par plages contiguës)
+      type Row = { user_id: string; specific_date: string; start_time: string; end_time: string; is_available: boolean };
+      const rows: Row[] = [];
+
+      period.forEach((d) => {
+        const av = getAvailabilityForDate(d);
+        const openTimes = av.timeSlots.filter((t) => t.available).map((t) => t.time);
+        if (av.enabled && openTimes.length > 0) {
+          const ranges = groupContiguous(openTimes);
+          ranges.forEach((r) => {
+            rows.push({
+              user_id: userId,
+              specific_date: format(d, "yyyy-MM-dd"),
+              start_time: r.start,
+              end_time: r.end,
+              is_available: true,
+            });
+          });
+        }
+        // Si fermé: aucune ligne insérée => jour fermé
+      });
+
+      if (rows.length > 0) {
+        const { error: insErr } = await supabase.from("specific_date_availability").insert(rows);
+        if (insErr) throw insErr;
+      }
+
+      toast({ title: "Disponibilités publiées", description: "La période visible a été enregistrée." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erreur de publication", description: e?.message ?? "Veuillez réessayer." });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -234,6 +326,19 @@ export default function AdminAvailabilityOverview() {
             <Button variant="outline" size="sm" onClick={goPrev}>Précédent</Button>
             <Button variant="outline" size="sm" onClick={goToday}>Aujourd'hui</Button>
             <Button variant="outline" size="sm" onClick={goNext}>Suivant</Button>
+            <Button size="sm" onClick={publishVisiblePeriod} disabled={isPublishing} aria-label="Publier les disponibilités de la période visible">
+              {isPublishing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  Publication...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Publier
+                </>
+              )}
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">Tout fermer</Button>
