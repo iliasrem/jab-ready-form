@@ -13,7 +13,7 @@ import { Calendar as CalendarIcon, Users } from "lucide-react";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
-  const [activeTab, setActiveTab] = useState("booking");
+  const [activeTab, setActiveTab] = useState("vaccinations");
   const navigate = useNavigate();
 
   const handleTabChange = (value: string) => {
@@ -55,13 +55,17 @@ const AdminDashboard = () => {
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="vaccinations">Vaccins Administrés</TabsTrigger>
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
             <TabsTrigger value="vaccines">Gestion Flacons</TabsTrigger>
-            <TabsTrigger value="vaccinations">Vaccins Administrés</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="vaccinations" className="mt-6">
+            <VaccineAdministration />
+          </TabsContent>
           
           <TabsContent value="booking" className="mt-6">
             <div className="text-center mb-6">
@@ -85,10 +89,6 @@ const AdminDashboard = () => {
           
           <TabsContent value="vaccines" className="mt-6">
             <VaccineManagement />
-          </TabsContent>
-          
-          <TabsContent value="vaccinations" className="mt-6">
-            <VaccineAdministration />
           </TabsContent>
         </Tabs>
         </div>
