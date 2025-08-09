@@ -15,7 +15,11 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
+    if (value === "availability") {
+      navigate("/admin/disponibilites-vue");
+    } else {
+      setActiveTab(value);
+    }
   };
 
   return (
@@ -68,13 +72,6 @@ const AdminDashboard = () => {
           
           <TabsContent value="patients" className="mt-6">
             <PatientList />
-          </TabsContent>
-          
-          <TabsContent value="availability" className="mt-6">
-            <AdvancedAvailabilityManager 
-              onAvailabilityChange={setSpecificAvailability}
-              initialAvailability={specificAvailability}
-            />
           </TabsContent>
           
           <TabsContent value="calendar" className="mt-6">
