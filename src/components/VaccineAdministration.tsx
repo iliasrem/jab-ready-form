@@ -5,9 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, Printer, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -47,6 +50,12 @@ export const VaccineAdministration = () => {
     patient_first_name: '',
     patient_last_name: '',
     use_manual_patient: false
+  });
+
+  // Print date range state
+  const [printDateRange, setPrintDateRange] = useState({
+    from: undefined as Date | undefined,
+    to: undefined as Date | undefined
   });
 
   // Auto-update time every minute
@@ -190,6 +199,91 @@ export const VaccineAdministration = () => {
     setEditingId(administration.id);
   };
 
+  const getFilteredAdministrations = () => {
+    if (!printDateRange.from && !printDateRange.to) {
+      return administrations;
+    }
+
+    return administrations.filter(admin => {
+      const adminDate = new Date(admin.date);
+      const fromDate = printDateRange.from;
+      const toDate = printDateRange.to;
+
+      if (fromDate && toDate) {
+        return adminDate >= fromDate && adminDate <= toDate;
+      } else if (fromDate) {
+        return adminDate >= fromDate;
+      } else if (toDate) {
+        return adminDate <= toDate;
+      }
+      return true;
+    });
+  };
+
+  const handlePrintReport = () => {
+    const filteredData = getFilteredAdministrations();
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const dateRangeText = printDateRange.from && printDateRange.to
+      ? `du ${format(printDateRange.from, 'dd/MM/yyyy', { locale: fr })} au ${format(printDateRange.to, 'dd/MM/yyyy', { locale: fr })}`
+      : printDateRange.from
+      ? `à partir du ${format(printDateRange.from, 'dd/MM/yyyy', { locale: fr })}`
+      : printDateRange.to
+      ? `jusqu'au ${format(printDateRange.to, 'dd/MM/yyyy', { locale: fr })}`
+      : 'toutes les dates';
+
+    const printContent = `
+      <html>
+        <head>
+          <title>Rapport des Vaccinations</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; }
+            h2 { color: #666; font-size: 16px; text-align: center; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>Rapport des Vaccinations</h1>
+          <h2>Période: ${dateRangeText}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>N° Lot</th>
+                <th>Patient</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredData.map(admin => `
+                <tr>
+                  <td>${format(new Date(admin.date), 'dd/MM/yyyy', { locale: fr })}</td>
+                  <td>${admin.time}</td>
+                  <td>${admin.lot_number}</td>
+                  <td>${admin.patient_first_name} ${admin.patient_last_name}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="footer">
+            <p>Rapport généré le ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}</p>
+            <p>Total: ${filteredData.length} vaccination(s)</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const handleDelete = (id: string) => {
     const updatedAdministrations = administrations.filter(admin => admin.id !== id);
     setAdministrations(updatedAdministrations);
@@ -326,10 +420,72 @@ export const VaccineAdministration = () => {
       {/* Liste des vaccinations */}
       <Card>
         <CardHeader>
-          <CardTitle>Historique des vaccinations</CardTitle>
-          <CardDescription>
-            Liste des vaccins administrés
-          </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Historique des vaccinations</CardTitle>
+              <CardDescription>
+                Liste des vaccins administrés
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !printDateRange.from && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {printDateRange.from ? format(printDateRange.from, "dd/MM/yyyy", { locale: fr }) : "Date début"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={printDateRange.from}
+                      onSelect={(date) => setPrintDateRange(prev => ({ ...prev, from: date }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !printDateRange.to && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {printDateRange.to ? format(printDateRange.to, "dd/MM/yyyy", { locale: fr }) : "Date fin"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={printDateRange.to}
+                      onSelect={(date) => setPrintDateRange(prev => ({ ...prev, to: date }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <Button onClick={handlePrintReport} size="sm" className="gap-2">
+                <Printer className="h-4 w-4" />
+                Imprimer
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -343,14 +499,14 @@ export const VaccineAdministration = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {administrations.length === 0 ? (
+              {getFilteredAdministrations().length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Aucune vaccination enregistrée
+                    {administrations.length === 0 ? "Aucune vaccination enregistrée" : "Aucune vaccination dans cette période"}
                   </TableCell>
                 </TableRow>
               ) : (
-                administrations.map((administration) => (
+                getFilteredAdministrations().map((administration) => (
                   <TableRow key={administration.id}>
                     <TableCell>
                       {format(new Date(administration.date), 'dd/MM/yyyy', { locale: fr })}
