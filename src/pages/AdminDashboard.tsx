@@ -46,13 +46,21 @@ const AdminDashboard = () => {
           </div>
         
         <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           </TabsList>
+          
+          <div className="mt-6 flex justify-center">
+            <Button asChild variant="default" size="lg" className="gap-2">
+              <Link to="/admin/disponibilites-vue">
+                <CalendarIcon className="h-5 w-5" />
+                Gestion des Disponibilités
+              </Link>
+            </Button>
+          </div>
           
           <TabsContent value="booking" className="mt-6">
             <div className="text-center mb-6">
@@ -64,24 +72,6 @@ const AdminDashboard = () => {
           
           <TabsContent value="appointments" className="mt-6">
             <AppointmentsList />
-          </TabsContent>
-          
-          <TabsContent value="availability" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
-                  <p className="text-sm text-muted-foreground">Définir les créneaux disponibles</p>
-                </div>
-                <Button asChild variant="outline" className="gap-2">
-                  <Link to="/admin/disponibilites-vue">
-                    <CalendarIcon className="h-4 w-4" />
-                    Vue Administrateur Complète
-                  </Link>
-                </Button>
-              </div>
-              <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
-            </div>
           </TabsContent>
           
           <TabsContent value="patients" className="mt-6">
