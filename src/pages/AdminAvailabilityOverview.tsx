@@ -272,6 +272,9 @@ export default function AdminAvailabilityOverview() {
                     <div key={format(d, "yyyy-MM-dd")} className={`p-3 rounded-lg border ${isOffDay ? "bg-muted" : "bg-card"}`} aria-label={`${format(d, "P", { locale: fr })}${isHoliday ? " — Jour férié (BE)" : isSunday ? " — Dimanche" : ""}`}>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{format(d, "EEE d MMM", { locale: fr })}</span>
+                        {isHoliday && (
+                          <Badge variant="outline" aria-label="Jour férié en Belgique">Férié</Badge>
+                        )}
                         <Badge variant={info.tone}>{info.label}</Badge>
                       </div>
                       <div className="mt-2 flex gap-2">
