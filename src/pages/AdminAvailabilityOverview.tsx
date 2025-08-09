@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
+import type { SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -314,11 +314,8 @@ export default function AdminAvailabilityOverview() {
           </Card>
         </section>
 
-        <Separator />
+        
 
-        <aside aria-label="Édition des disponibilités">
-          <AdvancedAvailabilityManager initialAvailability={availability} onAvailabilityChange={setAvailability} />
-        </aside>
       </main>
     </div>
   );
