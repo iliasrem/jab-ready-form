@@ -18,7 +18,7 @@ const defaultTimeSlots = [
 
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition
 export default function AdminAvailabilityOverview() {
-  type ViewMode = "week" | "month" | "quarter";
+  type ViewMode = "day" | "week" | "month" | "quarter";
 
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
@@ -64,7 +64,9 @@ export default function AdminAvailabilityOverview() {
     let start = new Date(periodStart);
     let end = new Date(periodStart);
 
-    if (viewMode === "week") {
+    if (viewMode === "day") {
+      end = start;
+    } else if (viewMode === "week") {
       end = addDays(start, 6);
     } else if (viewMode === "month") {
       start = startOfMonth(start);
@@ -153,12 +155,14 @@ export default function AdminAvailabilityOverview() {
   };
 
   const goPrev = () => {
-    if (viewMode === "week") setPeriodStart(addDays(periodStart, -7));
+    if (viewMode === "day") setPeriodStart(addDays(periodStart, -1));
+    else if (viewMode === "week") setPeriodStart(addDays(periodStart, -7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, -1));
     else setPeriodStart(addMonths(periodStart, -3));
   };
   const goNext = () => {
-    if (viewMode === "week") setPeriodStart(addDays(periodStart, 7));
+    if (viewMode === "day") setPeriodStart(addDays(periodStart, 1));
+    else if (viewMode === "week") setPeriodStart(addDays(periodStart, 7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, 1));
     else setPeriodStart(addMonths(periodStart, 3));
   };
@@ -176,6 +180,7 @@ export default function AdminAvailabilityOverview() {
       <main className="container mx-auto px-4 py-6 space-y-6">
         <section aria-label="Contrôles de période" className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex gap-2">
+            <Button variant={viewMode === "day" ? "default" : "outline"} size="sm" onClick={() => setViewMode("day")}>Jour</Button>
             <Button variant={viewMode === "week" ? "default" : "outline"} size="sm" onClick={() => setViewMode("week")}>Semaine</Button>
             <Button variant={viewMode === "month" ? "default" : "outline"} size="sm" onClick={() => setViewMode("month")}>Mois</Button>
             <Button variant={viewMode === "quarter" ? "default" : "outline"} size="sm" onClick={() => setViewMode("quarter")}>3 mois</Button>
