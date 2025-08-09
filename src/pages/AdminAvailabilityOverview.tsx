@@ -80,6 +80,50 @@ export default function AdminAvailabilityOverview() {
     return eachDayOfInterval({ start, end });
   }, [viewMode, periodStart]);
 
+  // Jours fériés belges et dimanches: calcul et aide
+  const calculateEasterSunday = (year: number) => {
+    // Algorithme grégorien anonyme
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0 = Janvier
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month, day);
+  };
+
+  const belgianHolidayKeys = useMemo(() => {
+    const years = new Set(period.map((d) => d.getFullYear()));
+    const keys = new Set<string>();
+    years.forEach((year) => {
+      const easter = calculateEasterSunday(year);
+      const push = (dt: Date) => keys.add(format(dt, "yyyy-MM-dd"));
+      push(new Date(year, 0, 1)); // Jour de l'An
+      push(addDays(easter, 1)); // Lundi de Pâques
+      push(new Date(year, 4, 1)); // Fête du Travail
+      push(addDays(easter, 39)); // Ascension
+      push(addDays(easter, 50)); // Lundi de Pentecôte
+      push(new Date(year, 6, 21)); // Fête nationale
+      push(new Date(year, 7, 15)); // Assomption
+      push(new Date(year, 10, 1)); // Toussaint
+      push(new Date(year, 10, 11)); // Armistice
+      push(new Date(year, 11, 25)); // Noël
+    });
+    return keys;
+  }, [period]);
+
+  const isBelgianHoliday = (date: Date) => {
+    return belgianHolidayKeys.has(format(date, "yyyy-MM-dd"));
+  };
+
   const countOpenSlots = (date: Date) => {
     const key = format(date, "yyyy-MM-dd");
     const av = byDate.get(key);
@@ -221,8 +265,11 @@ export default function AdminAvailabilityOverview() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
                 {period.map((d) => {
                   const info = countOpenSlots(d);
+                  const isSunday = d.getDay() === 0;
+                  const isHoliday = isBelgianHoliday(d);
+                  const isOffDay = isSunday || isHoliday;
                   return (
-                    <div key={format(d, "yyyy-MM-dd")} className="p-3 rounded-lg border bg-card">
+                    <div key={format(d, "yyyy-MM-dd")} className={`p-3 rounded-lg border ${isOffDay ? "bg-muted" : "bg-card"}`} aria-label={`${format(d, "P", { locale: fr })}${isHoliday ? " — Jour férié (BE)" : isSunday ? " — Dimanche" : ""}`}>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{format(d, "EEE d MMM", { locale: fr })}</span>
                         <Badge variant={info.tone}>{info.label}</Badge>
