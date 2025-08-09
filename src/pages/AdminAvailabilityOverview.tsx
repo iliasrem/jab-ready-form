@@ -231,6 +231,21 @@ export default function AdminAvailabilityOverview() {
                         <Button size="sm" variant="secondary" onClick={() => openAll(d)} aria-label={`Ouvrir tous les créneaux du ${format(d, "P", { locale: fr })}`}>Ouvrir</Button>
                         <Button size="sm" variant="outline" onClick={() => closeAll(d)} aria-label={`Fermer tous les créneaux du ${format(d, "P", { locale: fr })}`}>Fermer</Button>
                       </div>
+                      {(viewMode === "day" || viewMode === "week") && (
+                        <div className="mt-3">
+                          <div className="flex flex-wrap gap-2" aria-label={`Créneaux du ${format(d, "P", { locale: fr })}`}>
+                            {getAvailabilityForDate(d).timeSlots.map((slot) => (
+                              <Badge
+                                key={slot.time}
+                                variant={slot.available ? "default" : "secondary"}
+                                aria-label={`${slot.time} ${slot.available ? "ouvert" : "fermé"}`}
+                              >
+                                {slot.time}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
