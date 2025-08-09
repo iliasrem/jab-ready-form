@@ -5,6 +5,7 @@ import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/compone
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
 import { VaccineManagement } from "@/components/VaccineManagement";
+import { VaccineAdministration } from "@/components/VaccineAdministration";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -53,12 +54,13 @@ const AdminDashboard = () => {
           </div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
             <TabsTrigger value="vaccines">Gestion Flacons</TabsTrigger>
+            <TabsTrigger value="vaccinations">Vaccins Administrés</TabsTrigger>
           </TabsList>
           
           <TabsContent value="booking" className="mt-6">
@@ -83,6 +85,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="vaccines" className="mt-6">
             <VaccineManagement />
+          </TabsContent>
+          
+          <TabsContent value="vaccinations" className="mt-6">
+            <VaccineAdministration />
           </TabsContent>
         </Tabs>
         </div>
