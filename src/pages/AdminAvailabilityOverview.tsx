@@ -7,9 +7,10 @@ import { Separator } from "@/components/ui/separator";
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { fr } from "date-fns/locale";
-import { Star, UploadCloud, Loader2 } from "lucide-react";
+import { Star, UploadCloud, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 // créneaux par défaut (doit refléter le gestionnaire avancé)
 const defaultTimeSlots = [
@@ -309,8 +310,18 @@ export default function AdminAvailabilityOverview() {
     <div>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">Disponibilités — Vue administrateur</h1>
-          <p className="text-sm text-muted-foreground">Semaine, mois et 3 mois — consulter et modifier</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Disponibilités — Vue administrateur</h1>
+              <p className="text-sm text-muted-foreground">Semaine, mois et 3 mois — consulter et modifier</p>
+            </div>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/admin">
+                <ArrowLeft className="h-4 w-4" />
+                Retour Admin
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
