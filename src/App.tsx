@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Calendar from "./pages/Calendar";
 import PatientBooking from "./pages/PatientBooking";
 import NotFound from "./pages/NotFound";
+import AdminAvailabilityOverview from "./pages/AdminAvailabilityOverview";
 
 
 const queryClient = new QueryClient();
@@ -34,6 +35,11 @@ const App = () => (
             <Route path="/calendar" element={
               <ProtectedRoute>
                 <Calendar />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/disponibilites-vue" element={
+              <ProtectedRoute>
+                <AdminAvailabilityOverview />
               </ProtectedRoute>
             } />
             

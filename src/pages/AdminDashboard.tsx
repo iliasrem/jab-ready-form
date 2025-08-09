@@ -21,12 +21,20 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold">Gestion des Rendez-vous</h1>
             <p className="text-sm text-muted-foreground">Interface d'administration</p>
           </div>
-          <Button asChild variant="default" className="gap-2">
-            <Link to="/">
-              <Users className="h-4 w-4" />
-              Page Patients
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="default" className="gap-2">
+              <Link to="/">
+                <Users className="h-4 w-4" />
+                Page Patients
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/admin/disponibilites-vue">
+                <CalendarIcon className="h-4 w-4" />
+                Vue des Disponibilités
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
