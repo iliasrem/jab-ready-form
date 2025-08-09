@@ -175,10 +175,11 @@ export const VaccineAdministration = () => {
   };
 
   const resetForm = () => {
+    const currentLotNumber = formData.lot_number; // Mémoriser le lot actuel
     setFormData({
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      lot_number: '',
+      lot_number: currentLotNumber, // Conserver le numéro de lot
       patient_selection: '',
       patient_first_name: '',
       patient_last_name: '',
