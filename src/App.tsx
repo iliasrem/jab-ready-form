@@ -10,7 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Calendar from "./pages/Calendar";
 import PatientBooking from "./pages/PatientBooking";
 import NotFound from "./pages/NotFound";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
+
 
 const queryClient = new QueryClient();
 
@@ -38,7 +38,7 @@ const App = () => (
             } />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="/politique-de-confidentialite" element={<PrivacyPolicy />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
           <GdprBanner />

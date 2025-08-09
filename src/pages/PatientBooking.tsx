@@ -317,12 +317,14 @@ const PatientBooking = () => {
             </a>
           </p>
           <p>
-            <Link
-              to="/politique-de-confidentialite"
+            <a
+              href="https://www.remili.be/privacy"
               className="text-primary hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Politique de confidentialité
-            </Link>
+            </a>
           </p>
         </div>
       </div>
