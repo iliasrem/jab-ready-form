@@ -153,15 +153,9 @@ export const VaccineManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Gestion des Flacons de Vaccins</h2>
-          <p className="text-muted-foreground">Encoder et gérer l'arrivée des vaccins</p>
-        </div>
-        <Button onClick={handlePrintList} variant="outline" className="gap-2">
-          <Printer className="h-4 w-4" />
-          Imprimer la liste
-        </Button>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-semibold mb-2">Gestion des Flacons de Vaccins</h2>
+        <p className="text-muted-foreground">Encoder et gérer l'arrivée des vaccins</p>
       </div>
 
       {/* Formulaire d'ajout */}
@@ -280,10 +274,18 @@ export const VaccineManagement = () => {
       {/* Liste des flacons */}
       <Card>
         <CardHeader>
-          <CardTitle>Inventaire des vaccins</CardTitle>
-          <CardDescription>
-            Liste des flacons de vaccins en stock
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Inventaire des vaccins</CardTitle>
+              <CardDescription>
+                Liste des flacons de vaccins en stock
+              </CardDescription>
+            </div>
+            <Button onClick={handlePrintList} variant="outline" className="gap-2">
+              <Printer className="h-4 w-4" />
+              Imprimer la liste
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
