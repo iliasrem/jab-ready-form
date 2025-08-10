@@ -171,6 +171,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const [phonePrefix, setPhonePrefix] = useState<string>("+32 ");
+  const [birthDateInput, setBirthDateInput] = useState<string>("");
   const countryOptions = [
     { code: "BE", label: "Belgique (+32)", prefix: "+32 " },
     { code: "AL", label: "Albanie (+355)", prefix: "+355 " },
@@ -378,8 +379,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   <FormControl>
                     <Input
                       placeholder="JJ/MM/AAAA"
-                      value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
+                      value={birthDateInput}
                       onChange={(e) => {
+                        console.log("Input onChange:", e.target.value); // Debug log
                         let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
                         
                         // Add slashes automatically
@@ -390,8 +392,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           value = value.substring(0, 5) + '/' + value.substring(5, 9);
                         }
                         
-                        // Update the input display
-                        e.target.value = value;
+                        setBirthDateInput(value);
                         
                         // Parse and set the date if complete
                         if (value.length === 10) {
@@ -403,14 +404,16 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                               date.getMonth() == parseInt(month) - 1 && 
                               date.getFullYear() == parseInt(year)) {
                             field.onChange(date);
+                            console.log("Date set:", date); // Debug log
                           }
                         } else {
                           field.onChange(undefined);
                         }
                       }}
                       onKeyDown={(e) => {
-                        // Allow backspace, delete, tab, escape, enter
-                        if ([8, 9, 27, 13, 46].includes(e.keyCode) ||
+                        console.log("Key pressed:", e.key); // Debug log
+                        // Allow backspace, delete, tab, escape, enter, arrows
+                        if ([8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode) ||
                             // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
                             (e.keyCode === 65 && e.ctrlKey) ||
                             (e.keyCode === 67 && e.ctrlKey) ||
