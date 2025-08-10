@@ -373,40 +373,59 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               control={form.control}
               name="birthDate"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem>
                   <FormLabel>Date de naissance</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Sélectionner une date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
+                  <FormControl>
+                    <Input
+                      placeholder="JJ/MM/AAAA"
+                      value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                        
+                        // Add slashes automatically
+                        if (value.length >= 2) {
+                          value = value.substring(0, 2) + '/' + value.substring(2);
                         }
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        if (value.length >= 5) {
+                          value = value.substring(0, 5) + '/' + value.substring(5, 9);
+                        }
+                        
+                        // Update the input display
+                        e.target.value = value;
+                        
+                        // Parse and set the date if complete
+                        if (value.length === 10) {
+                          const [day, month, year] = value.split('/');
+                          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                          
+                          // Validate the date
+                          if (date.getDate() == parseInt(day) && 
+                              date.getMonth() == parseInt(month) - 1 && 
+                              date.getFullYear() == parseInt(year)) {
+                            field.onChange(date);
+                          }
+                        } else {
+                          field.onChange(undefined);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        // Allow backspace, delete, tab, escape, enter
+                        if ([8, 9, 27, 13, 46].includes(e.keyCode) ||
+                            // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                            (e.keyCode === 65 && e.ctrlKey) ||
+                            (e.keyCode === 67 && e.ctrlKey) ||
+                            (e.keyCode === 86 && e.ctrlKey) ||
+                            (e.keyCode === 88 && e.ctrlKey)) {
+                          return;
+                        }
+                        // Ensure that it is a number and stop the keypress
+                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      maxLength={10}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
