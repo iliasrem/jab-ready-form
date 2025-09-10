@@ -631,7 +631,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 control={form.control}
                 name="time"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Heure préférée</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
