@@ -53,7 +53,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <div className="flex items-center space-x-4">
             <Shield className="h-5 w-5 text-primary" />
             <span className="font-semibold">Administration</span>
-            <Button asChild variant="default" size="sm" className="gap-2">
+            <Button asChild variant="ghost" size="sm" className="gap-2 font-semibold p-0">
               <Link to="/">
                 <Users className="h-4 w-4" />
                 Page Patients
