@@ -52,9 +52,13 @@ const appointmentSchema = z.object({
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
   }),
-  phone: z.string().min(1, {
-    message: "Le numéro de téléphone est obligatoire.",
-  }),
+  phone: z
+    .string()
+    .min(8, { message: "Le numéro doit comporter au moins 8 caractères." })
+    .max(20, { message: "Le numéro ne peut pas dépasser 20 caractères." })
+    .regex(/^[+]?[0-9\s\-\(\)\.]+$/, {
+      message: "Utilisez uniquement chiffres, espaces, +, -, (), .",
+    }),
   birthDate: z.date({
     required_error: "Veuillez sélectionner votre date de naissance.",
   }),
@@ -69,7 +73,7 @@ const appointmentSchema = z.object({
   }).max(2, {
     message: "Vous pouvez sélectionner maximum 2 services.",
   }),
-  notes: z.string().optional(),
+  notes: z.string().max(500, { message: "500 caractères maximum." }).optional(),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -98,12 +102,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .insert({
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email || null,
-          phone: data.phone || null,
+          first_name: data.firstName.trim(),
+          last_name: data.lastName.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: data.phone ? data.phone.trim() : null,
           birth_date: data.birthDate.toISOString().split('T')[0],
-          notes: data.notes || null,
+          notes: data.notes ? data.notes.trim() : null,
         })
         .select()
         .single();
