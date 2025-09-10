@@ -15,7 +15,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Tabs defaultValue="booking" className="w-full">
-        <div className="bg-green-50 dark:bg-green-950/20">
+        <div className="bg-green-600/10 dark:bg-green-600/20">
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <div className="text-center mb-6">
