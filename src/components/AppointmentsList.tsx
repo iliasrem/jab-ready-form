@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { format, parseISO, compareAsc } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, Mail, FileText, Printer } from "lucide-react";
-import { TicketPrinter } from "@/components/printing/TicketPrinter";
+import { Calendar, Clock, User, Phone, Mail, FileText } from "lucide-react";
 
 export interface Appointment {
   id: string;
@@ -133,7 +130,6 @@ export function AppointmentsList() {
                   <TableHead>Date & Heure</TableHead>
                   <TableHead>Services</TableHead>
                   <TableHead>Notes</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,27 +197,6 @@ export function AppointmentsList() {
                           </span>
                         </div>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Printer className="h-4 w-4 mr-2" />
-                            Ticket
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                          <TicketPrinter
-                            ticketData={{
-                              firstName: appointment.firstName,
-                              lastName: appointment.lastName,
-                              date: format(parseISO(appointment.date), "EEEE d MMMM yyyy", { locale: fr }),
-                              time: appointment.time,
-                              service: appointment.services?.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")
-                            }}
-                          />
-                        </DialogContent>
-                      </Dialog>
                     </TableCell>
                   </TableRow>
                 ))}

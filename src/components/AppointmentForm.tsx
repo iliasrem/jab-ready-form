@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -51,14 +50,8 @@ const appointmentSchema = z.object({
   }),
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
-  }),
-  phone: z
-    .string()
-    .min(8, { message: "Le numéro doit comporter au moins 8 caractères." })
-    .max(20, { message: "Le numéro ne peut pas dépasser 20 caractères." })
-    .regex(/^[+]?[0-9\s\-\(\)\.]+$/, {
-      message: "Utilisez uniquement chiffres, espaces, +, -, (), .",
-    }),
+  }).optional().or(z.literal("")),
+  phone: z.string().optional(),
   birthDate: z.date({
     required_error: "Veuillez sélectionner votre date de naissance.",
   }),
@@ -73,7 +66,7 @@ const appointmentSchema = z.object({
   }).max(2, {
     message: "Vous pouvez sélectionner maximum 2 services.",
   }),
-  notes: z.string().max(500, { message: "500 caractères maximum." }).optional(),
+  notes: z.string().optional(),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -94,70 +87,51 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   });
 
   async function onSubmit(data: AppointmentFormValues) {
-    console.log('Starting form submission with data:', data);
-    
+    toast({
+      title: "Rendez-vous demandé",
+      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
+    });
+
     try {
-      // First, create the patient record
-      console.log('Creating patient record...');
-      const { data: patientData, error: patientError } = await supabase
-        .from('patients')
-        .insert({
-          first_name: data.firstName.trim(),
-          last_name: data.lastName.trim(),
-          email: data.email.trim().toLowerCase(),
-          phone: data.phone ? data.phone.trim() : null,
-          birth_date: data.birthDate.toISOString().split('T')[0],
-          notes: data.notes ? data.notes.trim() : null,
-        })
-        .select()
-        .single();
+      if (data.email && data.email.includes("@")) {
+        const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
+        const start = new Date(data.date);
+        start.setHours(hh || 0, mm || 0, 0, 0);
+        const end = new Date(start.getTime() + 15 * 60 * 1000);
 
-      if (patientError) {
-        console.error('Error creating patient:', patientError);
-        toast({
-          title: "Erreur",
-          description: "Impossible d'enregistrer vos informations. Veuillez réessayer.",
-          variant: "destructive",
+        const { error } = await supabase.functions.invoke("send-confirmation", {
+          body: {
+            to: data.email,
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            startISO: start.toISOString(),
+            endISO: end.toISOString(),
+            summary: "Rendez-vous Pharmacie Remili-Bastin",
+            description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
+            location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
+            displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
+            displayTime: data.time,
+          },
         });
-        return;
+
+        if (error) {
+          console.error("send-confirmation error", error);
+          toast({
+            title: "Email non envoyé",
+            description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Email envoyé",
+            description: "Un email de confirmation avec fichier calendrier a été envoyé.",
+          });
+        }
       }
-
-      console.log('Patient created successfully:', patientData);
-
-      // Then, create the appointment record
-      console.log('Creating appointment record...');
-      const { error: appointmentError } = await supabase
-        .from('appointments')
-        .insert({
-          patient_id: patientData.id,
-          appointment_date: data.date.toISOString().split('T')[0],
-          appointment_time: data.time,
-          services: data.services as ("covid" | "grippe")[],
-          notes: data.notes || null,
-        });
-
-      if (appointmentError) {
-        console.error('Error creating appointment:', appointmentError);
-        toast({
-          title: "Erreur",
-          description: "Impossible d'enregistrer votre rendez-vous. Veuillez réessayer.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Appointment created successfully');
-
-      // Show success message
-      toast({
-        title: "Rendez-vous confirmé !",
-        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été enregistré. Services: ${data.services.join(", ")}`,
-      });
     } catch (e) {
-      console.error('General error:', e);
+      console.error(e);
       toast({
         title: "Erreur",
-        description: "Impossible d'enregistrer votre rendez-vous. Veuillez réessayer.",
+        description: "Impossible d'envoyer l'email de confirmation.",
         variant: "destructive",
       });
     } finally {
@@ -197,7 +171,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const [phonePrefix, setPhonePrefix] = useState<string>("+32 ");
-  const [birthDateInput, setBirthDateInput] = useState<string>("");
   const countryOptions = [
     { code: "BE", label: "Belgique (+32)", prefix: "+32 " },
     { code: "AL", label: "Albanie (+355)", prefix: "+355 " },
@@ -303,7 +276,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
@@ -321,7 +294,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormLabel>Numéro de téléphone <span className="text-muted-foreground">(optionnel)</span></FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <Select
@@ -405,9 +378,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   <FormControl>
                     <Input
                       placeholder="JJ/MM/AAAA"
-                      value={birthDateInput}
+                      value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
                       onChange={(e) => {
-                        console.log("Input onChange:", e.target.value); // Debug log
                         let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
                         
                         // Add slashes automatically
@@ -418,7 +390,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           value = value.substring(0, 5) + '/' + value.substring(5, 9);
                         }
                         
-                        setBirthDateInput(value);
+                        // Update the input display
+                        e.target.value = value;
                         
                         // Parse and set the date if complete
                         if (value.length === 10) {
@@ -430,16 +403,14 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                               date.getMonth() == parseInt(month) - 1 && 
                               date.getFullYear() == parseInt(year)) {
                             field.onChange(date);
-                            console.log("Date set:", date); // Debug log
                           }
                         } else {
                           field.onChange(undefined);
                         }
                       }}
                       onKeyDown={(e) => {
-                        console.log("Key pressed:", e.key); // Debug log
-                        // Allow backspace, delete, tab, escape, enter, arrows
-                        if ([8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode) ||
+                        // Allow backspace, delete, tab, escape, enter
+                        if ([8, 9, 27, 13, 46].includes(e.keyCode) ||
                             // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
                             (e.keyCode === 65 && e.ctrlKey) ||
                             (e.keyCode === 67 && e.ctrlKey) ||
@@ -528,7 +499,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP", { locale: fr })
+                              format(field.value, "PPP")
                               ) : (
                                 <span>Choisir une date</span>
                               )}

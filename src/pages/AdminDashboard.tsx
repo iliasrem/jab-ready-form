@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
-import { VaccineManagement } from "@/components/VaccineManagement";
-import { VaccineAdministration } from "@/components/VaccineAdministration";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,12 +11,6 @@ import { Calendar as CalendarIcon, Users } from "lucide-react";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
-  const [activeTab, setActiveTab] = useState("vaccinations");
-  const navigate = useNavigate();
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,7 +31,7 @@ const AdminDashboard = () => {
             <Button asChild variant="outline" className="gap-2">
               <Link to="/admin/disponibilites-vue">
                 <CalendarIcon className="h-4 w-4" />
-                Disponibilités
+                Vue des Disponibilités
               </Link>
             </Button>
           </div>
@@ -53,19 +45,14 @@ const AdminDashboard = () => {
             <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
           </div>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="vaccinations">Vaccins Administrés</TabsTrigger>
+        <Tabs defaultValue="booking" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
             <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
+            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
             <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-            <TabsTrigger value="vaccines">Gestion Flacons</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="vaccinations" className="mt-6">
-            <VaccineAdministration />
-          </TabsContent>
           
           <TabsContent value="booking" className="mt-6">
             <div className="text-center mb-6">
@@ -79,16 +66,30 @@ const AdminDashboard = () => {
             <AppointmentsList />
           </TabsContent>
           
+          <TabsContent value="availability" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
+                  <p className="text-sm text-muted-foreground">Définir les créneaux disponibles</p>
+                </div>
+                <Button asChild variant="outline" className="gap-2">
+                  <Link to="/admin/disponibilites-vue">
+                    <CalendarIcon className="h-4 w-4" />
+                    Vue Administrateur Complète
+                  </Link>
+                </Button>
+              </div>
+              <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+            </div>
+          </TabsContent>
+          
           <TabsContent value="patients" className="mt-6">
             <PatientList />
           </TabsContent>
           
           <TabsContent value="calendar" className="mt-6">
             <Calendar />
-          </TabsContent>
-          
-          <TabsContent value="vaccines" className="mt-6">
-            <VaccineManagement />
           </TabsContent>
         </Tabs>
         </div>
