@@ -87,8 +87,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   });
 
   async function onSubmit(data: AppointmentFormValues) {
+    console.log('Starting form submission with data:', data);
+    
     try {
       // First, create the patient record
+      console.log('Creating patient record...');
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .insert({
@@ -112,7 +115,10 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         return;
       }
 
+      console.log('Patient created successfully:', patientData);
+
       // Then, create the appointment record
+      console.log('Creating appointment record...');
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert({
@@ -132,6 +138,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         });
         return;
       }
+
+      console.log('Appointment created successfully');
 
       // Show success message
       toast({
