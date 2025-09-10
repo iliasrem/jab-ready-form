@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -89,7 +90,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   async function onSubmit(data: AppointmentFormValues) {
     toast({
       title: "Rendez-vous demandé",
-      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
+      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
     });
 
     try {
@@ -108,7 +109,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
             summary: "Rendez-vous Pharmacie Remili-Bastin",
             description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
             location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
-            displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
+            displayDate: format(data.date, "PPP", { locale: fr }),
             displayTime: data.time,
           },
         });
@@ -386,7 +387,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "PPP", { locale: fr })
                           ) : (
                             <span>Choisir une date</span>
                           )}
@@ -480,7 +481,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              format(field.value, "PPP", { locale: fr })
                               ) : (
                                 <span>Choisir une date</span>
                               )}
