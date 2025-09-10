@@ -138,51 +138,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         title: "Rendez-vous confirmé !",
         description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été enregistré. Services: ${data.services.join(", ")}`,
       });
-
-      // Try to send confirmation email if email provided
-      if (data.email && data.email.includes("@")) {
-        try {
-          const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
-          const start = new Date(data.date);
-          start.setHours(hh || 0, mm || 0, 0, 0);
-          const end = new Date(start.getTime() + 15 * 60 * 1000);
-
-          const { error } = await supabase.functions.invoke("send-confirmation", {
-            body: {
-              to: data.email,
-              name: `${data.firstName} ${data.lastName}`.trim(),
-              startISO: start.toISOString(),
-              endISO: end.toISOString(),
-              summary: "Rendez-vous Pharmacie Remili-Bastin",
-              description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
-              location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
-              displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
-              displayTime: data.time,
-            },
-          });
-
-          if (error) {
-            console.error("send-confirmation error", error);
-            toast({
-              title: "Email non envoyé",
-              description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Email envoyé",
-              description: "Un email de confirmation avec fichier calendrier a été envoyé.",
-            });
-          }
-        } catch (emailError) {
-          console.error("Email sending error:", emailError);
-          toast({
-            title: "Erreur email",
-            description: "Impossible d'envoyer l'email de confirmation.",
-            variant: "destructive",
-          });
-        }
-      }
     } catch (e) {
       console.error('General error:', e);
       toast({
