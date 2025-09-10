@@ -85,12 +85,58 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   });
 
   async function onSubmit(data: AppointmentFormValues) {
-    toast({
-      title: "Rendez-vous demandé",
-      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
-    });
-
     try {
+      // 1. Créer le patient
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email || null,
+          phone: data.phone || null,
+          notes: data.notes || null,
+        })
+        .select()
+        .single();
+
+      if (patientError) {
+        console.error('Erreur lors de la création du patient:', patientError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer le patient. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2. Créer le rendez-vous
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .insert({
+          patient_id: patientData.id,
+          appointment_date: data.date.toISOString().split('T')[0],
+          appointment_time: data.time,
+          services: data.services as any, // Force type conversion
+          notes: data.notes || null,
+        });
+
+      if (appointmentError) {
+        console.error('Erreur lors de la création du rendez-vous:', appointmentError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer le rendez-vous. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 3. Afficher le message de succès
+      toast({
+        title: "Rendez-vous créé",
+        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été créé. Services: ${data.services.join(", ")}`,
+      });
+
+      // 4. Envoyer l'email de confirmation si l'email est fourni
       if (data.email && data.email.includes("@")) {
         const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
         const start = new Date(data.date);
