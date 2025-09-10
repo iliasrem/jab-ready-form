@@ -111,9 +111,16 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       if (patientError) {
         console.error('Erreur lors de la création du patient:', patientError);
+        console.log('Données patient envoyées:', {
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          notes: normalizedNotes,
+        });
         toast({
           title: "Erreur",
-          description: "Impossible de créer le patient. Veuillez réessayer.",
+          description: `Impossible de créer le patient: ${patientError.message}`,
           variant: "destructive",
         });
         return;
