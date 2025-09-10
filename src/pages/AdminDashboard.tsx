@@ -14,14 +14,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header avec lien de réservation */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">Gestion des Rendez-vous</h1>
-          <p className="text-sm text-muted-foreground">Interface d'administration</p>
-        </div>
-      </header>
-
       <div className="py-12 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-8">
