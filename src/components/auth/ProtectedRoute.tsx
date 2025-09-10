@@ -50,20 +50,20 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <Shield className="h-5 w-5 text-primary" />
             <span className="font-semibold">Administration</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Connecté en tant que {user.email}
-            </span>
             <Button asChild variant="default" size="sm" className="gap-2">
               <Link to="/">
                 <Users className="h-4 w-4" />
                 Page Patients
               </Link>
             </Button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-muted-foreground">
+              Connecté en tant que {user.email}
+            </span>
             <Button
               variant="outline"
               size="sm"
