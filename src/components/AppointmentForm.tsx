@@ -97,17 +97,18 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       const notesTrim = (data.notes ?? "").trim();
       const normalizedNotes = notesTrim.length ? notesTrim : null;
 
-      const { data: patientData, error: patientError } = await supabase
+      const newPatientId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const { error: patientError } = await supabase
         .from('patients')
         .insert({
+          id: newPatientId,
           first_name: data.firstName,
           last_name: data.lastName,
           email: normalizedEmail,
           phone: normalizedPhone,
           notes: normalizedNotes,
-        })
-        .select()
-        .single();
+        });
 
       if (patientError) {
         console.error('Erreur lors de la création du patient:', patientError);
@@ -130,7 +131,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert({
-          patient_id: patientData.id,
+          patient_id: newPatientId,
           appointment_date: data.date.toISOString().split('T')[0],
           appointment_time: data.time,
           services: data.services as any, // Force type conversion
