@@ -51,7 +51,7 @@ const appointmentSchema = z.object({
   }),
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
-  }).optional().or(z.literal("")),
+  }),
   phone: z.string().optional(),
   birthDate: z.date({
     required_error: "Veuillez sélectionner votre date de naissance.",
@@ -297,7 +297,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email <span className="text-muted-foreground">(optionnel)</span></FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
