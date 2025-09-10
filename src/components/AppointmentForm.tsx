@@ -53,8 +53,14 @@ const appointmentSchema = z.object({
     message: "Veuillez entrer une adresse e-mail valide.",
   }).optional().or(z.literal("")),
   phone: z.string().optional(),
-  birthDate: z.date({
-    required_error: "Veuillez sélectionner votre date de naissance.",
+  birthDay: z.string({
+    required_error: "Veuillez sélectionner le jour de naissance.",
+  }),
+  birthMonth: z.string({
+    required_error: "Veuillez sélectionner le mois de naissance.",
+  }),
+  birthYear: z.string({
+    required_error: "Veuillez sélectionner l'année de naissance.",
   }),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
@@ -82,6 +88,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       lastName: "",
       email: "",
       phone: "",
+      birthDay: "",
+      birthMonth: "",
+      birthYear: "",
       services: [],
       notes: "",
     },
@@ -102,6 +111,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       const newPatientId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+      // Créer la date de naissance à partir des champs séparés
+      const birthDate = new Date(parseInt(data.birthYear), parseInt(data.birthMonth) - 1, parseInt(data.birthDay));
+
       const { error: patientError } = await supabase
         .from('patients')
         .insert({
@@ -110,7 +122,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           last_name: data.lastName,
           email: normalizedEmail,
           phone: normalizedPhone,
-          birth_date: data.birthDate.toISOString().split('T')[0],
+          birth_date: birthDate.toISOString().split('T')[0],
           notes: normalizedNotes,
         });
 
@@ -336,51 +348,88 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="birthDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date de naissance</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: fr })
-                          ) : (
-                            <span>Sélectionner votre date de naissance</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                        captionLayout="dropdown-buttons"
-                        fromYear={1900}
-                        toYear={new Date().getFullYear()}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <FormLabel className="text-sm font-medium">Date de naissance</FormLabel>
+              <div className="grid grid-cols-3 gap-2 mt-1.5">
+                <FormField
+                  control={form.control}
+                  name="birthDay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Jour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
+                          {Array.from({ length: 31 }, (_, i) => (
+                            <SelectItem key={i + 1} value={(i + 1).toString()}>
+                              {i + 1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="birthMonth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Mois" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
+                          {[
+                            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+                            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+                          ].map((month, index) => (
+                            <SelectItem key={index + 1} value={(index + 1).toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="birthYear"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Année" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
+                          {Array.from({ length: new Date().getFullYear() - 1900 + 1 }, (_, i) => {
+                            const year = new Date().getFullYear() - i;
+                            return (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
