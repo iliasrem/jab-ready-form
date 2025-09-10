@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Edit, Save, X, Trash2, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Patient {
   id: string;
@@ -65,10 +66,44 @@ const mockPatients: Patient[] = [
 
 export function PatientList() {
   const { toast } = useToast();
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedPatient, setEditedPatient] = useState<Patient | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const loadPatients = async () => {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('id, first_name, last_name, email, phone, birth_date, status, notes')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erreur lors du chargement des patients:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger la liste des patients.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const mapped: Patient[] = (data ?? []).map((p: any) => ({
+        id: p.id,
+        name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(),
+        email: p.email ?? "",
+        phone: p.phone ?? "",
+        birthDate: p.birth_date ? new Date(p.birth_date) : null,
+        nextAppointment: null,
+        notes: p.notes ?? "",
+        status: (p.status === 'inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+      }));
+
+      setPatients(mapped);
+    };
+
+    loadPatients();
+  }, []);
 
   const startEditing = (patient: Patient) => {
     setEditingId(patient.id);
