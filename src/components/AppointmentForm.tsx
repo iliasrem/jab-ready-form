@@ -87,51 +87,107 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   });
 
   async function onSubmit(data: AppointmentFormValues) {
-    toast({
-      title: "Rendez-vous demandé",
-      description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été soumis. Services: ${data.services.join(", ")}`,
-    });
-
     try {
-      if (data.email && data.email.includes("@")) {
-        const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
-        const start = new Date(data.date);
-        start.setHours(hh || 0, mm || 0, 0, 0);
-        const end = new Date(start.getTime() + 15 * 60 * 1000);
+      // First, create the patient record
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email || null,
+          phone: data.phone || null,
+          birth_date: data.birthDate.toISOString().split('T')[0],
+          notes: data.notes || null,
+        })
+        .select()
+        .single();
 
-        const { error } = await supabase.functions.invoke("send-confirmation", {
-          body: {
-            to: data.email,
-            name: `${data.firstName} ${data.lastName}`.trim(),
-            startISO: start.toISOString(),
-            endISO: end.toISOString(),
-            summary: "Rendez-vous Pharmacie Remili-Bastin",
-            description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
-            location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
-            displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
-            displayTime: data.time,
-          },
+      if (patientError) {
+        console.error('Error creating patient:', patientError);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'enregistrer vos informations. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Then, create the appointment record
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .insert({
+          patient_id: patientData.id,
+          appointment_date: data.date.toISOString().split('T')[0],
+          appointment_time: data.time,
+          services: data.services as ("covid" | "grippe")[],
+          notes: data.notes || null,
         });
 
-        if (error) {
-          console.error("send-confirmation error", error);
-          toast({
-            title: "Email non envoyé",
-            description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
-            variant: "destructive",
+      if (appointmentError) {
+        console.error('Error creating appointment:', appointmentError);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'enregistrer votre rendez-vous. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Show success message
+      toast({
+        title: "Rendez-vous confirmé !",
+        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été enregistré. Services: ${data.services.join(", ")}`,
+      });
+
+      // Try to send confirmation email if email provided
+      if (data.email && data.email.includes("@")) {
+        try {
+          const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
+          const start = new Date(data.date);
+          start.setHours(hh || 0, mm || 0, 0, 0);
+          const end = new Date(start.getTime() + 15 * 60 * 1000);
+
+          const { error } = await supabase.functions.invoke("send-confirmation", {
+            body: {
+              to: data.email,
+              name: `${data.firstName} ${data.lastName}`.trim(),
+              startISO: start.toISOString(),
+              endISO: end.toISOString(),
+              summary: "Rendez-vous Pharmacie Remili-Bastin",
+              description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
+              location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
+              displayDate: format(data.date, "PPP", { locale: require("date-fns/locale/fr") }),
+              displayTime: data.time,
+            },
           });
-        } else {
+
+          if (error) {
+            console.error("send-confirmation error", error);
+            toast({
+              title: "Email non envoyé",
+              description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Email envoyé",
+              description: "Un email de confirmation avec fichier calendrier a été envoyé.",
+            });
+          }
+        } catch (emailError) {
+          console.error("Email sending error:", emailError);
           toast({
-            title: "Email envoyé",
-            description: "Un email de confirmation avec fichier calendrier a été envoyé.",
+            title: "Erreur email",
+            description: "Impossible d'envoyer l'email de confirmation.",
+            variant: "destructive",
           });
         }
       }
     } catch (e) {
-      console.error(e);
+      console.error('General error:', e);
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'email de confirmation.",
+        description: "Impossible d'enregistrer votre rendez-vous. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
