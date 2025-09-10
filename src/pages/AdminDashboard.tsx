@@ -16,12 +16,9 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header avec lien de réservation */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Gestion des Rendez-vous</h1>
-            <p className="text-sm text-muted-foreground">Interface d'administration</p>
-          </div>
-          <div className="flex gap-2">
             <Button asChild variant="default" className="gap-2">
               <Link to="/">
                 <Users className="h-4 w-4" />
@@ -29,6 +26,7 @@ const AdminDashboard = () => {
               </Link>
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground mt-1">Interface d'administration</p>
         </div>
       </header>
 
