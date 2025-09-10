@@ -87,14 +87,24 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   async function onSubmit(data: AppointmentFormValues) {
     try {
       // 1. Créer le patient
+      // Normaliser les champs optionnels pour satisfaire les politiques RLS
+      const emailTrim = (data.email ?? "").trim();
+      const normalizedEmail = emailTrim.length ? emailTrim : null;
+
+      const phoneTrim = (data.phone ?? "").trim();
+      const normalizedPhone = phoneTrim && phoneTrim !== phonePrefix.trim() ? phoneTrim : null;
+
+      const notesTrim = (data.notes ?? "").trim();
+      const normalizedNotes = notesTrim.length ? notesTrim : null;
+
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .insert({
           first_name: data.firstName,
           last_name: data.lastName,
-          email: data.email || null,
-          phone: data.phone || null,
-          notes: data.notes || null,
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          notes: normalizedNotes,
         })
         .select()
         .single();
