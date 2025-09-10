@@ -53,9 +53,6 @@ const appointmentSchema = z.object({
     message: "Veuillez entrer une adresse e-mail valide.",
   }).optional().or(z.literal("")),
   phone: z.string().optional(),
-  birthDate: z.date({
-    required_error: "Veuillez sélectionner votre date de naissance.",
-  }),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -370,67 +367,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="birthDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date de naissance</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="JJ/MM/AAAA"
-                      value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
-                      onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-                        
-                        // Add slashes automatically
-                        if (value.length >= 2) {
-                          value = value.substring(0, 2) + '/' + value.substring(2);
-                        }
-                        if (value.length >= 5) {
-                          value = value.substring(0, 5) + '/' + value.substring(5, 9);
-                        }
-                        
-                        // Update the input display
-                        e.target.value = value;
-                        
-                        // Parse and set the date if complete
-                        if (value.length === 10) {
-                          const [day, month, year] = value.split('/');
-                          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                          
-                          // Validate the date
-                          if (date.getDate() == parseInt(day) && 
-                              date.getMonth() == parseInt(month) - 1 && 
-                              date.getFullYear() == parseInt(year)) {
-                            field.onChange(date);
-                          }
-                        } else {
-                          field.onChange(undefined);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        // Allow backspace, delete, tab, escape, enter
-                        if ([8, 9, 27, 13, 46].includes(e.keyCode) ||
-                            // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                            (e.keyCode === 65 && e.ctrlKey) ||
-                            (e.keyCode === 67 && e.ctrlKey) ||
-                            (e.keyCode === 86 && e.ctrlKey) ||
-                            (e.keyCode === 88 && e.ctrlKey)) {
-                          return;
-                        }
-                        // Ensure that it is a number and stop the keypress
-                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-                          e.preventDefault();
-                        }
-                      }}
-                      maxLength={10}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
