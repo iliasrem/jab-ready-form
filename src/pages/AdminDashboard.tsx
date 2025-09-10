@@ -15,12 +15,12 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Tabs defaultValue="booking" className="w-full">
-        <div className="bg-green-600/10 dark:bg-green-600/20">
+        <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold mb-4">Administration</h2>
-                <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
+                <p className="text-xl opacity-90">Gérer la disponibilité et les réservations des patients</p>
               </div>
             
               <TabsList className="grid w-full grid-cols-6">
