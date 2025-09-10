@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -144,7 +145,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       // Show success message
       toast({
         title: "Rendez-vous confirmé !",
-        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: require("date-fns/locale/fr") })} à ${data.time} a été enregistré. Services: ${data.services.join(", ")}`,
+        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été enregistré. Services: ${data.services.join(", ")}`,
       });
     } catch (e) {
       console.error('General error:', e);
