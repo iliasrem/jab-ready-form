@@ -21,21 +21,21 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold">Gestion des Rendez-vous</h1>
             <p className="text-sm text-muted-foreground">Interface d'administration</p>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="default" className="gap-2">
-              <Link to="/">
-                <Users className="h-4 w-4" />
-                Page Patients
-              </Link>
-            </Button>
-          </div>
         </div>
       </header>
 
       <div className="py-12 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Administration</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-bold">Administration</h2>
+              <Button asChild variant="default" className="gap-2">
+                <Link to="/">
+                  <Users className="h-4 w-4" />
+                  Page Patients
+                </Link>
+              </Button>
+            </div>
             <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
           </div>
         
