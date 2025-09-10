@@ -53,6 +53,9 @@ const appointmentSchema = z.object({
     message: "Veuillez entrer une adresse e-mail valide.",
   }).optional().or(z.literal("")),
   phone: z.string().optional(),
+  birthDate: z.date({
+    required_error: "Veuillez sélectionner votre date de naissance.",
+  }),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -107,6 +110,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           last_name: data.lastName,
           email: normalizedEmail,
           phone: normalizedPhone,
+          birth_date: data.birthDate.toISOString().split('T')[0],
           notes: normalizedNotes,
         });
 
@@ -331,6 +335,52 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date de naissance</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: fr })
+                          ) : (
+                            <span>Sélectionner votre date de naissance</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={new Date().getFullYear()}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
