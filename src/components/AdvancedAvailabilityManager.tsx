@@ -245,9 +245,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Calendrier */}
-            <div>
+            <div className="xl:col-span-2">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -287,7 +287,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
             </div>
 
             {/* Configuration du jour sélectionné */}
-            <div>
+            <div className="xl:col-span-1">
               {selectedDate && selectedDayAvailability ? (
                 <Card>
                   <CardHeader>
@@ -308,7 +308,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                   </CardHeader>
                   
                   {selectedDayAvailability.enabled && (
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pb-6">{/* Added bottom padding */}
                       <div className="flex flex-wrap gap-2">
                         <Button
                           variant="outline"
@@ -358,7 +358,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">{/* Removed max-h-64 overflow-y-auto for extended view */}
                         {selectedDayAvailability.timeSlots.map((slot, index) => (
                           <Button
                             key={slot.time}
