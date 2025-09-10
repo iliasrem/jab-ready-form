@@ -522,7 +522,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              format(field.value, "PPP", { locale: fr })
                               ) : (
                                 <span>Choisir une date</span>
                               )}
