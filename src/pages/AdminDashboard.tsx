@@ -16,9 +16,9 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <Tabs defaultValue="booking" className="w-full">
         <div className="bg-green-50 dark:bg-green-950/20">
-          <div className="py-12 px-4">
+          <div className="py-6 px-4">
             <div className="container mx-auto">
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold mb-4">Administration</h2>
                 <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
               </div>
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
                 <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
               </TabsList>
-              <div className="pb-8"></div>
+              <div className="pb-4"></div>
             </div>
           </div>
         </div>
