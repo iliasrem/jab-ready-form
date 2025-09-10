@@ -14,62 +14,69 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="py-12 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Administration</h2>
-            <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
-          </div>
-        
-        <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
-            <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilités</TabsTrigger>
-            <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
-            <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-            <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="booking" className="mt-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-semibold mb-2">Réserver votre Rendez-vous</h2>
-              <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
-            </div>
-            <AppointmentForm />
-          </TabsContent>
-          
-          <TabsContent value="appointments" className="mt-6">
-            <AppointmentsList />
-          </TabsContent>
-          
-          <TabsContent value="availability" className="mt-6">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
-              <p className="text-sm text-muted-foreground">Définir les créneaux disponibles de base</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="patients" className="mt-6">
-            <PatientList />
-          </TabsContent>
-          
-          <TabsContent value="calendar" className="mt-6">
-            <Calendar />
-          </TabsContent>
-          
-          <TabsContent value="manager" className="mt-6">
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold">Manager les Disponibilités Avancées</h3>
-                <p className="text-sm text-muted-foreground">Configuration complète des créneaux disponibles par date</p>
+      <Tabs defaultValue="booking" className="w-full">
+        <div className="bg-green-50 dark:bg-green-950/20">
+          <div className="py-12 px-4">
+            <div className="container mx-auto">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">Administration</h2>
+                <p className="text-xl text-muted-foreground">Gérer la disponibilité et les réservations des patients</p>
               </div>
-              <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+            
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
+                <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
+                <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+                <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
+                <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+                <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
+              </TabsList>
+              <div className="pb-8"></div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
         </div>
-      </div>
+        
+        <div className="px-4">
+          <div className="container mx-auto">
+            <TabsContent value="booking" className="mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-semibold mb-2">Réserver votre Rendez-vous</h2>
+                <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
+              </div>
+              <AppointmentForm />
+            </TabsContent>
+            
+            <TabsContent value="appointments" className="mt-6">
+              <AppointmentsList />
+            </TabsContent>
+            
+            <TabsContent value="availability" className="mt-6">
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
+                <p className="text-sm text-muted-foreground">Définir les créneaux disponibles de base</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="patients" className="mt-6">
+              <PatientList />
+            </TabsContent>
+            
+            <TabsContent value="calendar" className="mt-6">
+              <Calendar />
+            </TabsContent>
+            
+            <TabsContent value="manager" className="mt-6">
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold">Manager les Disponibilités Avancées</h3>
+                  <p className="text-sm text-muted-foreground">Configuration complète des créneaux disponibles par date</p>
+                </div>
+                <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+              </div>
+            </TabsContent>
+          </div>
+        </div>
+      </Tabs>
     </div>
   );
 };
