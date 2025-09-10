@@ -1,8 +1,9 @@
 import { useAuth } from './AuthProvider'
 import { LoginForm } from './LoginForm'
 import { Button } from '@/components/ui/button'
-import { LogOut, Shield } from 'lucide-react'
+import { LogOut, Shield, Users } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { Link } from 'react-router-dom'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -57,6 +58,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <span className="text-sm text-muted-foreground">
               Connecté en tant que {user.email}
             </span>
+            <Button asChild variant="default" size="sm" className="gap-2">
+              <Link to="/">
+                <Users className="h-4 w-4" />
+                Page Patients
+              </Link>
+            </Button>
             <Button
               variant="outline"
               size="sm"
