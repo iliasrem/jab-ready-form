@@ -171,22 +171,21 @@ export const VaccineReservationsList = () => {
                             {format(new Date(reservation.reservation_date), "dd/MM/yyyy", { locale: fr })}
                           </span>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {reservation.patients.phone && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
                             <a 
                               href={`tel:${reservation.patients.phone}`}
-                              className="hover:underline"
+                              className="hover:underline text-sm"
                             >
                               {reservation.patients.phone}
                             </a>
                           </div>
                         )}
+
                         {reservation.patients.email && (
-                          <span>{reservation.patients.email}</span>
+                          <span className="text-sm text-muted-foreground">{reservation.patients.email}</span>
                         )}
                       </div>
 
