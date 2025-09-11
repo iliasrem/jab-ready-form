@@ -4,6 +4,9 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
+import { VaccineManagement } from "@/components/VaccineManagement";
+import { VaccineReservation } from "@/components/VaccineReservation";
+import { VaccineReservationsList } from "@/components/VaccineReservationsList";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -23,10 +26,11 @@ const AdminDashboard = () => {
                 <p className="text-xl opacity-90">Gérer la disponibilité et les réservations des patients</p>
               </div>
             
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
+                <TabsTrigger value="vaccines">Réservation Vaccin</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
                 <TabsTrigger value="availability">Disponibilités</TabsTrigger>
                 <TabsTrigger value="manager">Manager</TabsTrigger>
@@ -65,6 +69,18 @@ const AdminDashboard = () => {
               <Calendar />
             </TabsContent>
             
+            <TabsContent value="vaccines" className="mt-6">
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-semibold mb-2">Réservation de Vaccins</h2>
+                  <p className="text-muted-foreground">Réservez votre vaccin et gérez les réservations</p>
+                </div>
+                <VaccineReservation />
+                <VaccineReservationsList />
+                <VaccineManagement />
+              </div>
+            </TabsContent>
+
             <TabsContent value="manager" className="mt-6">
               <div className="space-y-6">
                 <div className="text-center mb-6">

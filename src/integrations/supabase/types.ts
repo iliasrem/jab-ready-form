@@ -202,6 +202,81 @@ export type Database = {
         }
         Relationships: []
       }
+      vaccine_reservations: {
+        Row: {
+          created_at: string
+          id: string
+          is_called: boolean
+          notes: string | null
+          patient_id: string
+          reservation_date: string
+          updated_at: string
+          vaccine_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_called?: boolean
+          notes?: string | null
+          patient_id: string
+          reservation_date?: string
+          updated_at?: string
+          vaccine_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_called?: boolean
+          notes?: string | null
+          patient_id?: string
+          reservation_date?: string
+          updated_at?: string
+          vaccine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaccine_reservations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaccine_reservations_vaccine_id_fkey"
+            columns: ["vaccine_id"]
+            isOneToOne: false
+            referencedRelation: "vaccines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaccines: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_available: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
