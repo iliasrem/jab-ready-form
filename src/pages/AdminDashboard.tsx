@@ -29,7 +29,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
                 <TabsTrigger value="availability">Disponibilités</TabsTrigger>
-                <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
+                <TabsTrigger value="manager">Manager</TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
             </div>
