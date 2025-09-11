@@ -155,7 +155,7 @@ export const VaccineReservationsList = () => {
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-lg font-bold">
+                          <span className="text-lg font-bold capitalize">
                             {reservation.patients.first_name} {reservation.patients.last_name}
                           </span>
                         </div>
