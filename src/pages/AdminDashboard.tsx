@@ -4,8 +4,8 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
-import { VaccineManagement } from "@/components/VaccineManagement";
-import { VaccineReservation } from "@/components/VaccineReservation";
+import { VaccineReservationForm } from "@/components/VaccineReservationForm";
+import { VaccineList } from "@/components/VaccineList";
 import { VaccineReservationsList } from "@/components/VaccineReservationsList";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -75,9 +75,9 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-semibold mb-2">Réservation de Vaccins</h2>
                   <p className="text-muted-foreground">Réservez votre vaccin et gérez les réservations</p>
                 </div>
-                <VaccineReservation />
+                <VaccineReservationForm />
                 <VaccineReservationsList />
-                <VaccineManagement />
+                <VaccineList />
               </div>
             </TabsContent>
 
