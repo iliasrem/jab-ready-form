@@ -406,46 +406,105 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                 <CardContent className="space-y-4">
                   {selectedWeek && (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateWeek("prev")}
-                            className="flex items-center space-x-1"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            <span>Précédente</span>
-                          </Button>
-                          
-                          <div className="text-center">
-                            <p className="font-medium">
-                              Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
-                            </p>
-                          </div>
+                       <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                         <div className="flex items-center space-x-3">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => navigateWeek("prev")}
+                             className="flex items-center space-x-1"
+                           >
+                             <ChevronLeft className="h-4 w-4" />
+                             <span>Précédente</span>
+                           </Button>
+                           
+                           <div className="text-center">
+                             <p className="font-medium">
+                               Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
+                             </p>
+                             <p className="text-sm text-muted-foreground">
+                               {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
+                             </p>
+                           </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateWeek("next")}
-                            className="flex items-center space-x-1"
-                          >
-                            <span>Suivante</span>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedWeek(new Date())}
-                        >
-                          Semaine actuelle
-                        </Button>
-                      </div>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => navigateWeek("next")}
+                             className="flex items-center space-x-1"
+                           >
+                             <span>Suivante</span>
+                             <ChevronRight className="h-4 w-4" />
+                           </Button>
+                         </div>
+                         
+                         <div className="flex items-center space-x-2">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => setSelectedWeek(new Date())}
+                           >
+                             Semaine actuelle
+                           </Button>
+                           
+                           <Button
+                             variant="default"
+                             size="sm"
+                             onClick={() => applyDefaultToWeek(selectedWeek)}
+                           >
+                             Horaires par défaut
+                           </Button>
+                           
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => closeWeek(selectedWeek)}
+                           >
+                             Fermer la semaine
+                           </Button>
+                           
+                           <Button
+                             variant="secondary"
+                             size="sm"
+                             onClick={() => {
+                               const weeks = eachWeekOfInterval(
+                                 { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
+                                 { weekStartsOn: 1 }
+                               );
+                               weeks.forEach(week => {
+                                 if (!isSameWeek(week, selectedWeek)) {
+                                   const weekDays = getWeekDays(selectedWeek);
+                                   const templateDays = getWeekDays(week);
+                                   
+                                   const newAvailabilities = templateDays.map((date, index) => {
+                                     const templateDay = weekDays[index];
+                                     const template = getAvailabilityForDate(templateDay);
+                                     return {
+                                       ...template,
+                                       date: new Date(date)
+                                     };
+                                   });
+                                   
+                                   const updatedAvailability = [
+                                     ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
+                                     ...newAvailabilities
+                                   ];
+                                   
+                                   setSpecificAvailability(updatedAvailability);
+                                   onAvailabilityChange(updatedAvailability);
+                                 }
+                               });
+                               
+                               toast({
+                                 title: "Modèle appliqué",
+                                 description: "Les horaires ont été appliqués à toutes les semaines du mois.",
+                               });
+                             }}
+                           >
+                             Appliquer au mois
+                           </Button>
+                         </div>
+                       </div>
 
                       <div className="grid grid-cols-7 gap-2">
                         {getWeekDays(selectedWeek).map((day) => {
@@ -528,63 +587,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                             </div>
                           );
                         })}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => applyDefaultToWeek(selectedWeek)}
-                        >
-                          Horaires par défaut
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => closeWeek(selectedWeek)}
-                        >
-                          Fermer la semaine
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            const weeks = eachWeekOfInterval(
-                              { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
-                              { weekStartsOn: 1 }
-                            );
-                            weeks.forEach(week => {
-                              if (!isSameWeek(week, selectedWeek)) {
-                                const weekDays = getWeekDays(selectedWeek);
-                                const templateDays = getWeekDays(week);
-                                
-                                const newAvailabilities = templateDays.map((date, index) => {
-                                  const templateDay = weekDays[index];
-                                  const template = getAvailabilityForDate(templateDay);
-                                  return {
-                                    ...template,
-                                    date: new Date(date)
-                                  };
-                                });
-                                
-                                const updatedAvailability = [
-                                  ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
-                                  ...newAvailabilities
-                                ];
-                                
-                                setSpecificAvailability(updatedAvailability);
-                                onAvailabilityChange(updatedAvailability);
-                              }
-                            });
-                            
-                            toast({
-                              title: "Modèle appliqué",
-                              description: "Les horaires ont été appliqués à toutes les semaines du mois.",
-                            });
-                          }}
-                        >
-                          Appliquer au mois
-                        </Button>
                       </div>
                     </div>
                    )}
