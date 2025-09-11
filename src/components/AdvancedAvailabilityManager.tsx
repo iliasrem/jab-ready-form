@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Save, X, Calendar as CalendarIcon } from "lucide-react";
-import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore } from "date-fns";
+import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export interface SpecificDateAvailability {
@@ -33,6 +33,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedWeek, setSelectedWeek] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<string>("");
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
 
@@ -168,6 +169,57 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     });
   };
 
+  // Obtenir les jours de la semaine sélectionnée
+  const getWeekDays = (date: Date) => {
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Commencer le lundi
+    const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: weekStart, end: weekEnd });
+  };
+
+  // Appliquer des disponibilités par défaut à une semaine
+  const applyDefaultToWeek = (week: Date) => {
+    const weekDays = getWeekDays(week);
+    
+    const newAvailabilities = weekDays.map(date => getDefaultDayAvailability(date));
+    
+    const updatedAvailability = [
+      ...specificAvailability.filter(av => !weekDays.some(day => isSameDay(av.date, day))),
+      ...newAvailabilities
+    ];
+    
+    setSpecificAvailability(updatedAvailability);
+    onAvailabilityChange(updatedAvailability);
+    
+    toast({
+      title: "Semaine configurée",
+      description: `Les disponibilités par défaut ont été appliquées à la semaine du ${format(weekDays[0], "d MMMM", { locale: fr })}.`,
+    });
+  };
+
+  // Fermer complètement une semaine
+  const closeWeek = (week: Date) => {
+    const weekDays = getWeekDays(week);
+    
+    const newAvailabilities = weekDays.map(date => ({
+      ...getAvailabilityForDate(date),
+      date: new Date(date),
+      enabled: false
+    }));
+    
+    const updatedAvailability = [
+      ...specificAvailability.filter(av => !weekDays.some(day => isSameDay(av.date, day))),
+      ...newAvailabilities
+    ];
+    
+    setSpecificAvailability(updatedAvailability);
+    onAvailabilityChange(updatedAvailability);
+    
+    toast({
+      title: "Semaine fermée",
+      description: `La semaine du ${format(weekDays[0], "d MMMM", { locale: fr })} a été fermée.`,
+    });
+  };
+
   // Naviguer entre les mois
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentMonth(direction === "next" ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
@@ -251,7 +303,12 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => {
+                  setSelectedDate(date);
+                  if (date) {
+                    setSelectedWeek(date);
+                  }
+                }}
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
                 className="rounded-md border w-full"
@@ -381,6 +438,131 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                   </CardContent>
                 </Card>
               )}
+            </div>
+
+            {/* Gestion des disponibilités par semaine */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
+                  <CardDescription>
+                    Configurez rapidement les disponibilités pour une semaine entière
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedWeek && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="font-medium">
+                            Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedWeek(new Date())}
+                        >
+                          Semaine actuelle
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-2">
+                        {getWeekDays(selectedWeek).map((day) => {
+                          const dayAvailability = getAvailabilityForDate(day);
+                          const isSelected = selectedDate && isSameDay(day, selectedDate);
+                          const availableSlots = dayAvailability.timeSlots.filter(slot => slot.available).length;
+                          
+                          return (
+                            <div
+                              key={day.toISOString()}
+                              className={`p-2 rounded-lg border text-center cursor-pointer transition-colors ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/10' 
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                              onClick={() => setSelectedDate(day)}
+                            >
+                              <div className="text-xs font-medium">
+                                {format(day, "EEE", { locale: fr })}
+                              </div>
+                              <div className="text-sm font-bold">
+                                {format(day, "d", { locale: fr })}
+                              </div>
+                              <div className="text-xs mt-1">
+                                {dayAvailability.enabled 
+                                  ? `${availableSlots} créneaux`
+                                  : "Fermé"
+                                }
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => applyDefaultToWeek(selectedWeek)}
+                        >
+                          Horaires par défaut
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => closeWeek(selectedWeek)}
+                        >
+                          Fermer la semaine
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            const weeks = eachWeekOfInterval(
+                              { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
+                              { weekStartsOn: 1 }
+                            );
+                            weeks.forEach(week => {
+                              if (!isSameWeek(week, selectedWeek)) {
+                                const weekDays = getWeekDays(selectedWeek);
+                                const templateDays = getWeekDays(week);
+                                
+                                const newAvailabilities = templateDays.map((date, index) => {
+                                  const templateDay = weekDays[index];
+                                  const template = getAvailabilityForDate(templateDay);
+                                  return {
+                                    ...template,
+                                    date: new Date(date)
+                                  };
+                                });
+                                
+                                const updatedAvailability = [
+                                  ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
+                                  ...newAvailabilities
+                                ];
+                                
+                                setSpecificAvailability(updatedAvailability);
+                                onAvailabilityChange(updatedAvailability);
+                              }
+                            });
+                            
+                            toast({
+                              title: "Modèle appliqué",
+                              description: "Les horaires ont été appliqués à toutes les semaines du mois.",
+                            });
+                          }}
+                        >
+                          Appliquer au mois
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         </CardContent>
