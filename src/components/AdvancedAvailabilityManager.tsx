@@ -674,47 +674,27 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     {availableSlots}/{dayAvailability.timeSlots.length}
                                   </div>
                                   
-                                  {/* Affichage des créneaux en groupes pour gagner de la place */}
-                                  <div className="grid grid-cols-2 gap-1">
-                                    {dayAvailability.timeSlots.filter((_, index) => index % 4 === 0).map((slot, groupIndex) => {
-                                      const startSlotIndex = groupIndex * 4;
-                                      const groupSlots = dayAvailability.timeSlots.slice(startSlotIndex, startSlotIndex + 4);
-                                      const availableInGroup = groupSlots.filter(s => s.available).length;
-                                      const groupTime = slot.time.slice(0, 2) + "h";
-                                      
-                                      return (
-                                        <Button
-                                          key={groupIndex}
-                                          variant={availableInGroup > 0 ? "default" : "outline"}
-                                          size="sm"
-                                          className="text-xs h-6 px-1"
-                                          onClick={() => {
-                                            // Toggle tous les créneaux du groupe
-                                            const newEnabled = availableInGroup === 0;
-                                            groupSlots.forEach((_, slotIndex) => {
-                                              const actualIndex = startSlotIndex + slotIndex;
-                                              if (actualIndex < dayAvailability.timeSlots.length) {
-                                                const current = getAvailabilityForDate(day);
-                                                const updatedTimeSlots = [...current.timeSlots];
-                                                updatedTimeSlots[actualIndex].available = newEnabled;
-                                                const updated = { ...current, timeSlots: updatedTimeSlots };
-                                                updateDateAvailability(updated);
-                                              }
-                                            });
-                                          }}
-                                        >
-                                          {groupTime}
-                                        </Button>
-                                      );
-                                    })}
+                                  {/* Affichage de tous les créneaux de 15 minutes verticalement */}
+                                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                                    {dayAvailability.timeSlots.map((slot, slotIndex) => (
+                                      <Button
+                                        key={slot.time}
+                                        variant={slot.available ? "default" : "outline"}
+                                        size="sm"
+                                        className="text-xs h-6 w-full"
+                                        onClick={() => toggleTimeSlot(day, slotIndex)}
+                                      >
+                                        {slot.time}
+                                      </Button>
+                                    ))}
                                   </div>
                                   
                                   {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
-                                  <div className="flex gap-1 mt-1">
+                                  <div className="flex gap-1 mt-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-xs h-5 px-1"
+                                      className="text-xs h-6 flex-1"
                                       onClick={() => toggleAllTimeSlotsForDay(day, true)}
                                     >
                                       Tout
@@ -722,7 +702,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-xs h-5 px-1"
+                                      className="text-xs h-6 flex-1"
                                       onClick={() => toggleAllTimeSlotsForDay(day, false)}
                                     >
                                       Rien
