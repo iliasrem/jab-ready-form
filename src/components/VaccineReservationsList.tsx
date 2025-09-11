@@ -177,7 +177,7 @@ export const VaccineReservationsList = () => {
                             <Phone className="h-4 w-4 text-muted-foreground" />
                             <a 
                               href={`tel:${reservation.patients.phone}`}
-                              className="hover:underline text-sm"
+                              className="hover:underline text-lg font-bold text-primary"
                             >
                               {reservation.patients.phone}
                             </a>
