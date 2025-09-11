@@ -484,7 +484,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                   </div>
                                   
                                   {/* Affichage de tous les créneaux de 15 minutes verticalement */}
-                                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                                  <div className="space-y-1">
                                     {dayAvailability.timeSlots.map((slot, slotIndex) => (
                                       <Button
                                         key={slot.time}
