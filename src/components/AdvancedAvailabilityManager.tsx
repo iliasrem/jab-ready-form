@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Save, X, Calendar as CalendarIcon } from "lucide-react";
 import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SpecificDateAvailability {
   date: Date;
@@ -229,6 +230,128 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     setSelectedWeek(newWeek);
   };
 
+  // Sauvegarder les disponibilités dans Supabase
+  const saveAvailabilityToSupabase = async () => {
+    try {
+      // Récupérer l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur d'authentification",
+          description: "Vous devez être connecté pour sauvegarder les disponibilités.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Convertir les disponibilités locales en format Supabase
+      const supabaseAvailabilities = specificAvailability.flatMap(dayAvailability => 
+        dayAvailability.timeSlots.map(slot => ({
+          user_id: user.id,
+          specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
+          start_time: slot.time,
+          end_time: slot.time, // Pour des créneaux de 15 minutes, on utilise la même heure
+          is_available: slot.available && dayAvailability.enabled
+        }))
+      );
+
+      // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
+      const { error: deleteError } = await supabase
+        .from('specific_date_availability')
+        .delete()
+        .eq('user_id', user.id)
+        .gte('specific_date', format(startOfMonth(currentMonth), 'yyyy-MM-dd'))
+        .lte('specific_date', format(endOfMonth(currentMonth), 'yyyy-MM-dd'));
+
+      if (deleteError) throw deleteError;
+
+      if (supabaseAvailabilities.length > 0) {
+        const { error: insertError } = await supabase
+          .from('specific_date_availability')
+          .insert(supabaseAvailabilities);
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: "Sauvegarde réussie",
+        description: "Les disponibilités ont été sauvegardées dans la base de données.",
+      });
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      toast({
+        title: "Erreur de sauvegarde",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Charger les disponibilités depuis Supabase
+  const loadAvailabilityFromSupabase = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('specific_date_availability')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('specific_date', format(startOfMonth(currentMonth), 'yyyy-MM-dd'))
+        .lte('specific_date', format(endOfMonth(currentMonth), 'yyyy-MM-dd'));
+
+      if (error) throw error;
+
+      // Convertir les données Supabase en format local
+      const groupedByDate = data?.reduce((acc, item) => {
+        const dateKey = item.specific_date;
+        if (!acc[dateKey]) {
+          acc[dateKey] = [];
+        }
+        acc[dateKey].push({
+          time: item.start_time,
+          available: item.is_available
+        });
+        return acc;
+      }, {} as Record<string, { time: string; available: boolean; }[]>);
+
+      const loadedAvailabilities: SpecificDateAvailability[] = Object.entries(groupedByDate || {}).map(([dateStr, slots]) => {
+        const date = new Date(dateStr);
+        // Compléter avec tous les créneaux par défaut
+        const allSlots = defaultTimeSlots.map(time => {
+          const existingSlot = slots.find(s => s.time === time);
+          return existingSlot || { time, available: false };
+        });
+        
+        return {
+          date,
+          enabled: slots.some(slot => slot.available),
+          timeSlots: allSlots
+        };
+      });
+
+      setSpecificAvailability(loadedAvailabilities);
+      onAvailabilityChange(loadedAvailabilities);
+
+      toast({
+        title: "Chargement réussi",
+        description: "Les disponibilités ont été chargées depuis la base de données.",
+      });
+    } catch (error) {
+      console.error('Error loading availability:', error);
+      toast({
+        title: "Erreur de chargement",
+        description: "Une erreur est survenue lors du chargement.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Charger les disponibilités au changement de mois
+  useEffect(() => {
+    loadAvailabilityFromSupabase();
+  }, [currentMonth]);
+
   // Naviguer entre les mois
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentMonth(direction === "next" ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
@@ -253,10 +376,23 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Gestion des Disponibilités Avancée</CardTitle>
-          <CardDescription>
-            Configurez vos disponibilités sur plusieurs mois. Sélectionnez une date pour gérer ses créneaux horaires.
-          </CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Gestion des Disponibilités Avancée</CardTitle>
+              <CardDescription>
+                Configurez vos disponibilités sur plusieurs mois. Sélectionnez une date pour gérer ses créneaux horaires.
+              </CardDescription>
+            </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={saveAvailabilityToSupabase}
+              className="flex items-center space-x-2"
+            >
+              <Save className="h-4 w-4" />
+              <span>Sauvegarder</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Navigation des mois */}
@@ -511,25 +647,95 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           return (
                             <div
                               key={day.toISOString()}
-                              className={`p-2 rounded-lg border text-center cursor-pointer transition-colors ${
+                              className={`p-2 rounded-lg border text-center transition-colors ${
                                 isSelected 
                                   ? 'border-primary bg-primary/10' 
                                   : 'border-border hover:border-primary/50'
                               }`}
-                              onClick={() => setSelectedDate(day)}
                             >
                               <div className="text-xs font-medium">
                                 {format(day, "EEE", { locale: fr })}
                               </div>
-                              <div className="text-sm font-bold">
+                              <div className="text-sm font-bold mb-2">
                                 {format(day, "d", { locale: fr })}
                               </div>
-                              <div className="text-xs mt-1">
-                                {dayAvailability.enabled 
-                                  ? `${availableSlots} créneaux`
-                                  : "Fermé"
-                                }
+                              
+                              {/* Checkbox pour activer/désactiver le jour */}
+                              <div className="flex items-center justify-center mb-2">
+                                <Checkbox
+                                  checked={dayAvailability.enabled}
+                                  onCheckedChange={() => toggleDay(day)}
+                                />
                               </div>
+                              
+                              {dayAvailability.enabled && (
+                                <div className="space-y-1">
+                                  <div className="text-xs text-muted-foreground mb-1">
+                                    {availableSlots}/{dayAvailability.timeSlots.length}
+                                  </div>
+                                  
+                                  {/* Affichage des créneaux en groupes pour gagner de la place */}
+                                  <div className="grid grid-cols-2 gap-1">
+                                    {dayAvailability.timeSlots.filter((_, index) => index % 4 === 0).map((slot, groupIndex) => {
+                                      const startSlotIndex = groupIndex * 4;
+                                      const groupSlots = dayAvailability.timeSlots.slice(startSlotIndex, startSlotIndex + 4);
+                                      const availableInGroup = groupSlots.filter(s => s.available).length;
+                                      const groupTime = slot.time.slice(0, 2) + "h";
+                                      
+                                      return (
+                                        <Button
+                                          key={groupIndex}
+                                          variant={availableInGroup > 0 ? "default" : "outline"}
+                                          size="sm"
+                                          className="text-xs h-6 px-1"
+                                          onClick={() => {
+                                            // Toggle tous les créneaux du groupe
+                                            const newEnabled = availableInGroup === 0;
+                                            groupSlots.forEach((_, slotIndex) => {
+                                              const actualIndex = startSlotIndex + slotIndex;
+                                              if (actualIndex < dayAvailability.timeSlots.length) {
+                                                const current = getAvailabilityForDate(day);
+                                                const updatedTimeSlots = [...current.timeSlots];
+                                                updatedTimeSlots[actualIndex].available = newEnabled;
+                                                const updated = { ...current, timeSlots: updatedTimeSlots };
+                                                updateDateAvailability(updated);
+                                              }
+                                            });
+                                          }}
+                                        >
+                                          {groupTime}
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+                                  
+                                  {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
+                                  <div className="flex gap-1 mt-1">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-xs h-5 px-1"
+                                      onClick={() => toggleAllTimeSlotsForDay(day, true)}
+                                    >
+                                      Tout
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-xs h-5 px-1"
+                                      onClick={() => toggleAllTimeSlotsForDay(day, false)}
+                                    >
+                                      Rien
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {!dayAvailability.enabled && (
+                                <div className="text-xs text-muted-foreground">
+                                  Fermé
+                                </div>
+                              )}
                             </div>
                           );
                         })}
