@@ -22,8 +22,7 @@ export const VaccineReservationForm = () => {
     lastName: '',
     email: '',
     phone: '',
-    vaccineId: '',
-    notes: ''
+    vaccineId: ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -59,8 +58,7 @@ export const VaccineReservationForm = () => {
           first_name: formData.firstName,
           last_name: formData.lastName,
           email: formData.email,
-          phone: formData.phone,
-          notes: formData.notes
+          phone: formData.phone
         })
         .select()
         .single()
@@ -72,8 +70,7 @@ export const VaccineReservationForm = () => {
         .from('vaccine_reservations')
         .insert({
           patient_id: patientData.id,
-          vaccine_id: formData.vaccineId,
-          notes: formData.notes
+          vaccine_id: formData.vaccineId
         })
 
       if (reservationError) throw reservationError
@@ -89,8 +86,7 @@ export const VaccineReservationForm = () => {
         lastName: '',
         email: '',
         phone: '',
-        vaccineId: '',
-        notes: ''
+        vaccineId: ''
       })
     } catch (error) {
       console.error('Error creating reservation:', error)
@@ -172,16 +168,6 @@ export const VaccineReservationForm = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notes ou remarques particulières..."
-            />
           </div>
 
           <Button type="submit" disabled={isLoading || !formData.firstName || !formData.lastName || !formData.vaccineId}>

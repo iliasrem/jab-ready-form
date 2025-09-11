@@ -188,12 +188,6 @@ export const VaccineReservationsList = () => {
                           <span className="text-sm text-muted-foreground">{reservation.patients.email}</span>
                         )}
                       </div>
-
-                      {reservation.notes && (
-                        <p className="text-sm text-muted-foreground">
-                          <strong>Notes:</strong> {reservation.notes}
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
