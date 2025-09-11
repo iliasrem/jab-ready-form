@@ -245,16 +245,16 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {/* Calendrier */}
-            <div className="xl:col-span-2">
+            <div>
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
-                className="rounded-md border"
+                className="rounded-md border w-full"
                 components={{
                   DayContent: ({ date }) => {
                     const status = getDayStatus(date);
@@ -287,7 +287,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
             </div>
 
             {/* Configuration du jour sélectionné */}
-            <div className="xl:col-span-1">
+            <div>
               {selectedDate && selectedDayAvailability ? (
                 <Card>
                   <CardHeader>
