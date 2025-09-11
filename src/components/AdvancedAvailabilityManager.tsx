@@ -220,6 +220,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     });
   };
 
+  // Navigation entre les semaines
+  const navigateWeek = (direction: "prev" | "next") => {
+    if (!selectedWeek) return;
+    const newWeek = direction === "next" 
+      ? addDays(selectedWeek, 7) 
+      : addDays(selectedWeek, -7);
+    setSelectedWeek(newWeek);
+  };
+
   // Naviguer entre les mois
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentMonth(direction === "next" ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
@@ -453,14 +462,37 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                   {selectedWeek && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        <div>
-                          <p className="font-medium">
-                            Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
-                          </p>
+                        <div className="flex items-center space-x-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateWeek("prev")}
+                            className="flex items-center space-x-1"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span>Précédente</span>
+                          </Button>
+                          
+                          <div className="text-center">
+                            <p className="font-medium">
+                              Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
+                            </p>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateWeek("next")}
+                            className="flex items-center space-x-1"
+                          >
+                            <span>Suivante</span>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
                         </div>
+                        
                         <Button
                           variant="outline"
                           size="sm"
