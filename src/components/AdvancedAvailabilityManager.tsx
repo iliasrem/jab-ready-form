@@ -395,205 +395,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           </div>
         </CardHeader>
         <CardContent>
-          {/* Navigation des mois */}
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth("prev")}
-              className="flex items-center space-x-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span>Mois précédent</span>
-            </Button>
-            
-            <h3 className="text-xl font-semibold">
-              {format(currentMonth, "MMMM yyyy", { locale: fr })}
-            </h3>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth("next")}
-              className="flex items-center space-x-2"
-            >
-              <span>Mois suivant</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Légende */}
-          <div className="flex flex-wrap gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span className="text-sm">Entièrement disponible</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-              <span className="text-sm">Partiellement disponible</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-sm">Aucun créneau</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-gray-400 rounded"></div>
-              <span className="text-sm">Fermé</span>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {/* Calendrier */}
-            <div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  setSelectedDate(date);
-                  if (date) {
-                    setSelectedWeek(date);
-                  }
-                }}
-                month={currentMonth}
-                onMonthChange={setCurrentMonth}
-                className="rounded-md border w-full"
-                components={{
-                  DayContent: ({ date }) => {
-                    const status = getDayStatus(date);
-                    const isSelected = selectedDate && isSameDay(date, selectedDate);
-                    
-                    let bgColor = "";
-                    switch (status) {
-                      case "fully-available":
-                        bgColor = "bg-green-500";
-                        break;
-                      case "partially-available":
-                        bgColor = "bg-yellow-500";
-                        break;
-                      case "no-slots":
-                        bgColor = "bg-red-500";
-                        break;
-                      default:
-                        bgColor = "bg-gray-400";
-                    }
-                    
-                    return (
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        <span className={isSelected ? "font-bold" : ""}>{format(date, "d")}</span>
-                        <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full ${bgColor}`}></div>
-                      </div>
-                    );
-                  }
-                }}
-              />
-            </div>
-
-            {/* Configuration du jour sélectionné */}
-            <div>
-              {selectedDate && selectedDayAvailability ? (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })}
-                      </CardTitle>
-                      <div className="flex space-x-2">
-                        <Checkbox
-                          checked={selectedDayAvailability.enabled}
-                          onCheckedChange={() => toggleDay(selectedDate)}
-                        />
-                        <Badge variant={selectedDayAvailability.enabled ? "default" : "secondary"}>
-                          {selectedDayAvailability.enabled ? "Ouvert" : "Fermé"}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  {selectedDayAvailability.enabled && (
-                    <CardContent className="space-y-4 pb-6">{/* Added bottom padding */}
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleAllTimeSlotsForDay(selectedDate, true)}
-                        >
-                          Tout sélectionner
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleAllTimeSlotsForDay(selectedDate, false)}
-                        >
-                          Tout désélectionner
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={applyTemplateToMonth}
-                        >
-                          Appliquer au mois
-                        </Button>
-                      </div>
-
-                      {/* Application à une plage de dates */}
-                      <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                        <Label className="text-sm font-medium">Appliquer à une plage de dates</Label>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor="endDate" className="text-sm">Date de fin :</Label>
-                          <Input
-                            id="endDate"
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-auto"
-                          />
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={applyTemplateToDateRange}
-                            disabled={!endDate}
-                            className="flex items-center space-x-1"
-                          >
-                            <CalendarIcon className="h-4 w-4" />
-                            <span>Appliquer</span>
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">{/* Removed max-h-64 overflow-y-auto for extended view */}
-                        {selectedDayAvailability.timeSlots.map((slot, index) => (
-                          <Button
-                            key={slot.time}
-                            variant={slot.available ? "default" : "outline"}
-                            size="sm"
-                            className="text-xs"
-                            onClick={() => toggleTimeSlot(selectedDate, index)}
-                          >
-                            {slot.time}
-                          </Button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="flex items-center justify-center h-64">
-                    <p className="text-muted-foreground">Sélectionnez une date pour configurer ses disponibilités</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Gestion des disponibilités par semaine */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
-                  <CardDescription>
-                    Configurez rapidement les disponibilités pour une semaine entière
-                  </CardDescription>
-                </CardHeader>
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
+                <CardDescription>
+                  Configurez rapidement les disponibilités pour une semaine entière
+                </CardDescription>
+              </CardHeader>
                 <CardContent className="space-y-4">
                   {selectedWeek && (
                     <div className="space-y-4">
@@ -778,13 +587,12 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         </Button>
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+                   )}
+                 </CardContent>
+               </Card>
+             </div>
+         </CardContent>
+       </Card>
+     </div>
+   );
+ }
