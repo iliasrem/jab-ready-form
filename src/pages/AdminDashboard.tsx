@@ -26,10 +26,10 @@ const AdminDashboard = () => {
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
-                <TabsTrigger value="availability">Disponibilités</TabsTrigger>
-                <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+                <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+                <TabsTrigger value="manager">Manager Disponibilités</TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
             </div>
