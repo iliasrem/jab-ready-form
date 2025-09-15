@@ -7,9 +7,9 @@ const PatientBooking = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
-      <div className="bg-background border-b py-3 px-4">
-        <div className="container mx-auto">
-          <div className="flex gap-4">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center justify-between">
+          <div className="flex items-center space-x-4">
             <Button variant="default" size="sm">
               Réservation
             </Button>
@@ -20,7 +20,7 @@ const PatientBooking = () => {
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Header */}
       <div className="bg-brand text-brand-foreground py-8">

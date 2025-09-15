@@ -51,19 +51,16 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Shield className="h-5 w-5 text-primary" />
-            <span className="font-semibold">Administration</span>
-            <Button asChild variant="ghost" size="sm" className="gap-2 font-semibold p-0">
+            <Button asChild variant="outline" size="sm">
               <Link to="/">
-                <Users className="h-4 w-4" />
-                Page Patients
+                Réservation
               </Link>
+            </Button>
+            <Button variant="default" size="sm">
+              Administration
             </Button>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Connecté en tant que {user.email}
-            </span>
             <Button
               variant="outline"
               size="sm"
