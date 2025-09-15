@@ -7,7 +7,7 @@ import { PatientList } from "@/components/PatientList";
 import { VaccineReservationForm } from "@/components/VaccineReservationForm";
 import { VaccineList } from "@/components/VaccineList";
 import { VaccineReservationsList } from "@/components/VaccineReservationsList";
-import { AvailabilityOverview } from "@/components/AvailabilityOverview";
+
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,12 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="vaccines">Réservation Vaccin</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-                <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+                
                 <TabsTrigger value="manager">Manager</TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
@@ -42,13 +42,6 @@ const AdminDashboard = () => {
               <AppointmentsList />
             </TabsContent>
             
-            <TabsContent value="availability" className="mt-6">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold">Aperçu des Disponibilités</h3>
-                <p className="text-sm text-muted-foreground">Visualisez toutes les disponibilités enregistrées</p>
-              </div>
-              <AvailabilityOverview />
-            </TabsContent>
             
             <TabsContent value="patients" className="mt-6">
               <PatientList />
