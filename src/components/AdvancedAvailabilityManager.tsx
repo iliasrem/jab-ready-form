@@ -52,10 +52,10 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     
     return {
       date,
-      enabled: !isWeekend, // Activé en semaine par défaut
+      enabled: false, // Désactivé par défaut - l'utilisateur ouvrira les plages manuellement
       timeSlots: defaultTimeSlots.map(time => ({
         time,
-        available: !isWeekend && !["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45"].includes(time)
+        available: false // Tous les créneaux fermés par défaut
       }))
     };
   };
