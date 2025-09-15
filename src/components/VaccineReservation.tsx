@@ -135,12 +135,13 @@ export const VaccineReservation = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">Téléphone</Label>
+                <Label htmlFor="phone">Téléphone *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
                   placeholder="Votre numéro de téléphone"
                 />
               </div>
@@ -190,7 +191,7 @@ export const VaccineReservation = () => {
 
             <Button
               type="submit"
-              disabled={isLoading || !formData.firstName || !formData.lastName || !formData.vaccineId}
+              disabled={isLoading || !formData.firstName || !formData.lastName || !formData.phone || !formData.vaccineId}
               className="w-full"
             >
               {isLoading ? "Réservation en cours..." : "Réserver le vaccin"}

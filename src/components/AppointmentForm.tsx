@@ -56,7 +56,9 @@ const appointmentSchema = z.object({
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
   }).optional().or(z.literal("")),
-  phone: z.string().optional(),
+  phone: z.string().min(1, {
+    message: "Le numéro de téléphone est obligatoire.",
+  }),
   birthDay: z.string({
     required_error: "Veuillez sélectionner le jour de naissance.",
   }),
@@ -523,7 +525,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de téléphone <span className="text-muted-foreground">(optionnel)</span></FormLabel>
+                    <FormLabel>Numéro de téléphone *</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <Select
