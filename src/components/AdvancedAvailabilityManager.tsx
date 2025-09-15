@@ -660,21 +660,23 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                   
                                   {/* Affichage de tous les créneaux de 15 minutes verticalement */}
                                   <div className="space-y-1">
-                                    {dayAvailability.timeSlots.map((slot, slotIndex) => {
-                                      let buttonVariant: "default" | "outline" | "destructive" | "secondary" = "outline";
-                                      let buttonClass = "text-xs h-6 w-full";
-                                      let isDisabled = false;
-                                      
-                                      // Debug pour vérifier les données des créneaux
-                                      console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
-                                      
-                                      if (slot.reserved) {
-                                        buttonVariant = "destructive";
-                                        buttonClass += " opacity-75";
-                                        isDisabled = true;
-                                      } else if (slot.available) {
-                                        buttonVariant = "default";
-                                      }
+                                     {dayAvailability.timeSlots.map((slot, slotIndex) => {
+                                       let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
+                                       let buttonClass = "text-xs h-6 w-full";
+                                       let isDisabled = false;
+                                       
+                                       // Debug pour vérifier les données des créneaux
+                                       console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
+                                       
+                                       if (slot.reserved) {
+                                         buttonVariant = "destructive"; // 🔴 Rouge pour réservé
+                                         buttonClass += " opacity-75";
+                                         isDisabled = true;
+                                       } else if (slot.available) {
+                                         buttonVariant = "success"; // 🟢 Vert pour disponible
+                                       } else {
+                                         buttonVariant = "secondary"; // ⚫ Gris pour fermé
+                                       }
                                       
                                       return (
                                         <Button
