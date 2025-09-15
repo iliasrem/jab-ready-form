@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addDays, isSameDay } from "date-fns";
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface WeeklyAvailability {
@@ -26,11 +26,13 @@ interface TimeSlot {
   start: string;
   end: string;
   available: boolean;
+  reserved?: boolean;
 }
 
 export const AvailabilityOverview = () => {
   const [weeklyAvailability, setWeeklyAvailability] = useState<WeeklyAvailability[]>([]);
   const [specificAvailability, setSpecificAvailability] = useState<SpecificAvailability[]>([]);
+  const [reservedSlots, setReservedSlots] = useState<Set<string>>(new Set());
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [loading, setLoading] = useState(true);
 
@@ -39,10 +41,12 @@ export const AvailabilityOverview = () => {
 
   useEffect(() => {
     fetchAvailability();
-  }, []);
+  }, [currentWeek]);
 
   const fetchAvailability = async () => {
     try {
+      setLoading(true);
+      
       // Fetch weekly availability
       const { data: weeklyData, error: weeklyError } = await supabase
         .from('availability')
@@ -63,8 +67,24 @@ export const AvailabilityOverview = () => {
 
       if (specificError) throw specificError;
 
+      // Fetch appointments for the current week to identify reserved slots
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('appointment_date, appointment_time, status')
+        .gte('appointment_date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('appointment_date', format(weekEnd, 'yyyy-MM-dd'))
+        .neq('status', 'cancelled'); // Exclude cancelled appointments
+
+      if (appointmentsError) throw appointmentsError;
+
+      // Create a set of reserved slots for quick lookup
+      const reservedSlotsSet = new Set(
+        appointmentsData?.map(apt => `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`) || []
+      );
+
       setWeeklyAvailability(weeklyData || []);
       setSpecificAvailability(specificData || []);
+      setReservedSlots(reservedSlotsSet);
     } catch (error) {
       console.error('Erreur lors du chargement des disponibilités:', error);
     } finally {
@@ -95,10 +115,12 @@ export const AvailabilityOverview = () => {
     // Add weekly recurring slots for this day
     const weeklySlots = weeklyAvailability.filter(slot => slot.day_of_week === dayOfWeek);
     weeklySlots.forEach(slot => {
+      const slotKey = `${dateString}_${slot.start_time.slice(0, 5)}`;
       slots.push({
         start: slot.start_time.slice(0, 5),
         end: slot.end_time.slice(0, 5),
-        available: slot.is_available
+        available: slot.is_available,
+        reserved: reservedSlots.has(slotKey)
       });
     });
     
@@ -117,10 +139,12 @@ export const AvailabilityOverview = () => {
       }
       
       // Add the specific slot
+      const slotKey = `${dateString}_${startTime}`;
       slots.push({
         start: startTime,
         end: endTime,
-        available: slot.is_available
+        available: slot.is_available,
+        reserved: reservedSlots.has(slotKey)
       });
     });
     
@@ -133,19 +157,40 @@ export const AvailabilityOverview = () => {
 
   const getSlotStyle = (hour: number, slots: TimeSlot[]) => {
     const hourString = `${hour.toString().padStart(2, '0')}:00`;
-    const nextHourString = `${(hour + 1).toString().padStart(2, '0')}:00`;
     
-    // Check if this hour falls within any available slot
+    // Check if this hour falls within any slot
     for (const slot of slots) {
       if (slot.start <= hourString && slot.end > hourString) {
-        return slot.available 
-          ? "bg-green-200 border-green-300 text-green-800" 
-          : "bg-gray-200 border-gray-300 text-gray-600";
+        if (slot.reserved) {
+          return "bg-red-200 border-red-300 text-red-800"; // Rouge pour réservé
+        } else if (slot.available) {
+          return "bg-green-200 border-green-300 text-green-800"; // Vert pour disponible
+        } else {
+          return "bg-gray-200 border-gray-300 text-gray-600"; // Gris pour occupé/fermé
+        }
       }
     }
     
     // Default: no availability defined (closed)
     return "bg-gray-100 border-gray-200 text-gray-400";
+  };
+
+  const getSlotText = (hour: number, slots: TimeSlot[]) => {
+    const hourString = `${hour.toString().padStart(2, '0')}:00`;
+    
+    for (const slot of slots) {
+      if (slot.start <= hourString && slot.end > hourString) {
+        if (slot.reserved) {
+          return '📅'; // Icône pour réservé
+        } else if (slot.available) {
+          return 'Libre';
+        } else {
+          return 'Fermé';
+        }
+      }
+    }
+    
+    return 'Fermé';
   };
 
   if (loading) {
@@ -224,23 +269,14 @@ export const AvailabilityOverview = () => {
                 {weekDays.map((day) => {
                   const slots = getTimeSlotsForDay(day);
                   const slotStyle = getSlotStyle(hour, slots);
+                  const slotText = getSlotText(hour, slots);
                   
                   return (
                     <div
                       key={`${day.toISOString()}-${hour}`}
                       className={`p-2 text-center text-xs border rounded min-h-[40px] flex items-center justify-center ${slotStyle}`}
                     >
-                      {slots.find(slot => 
-                        slot.start <= `${hour.toString().padStart(2, '0')}:00` && 
-                        slot.end > `${hour.toString().padStart(2, '0')}:00`
-                      ) ? (
-                        slots.find(slot => 
-                          slot.start <= `${hour.toString().padStart(2, '0')}:00` && 
-                          slot.end > `${hour.toString().padStart(2, '0')}:00`
-                        )?.available ? 'Libre' : 'Fermé'
-                      ) : (
-                        'Fermé'
-                      )}
+                      {slotText}
                     </div>
                   );
                 })}
@@ -255,11 +291,11 @@ export const AvailabilityOverview = () => {
               <span className="text-sm">Disponible</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
-              <span className="text-sm">Occupé</span>
+              <div className="w-4 h-4 bg-red-200 border border-red-300 rounded"></div>
+              <span className="text-sm">Réservé</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-100 border border-gray-200 rounded"></div>
+              <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
               <span className="text-sm">Fermé</span>
             </div>
           </div>
