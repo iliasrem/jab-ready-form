@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface SpecificDateAvailability {
   date: Date;
   enabled: boolean;
-  timeSlots: { time: string; available: boolean; }[];
+  timeSlots: { time: string; available: boolean; reserved?: boolean; }[];
 }
 
 const defaultTimeSlots = [
@@ -345,7 +345,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       console.log('Chargement période:', monthStart, 'à', monthEnd);
 
       // Charger SEULEMENT les créneaux disponibles
-      const { data, error } = await supabase
+      const { data: availabilityData, error: availabilityError } = await supabase
         .from('specific_date_availability')
         .select('*')
         .eq('user_id', user.id)
@@ -353,32 +353,50 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         .gte('specific_date', monthStart)
         .lte('specific_date', monthEnd);
 
-      if (error) throw error;
+      if (availabilityError) throw availabilityError;
 
-      console.log('Créneaux disponibles chargés:', data?.length || 0);
-      console.log('Données:', data);
+      // Charger les rendez-vous pour la même période
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('appointment_date, appointment_time, status')
+        .gte('appointment_date', monthStart)
+        .lte('appointment_date', monthEnd)
+        .neq('status', 'cancelled'); // Exclure les rendez-vous annulés
+
+      if (appointmentsError) throw appointmentsError;
+
+      console.log('Créneaux disponibles chargés:', availabilityData?.length || 0);
+      console.log('Rendez-vous chargés:', appointmentsData?.length || 0);
+
+      // Créer un set des créneaux réservés pour une recherche rapide
+      const reservedSlots = new Set(
+        appointmentsData?.map(apt => `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`) || []
+      );
 
        // Convertir les données Supabase en format local
-       const groupedByDate = data?.reduce((acc, item) => {
+       const groupedByDate = availabilityData?.reduce((acc, item) => {
          const dateKey = item.specific_date;
          if (!acc[dateKey]) {
            acc[dateKey] = [];
          }
          // Normaliser le format d'heure : "09:00:00" -> "09:00"
          const normalizedTime = item.start_time.slice(0, 5);
+         const isReserved = reservedSlots.has(`${dateKey}_${normalizedTime}`);
+         
          acc[dateKey].push({
            time: normalizedTime,
-           available: true // Tous les créneaux chargés sont disponibles
+           available: true, // Tous les créneaux chargés sont disponibles
+           reserved: isReserved // Marquer si le créneau est réservé
          });
          return acc;
-       }, {} as Record<string, { time: string; available: boolean; }[]>);
+       }, {} as Record<string, { time: string; available: boolean; reserved: boolean; }[]>);
 
       const loadedAvailabilities: SpecificDateAvailability[] = Object.entries(groupedByDate || {}).map(([dateStr, slots]) => {
         const date = new Date(dateStr);
         // Compléter avec tous les créneaux par défaut
         const allSlots = defaultTimeSlots.map(time => {
           const existingSlot = slots.find(s => s.time === time);
-          return existingSlot || { time, available: false };
+          return existingSlot || { time, available: false, reserved: false };
         });
         
         return {
@@ -393,9 +411,10 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       setSpecificAvailability(loadedAvailabilities);
       onAvailabilityChange(loadedAvailabilities);
 
+      const reservedCount = appointmentsData?.length || 0;
       toast({
         title: "Chargement réussi",
-        description: `${loadedAvailabilities.length} jours avec créneaux chargés.`,
+        description: `${loadedAvailabilities.length} jours avec créneaux chargés. ${reservedCount} créneaux réservés.`,
       });
     } catch (error) {
       console.error('=== ERREUR CHARGEMENT ===', error);
@@ -609,17 +628,34 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                   
                                   {/* Affichage de tous les créneaux de 15 minutes verticalement */}
                                   <div className="space-y-1">
-                                    {dayAvailability.timeSlots.map((slot, slotIndex) => (
-                                      <Button
-                                        key={slot.time}
-                                        variant={slot.available ? "default" : "outline"}
-                                        size="sm"
-                                        className="text-xs h-6 w-full"
-                                        onClick={() => toggleTimeSlot(day, slotIndex)}
-                                      >
-                                        {slot.time}
-                                      </Button>
-                                    ))}
+                                    {dayAvailability.timeSlots.map((slot, slotIndex) => {
+                                      let buttonVariant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                                      let buttonClass = "text-xs h-6 w-full";
+                                      let isDisabled = false;
+                                      
+                                      if (slot.reserved) {
+                                        buttonVariant = "destructive";
+                                        buttonClass += " opacity-75";
+                                        isDisabled = true;
+                                      } else if (slot.available) {
+                                        buttonVariant = "default";
+                                      }
+                                      
+                                      return (
+                                        <Button
+                                          key={slot.time}
+                                          variant={buttonVariant}
+                                          size="sm"
+                                          className={buttonClass}
+                                          onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
+                                          disabled={isDisabled}
+                                          title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
+                                        >
+                                          {slot.time}
+                                          {slot.reserved && <span className="ml-1 text-xs">📅</span>}
+                                        </Button>
+                                      );
+                                    })}
                                   </div>
                                   
                                   {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
