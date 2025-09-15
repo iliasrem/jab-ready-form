@@ -4,6 +4,8 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { DayAvailability } from "@/components/AvailabilityManager";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 // Mock availability data - in a real app this would come from your backend
 const defaultAvailability: DayAvailability[] = [
@@ -216,10 +218,119 @@ const defaultAvailability: DayAvailability[] = [
 
 const PatientBooking = () => {
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Créneaux par défaut (15 minutes)
+  const defaultTimeSlots = [
+    "09:00", "09:15", "09:30", "09:45",
+    "10:00", "10:15", "10:30", "10:45",
+    "11:00", "11:15", "11:30", "11:45",
+    "14:00", "14:15", "14:30", "14:45",
+    "15:00", "15:15", "15:30", "15:45",
+    "16:00", "16:15", "16:30", "16:45",
+    "17:00"
+  ];
+
+  // Charger les disponibilités depuis Supabase
+  const loadAvailabilityFromSupabase = async () => {
+    try {
+      setLoading(true);
+      console.log('Chargement des disponibilités pour les patients...');
+      
+      // Charger les prochains 2 mois de disponibilités
+      const currentDate = new Date();
+      const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
+      const endDate = format(endOfMonth(new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0)), 'yyyy-MM-dd');
+      
+      console.log('Période de chargement:', startDate, 'à', endDate);
+
+      // Charger TOUTES les disponibilités publiques (sans filtrer par user_id)
+      const { data, error } = await supabase
+        .from('specific_date_availability')
+        .select('*')
+        .eq('is_available', true)
+        .gte('specific_date', startDate)
+        .lte('specific_date', endDate);
+
+      if (error) {
+        console.error('Erreur lors du chargement:', error);
+        // En cas d'erreur, utiliser les données par défaut
+        setAvailability(defaultAvailability);
+        return;
+      }
+
+      console.log('Créneaux disponibles chargés:', data?.length || 0);
+
+      if (!data || data.length === 0) {
+        console.log('Aucune disponibilité trouvée, utilisation des données par défaut');
+        setAvailability(defaultAvailability);
+        return;
+      }
+
+      // Grouper par jour de la semaine
+      const dayAvailabilityMap: { [key: string]: DayAvailability } = {
+        'Monday': { day: 'Monday', enabled: false, timeSlots: [] },
+        'Tuesday': { day: 'Tuesday', enabled: false, timeSlots: [] },
+        'Wednesday': { day: 'Wednesday', enabled: false, timeSlots: [] },
+        'Thursday': { day: 'Thursday', enabled: false, timeSlots: [] },
+        'Friday': { day: 'Friday', enabled: false, timeSlots: [] },
+        'Saturday': { day: 'Saturday', enabled: false, timeSlots: [] },
+        'Sunday': { day: 'Sunday', enabled: false, timeSlots: [] }
+      };
+
+      // Analyser les créneaux disponibles et créer les jours de la semaine
+      data.forEach(item => {
+        const date = new Date(item.specific_date);
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = dayNames[date.getDay()];
+        
+        if (!dayAvailabilityMap[dayName].enabled) {
+          dayAvailabilityMap[dayName].enabled = true;
+          // Initialiser tous les créneaux comme non disponibles
+          dayAvailabilityMap[dayName].timeSlots = defaultTimeSlots.map(time => ({
+            time,
+            available: false
+          }));
+        }
+        
+        // Marquer ce créneau comme disponible
+        const timeSlot = dayAvailabilityMap[dayName].timeSlots.find(slot => slot.time === item.start_time);
+        if (timeSlot) {
+          timeSlot.available = true;
+        }
+      });
+
+      // Convertir en tableau et ne garder que les jours avec au moins un créneau disponible
+      const availabilityArray = Object.values(dayAvailabilityMap).map(day => {
+        if (day.enabled) {
+          // Vérifier s'il y a au moins un créneau disponible
+          const hasAvailableSlots = day.timeSlots.some(slot => slot.available);
+          if (hasAvailableSlots) {
+            return day;
+          }
+        }
+        // Retourner un jour fermé
+        return {
+          ...day,
+          enabled: false,
+          timeSlots: []
+        };
+      });
+
+      console.log('Disponibilités finales:', availabilityArray);
+      setAvailability(availabilityArray);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des disponibilités:', error);
+      // En cas d'erreur, utiliser les données par défaut
+      setAvailability(defaultAvailability);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // In a real app, you would fetch this from your backend
-    setAvailability(defaultAvailability);
+    loadAvailabilityFromSupabase();
   }, []);
 
   return (
@@ -272,7 +383,14 @@ const PatientBooking = () => {
           </div>
 
           {/* Booking Form */}
-          <AppointmentForm availability={availability} />
+          {loading ? (
+            <div className="bg-card p-8 rounded-lg border text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Chargement des disponibilités...</p>
+            </div>
+          ) : (
+            <AppointmentForm availability={availability} />
+          )}
 
           {/* Additional Information */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
