@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AppointmentForm } from "@/components/AppointmentForm";
+
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
@@ -17,7 +17,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Tabs defaultValue="booking" className="w-full">
+      <Tabs defaultValue="appointments" className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
@@ -26,8 +26,7 @@ const AdminDashboard = () => {
                 <p className="text-xl opacity-90">Gérer la disponibilité et les réservations des patients</p>
               </div>
             
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="booking">Réservation Patient</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="vaccines">Réservation Vaccin</TabsTrigger>
@@ -42,13 +41,6 @@ const AdminDashboard = () => {
         
         <div className="px-4">
           <div className="container mx-auto">
-            <TabsContent value="booking" className="mt-6">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-semibold mb-2">Réserver votre Rendez-vous</h2>
-                <p className="text-muted-foreground">Planifiez votre visite avec notre équipe professionnelle</p>
-              </div>
-              <AppointmentForm />
-            </TabsContent>
             
             <TabsContent value="appointments" className="mt-6">
               <AppointmentsList />
