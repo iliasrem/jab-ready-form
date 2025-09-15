@@ -233,8 +233,12 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Sauvegarder les disponibilités dans Supabase
   const saveAvailabilityToSupabase = async () => {
     try {
+      console.log('Début de la sauvegarde, specificAvailability:', specificAvailability);
+      
       // Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Utilisateur:', user);
+      
       if (!user) {
         toast({
           title: "Erreur d'authentification",
@@ -254,6 +258,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           is_available: slot.available && dayAvailability.enabled
         }))
       );
+      
+      console.log('Données à sauvegarder:', supabaseAvailabilities);
 
       // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
       const { error: deleteError } = await supabase
@@ -265,12 +271,21 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
       if (deleteError) throw deleteError;
 
+      console.log('Nombre de créneaux à insérer:', supabaseAvailabilities.length);
+      
       if (supabaseAvailabilities.length > 0) {
+        console.log('Insertion des données...');
         const { error: insertError } = await supabase
           .from('specific_date_availability')
           .insert(supabaseAvailabilities);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Erreur d\'insertion:', insertError);
+          throw insertError;
+        }
+        console.log('Insertion réussie');
+      } else {
+        console.log('Aucune donnée à insérer');
       }
 
       toast({
