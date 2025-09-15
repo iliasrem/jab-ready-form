@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
+import { validatePhoneNumber } from "@/lib/phoneValidation";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,8 +57,11 @@ const appointmentSchema = z.object({
   email: z.string().email({
     message: "Veuillez entrer une adresse e-mail valide.",
   }).optional().or(z.literal("")),
-  phone: z.string().min(1, {
-    message: "Le numéro de téléphone est obligatoire.",
+  phone: z.string().refine((phone) => {
+    const validation = validatePhoneNumber(phone);
+    return validation.isValid;
+  }, {
+    message: "Format invalide. Formats acceptés : GSM belge (04XX XX XX XX), fixe belge, mobile français (06/07), mobile italien (3XX).",
   }),
   birthDay: z.string({
     required_error: "Veuillez sélectionner le jour de naissance.",
@@ -525,7 +529,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de téléphone *</FormLabel>
+                    <FormLabel>Numéro de téléphone * 
+                      <span className="text-sm text-muted-foreground font-normal block">
+                        Formats acceptés : GSM/fixe belge, mobile français (06/07), mobile italien
+                      </span>
+                    </FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <Select
@@ -556,7 +564,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                         <Input
                           type="tel"
                           inputMode="tel"
-                          placeholder="4xx xx xx xx"
+                          placeholder="Ex: 4xx xx xx xx, 6xx xx xx xx"
                           {...field}
                           value={field.value ?? ""}
                           onFocus={(e) => {

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Calendar, User, Syringe } from "lucide-react";
+import { validatePhoneNumber } from "@/lib/phoneValidation";
 
 interface Vaccine {
   id: string;
@@ -18,6 +19,7 @@ interface Vaccine {
 export const VaccineReservation = () => {
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -49,6 +51,14 @@ export const VaccineReservation = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Valider le téléphone avant soumission
+    const phoneValidation = validatePhoneNumber(formData.phone);
+    if (!phoneValidation.isValid) {
+      setPhoneError(phoneValidation.error || "Format de téléphone invalide");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -90,6 +100,7 @@ export const VaccineReservation = () => {
         vaccineId: "",
         notes: ""
       });
+      setPhoneError("");
 
     } catch (error) {
       console.error("Error creating reservation:", error);
@@ -140,10 +151,17 @@ export const VaccineReservation = () => {
                   id="phone"
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, phone: e.target.value });
+                    setPhoneError(""); // Effacer l'erreur lors de la saisie
+                  }}
                   required
-                  placeholder="Votre numéro de téléphone"
+                  placeholder="Ex: 04XX XX XX XX, +32 4XX XX XX XX"
+                  className={phoneError ? "border-destructive" : ""}
                 />
+                {phoneError && (
+                  <p className="text-sm text-destructive mt-1">{phoneError}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
