@@ -367,11 +367,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
       console.log('Créneaux disponibles chargés:', availabilityData?.length || 0);
       console.log('Rendez-vous chargés:', appointmentsData?.length || 0);
+      console.log('Détail des données de disponibilité:', availabilityData);
+      console.log('Détail des rendez-vous:', appointmentsData);
 
       // Créer un set des créneaux réservés pour une recherche rapide
       const reservedSlots = new Set(
         appointmentsData?.map(apt => `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`) || []
       );
+
+      console.log('Créneaux réservés:', Array.from(reservedSlots));
 
        // Convertir les données Supabase en format local
        const groupedByDate = availabilityData?.reduce((acc, item) => {
@@ -407,15 +411,43 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       });
 
       console.log('Jours avec créneaux:', loadedAvailabilities.length);
+      console.log('Détail des jours chargés:', loadedAvailabilities);
       
-      setSpecificAvailability(loadedAvailabilities);
-      onAvailabilityChange(loadedAvailabilities);
+      // Si aucune disponibilité n'est configurée, créer des jours par défaut pour le mois actuel
+      if (loadedAvailabilities.length === 0) {
+        console.log('Aucune disponibilité trouvée, création des jours par défaut');
+        const monthDays = eachDayOfInterval({
+          start: startOfMonth(currentMonth),
+          end: endOfMonth(currentMonth)
+        });
+        
+        const defaultAvailabilities: SpecificDateAvailability[] = monthDays.map(date => ({
+          date,
+          enabled: false, // Par défaut, les jours sont fermés
+          timeSlots: defaultTimeSlots.map(time => ({
+            time,
+            available: false,
+            reserved: reservedSlots.has(`${format(date, 'yyyy-MM-dd')}_${time}`)
+          }))
+        }));
+        
+        setSpecificAvailability(defaultAvailabilities);
+        onAvailabilityChange(defaultAvailabilities);
+        
+        toast({
+          title: "Disponibilités par défaut créées",
+          description: "Configurez vos créneaux disponibles pour ce mois.",
+        });
+      } else {
+        setSpecificAvailability(loadedAvailabilities);
+        onAvailabilityChange(loadedAvailabilities);
 
-      const reservedCount = appointmentsData?.length || 0;
-      toast({
-        title: "Chargement réussi",
-        description: `${loadedAvailabilities.length} jours avec créneaux chargés. ${reservedCount} créneaux réservés.`,
-      });
+        const reservedCount = appointmentsData?.length || 0;
+        toast({
+          title: "Chargement réussi",
+          description: `${loadedAvailabilities.length} jours avec créneaux chargés. ${reservedCount} créneaux réservés.`,
+        });
+      }
     } catch (error) {
       console.error('=== ERREUR CHARGEMENT ===', error);
       toast({
@@ -632,6 +664,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                       let buttonVariant: "default" | "outline" | "destructive" | "secondary" = "outline";
                                       let buttonClass = "text-xs h-6 w-full";
                                       let isDisabled = false;
+                                      
+                                      // Debug pour vérifier les données des créneaux
+                                      console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
                                       
                                       if (slot.reserved) {
                                         buttonVariant = "destructive";
