@@ -233,6 +233,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Sauvegarder les disponibilités dans Supabase
   const saveAvailabilityToSupabase = async () => {
     try {
+      alert('Début de la sauvegarde...');
       console.log('Début de la sauvegarde, specificAvailability:', specificAvailability);
       
       // Récupérer l'utilisateur connecté
@@ -243,6 +244,16 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         toast({
           title: "Erreur d'authentification",
           description: "Vous devez être connecté pour sauvegarder les disponibilités.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!specificAvailability || specificAvailability.length === 0) {
+        alert('Aucune disponibilité à sauvegarder - specificAvailability est vide');
+        toast({
+          title: "Aucune donnée",
+          description: "Aucune disponibilité à sauvegarder.",
           variant: "destructive"
         });
         return;
@@ -259,6 +270,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         }))
       );
       
+      alert(`Préparation de ${supabaseAvailabilities.length} créneaux à sauvegarder`);
       console.log('Données à sauvegarder:', supabaseAvailabilities);
 
       // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
@@ -271,6 +283,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
       if (deleteError) throw deleteError;
 
+      alert(`Suppression terminée, ${supabaseAvailabilities.length} créneaux à insérer`);
       console.log('Nombre de créneaux à insérer:', supabaseAvailabilities.length);
       
       if (supabaseAvailabilities.length > 0) {
@@ -281,13 +294,17 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
         if (insertError) {
           console.error('Erreur d\'insertion:', insertError);
+          alert('Erreur lors de l\'insertion: ' + insertError.message);
           throw insertError;
         }
         console.log('Insertion réussie');
+        alert('Insertion réussie!');
       } else {
         console.log('Aucune donnée à insérer');
+        alert('Aucune donnée à insérer');
       }
 
+      alert('Sauvegarde terminée avec succès!');
       toast({
         title: "Sauvegarde réussie",
         description: "Les disponibilités ont été sauvegardées dans la base de données.",
