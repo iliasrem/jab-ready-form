@@ -327,17 +327,28 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Charger les disponibilités depuis Supabase
   const loadAvailabilityFromSupabase = async () => {
     try {
+      console.log('=== CHARGEMENT DEPUIS SUPABASE ===');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+      
+      console.log('Chargement période:', monthStart, 'à', monthEnd);
+
+      // Charger SEULEMENT les créneaux disponibles
       const { data, error } = await supabase
         .from('specific_date_availability')
         .select('*')
         .eq('user_id', user.id)
-        .gte('specific_date', format(startOfMonth(currentMonth), 'yyyy-MM-dd'))
-        .lte('specific_date', format(endOfMonth(currentMonth), 'yyyy-MM-dd'));
+        .eq('is_available', true) // SEULEMENT les créneaux disponibles
+        .gte('specific_date', monthStart)
+        .lte('specific_date', monthEnd);
 
       if (error) throw error;
+
+      console.log('Créneaux disponibles chargés:', data?.length || 0);
+      console.log('Données:', data);
 
       // Convertir les données Supabase en format local
       const groupedByDate = data?.reduce((acc, item) => {
@@ -347,7 +358,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         }
         acc[dateKey].push({
           time: item.start_time,
-          available: item.is_available
+          available: true // Tous les créneaux chargés sont disponibles
         });
         return acc;
       }, {} as Record<string, { time: string; available: boolean; }[]>);
@@ -362,20 +373,22 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         
         return {
           date,
-          enabled: slots.some(slot => slot.available),
+          enabled: true, // Le jour est ouvert s'il a des créneaux disponibles
           timeSlots: allSlots
         };
       });
 
+      console.log('Jours avec créneaux:', loadedAvailabilities.length);
+      
       setSpecificAvailability(loadedAvailabilities);
       onAvailabilityChange(loadedAvailabilities);
 
       toast({
         title: "Chargement réussi",
-        description: "Les disponibilités ont été chargées depuis la base de données.",
+        description: `${loadedAvailabilities.length} jours avec créneaux chargés.`,
       });
     } catch (error) {
-      console.error('Error loading availability:', error);
+      console.error('=== ERREUR CHARGEMENT ===', error);
       toast({
         title: "Erreur de chargement",
         description: "Une erreur est survenue lors du chargement.",
