@@ -230,8 +230,8 @@ const CalendarPage = () => {
         <div className="grid grid-cols-4 gap-2 p-2 bg-muted/50 rounded font-medium text-sm">
           <div>Heure</div>
           <div>Patient</div>
-          <div>COVID</div>
-          <div>Grippe</div>
+          <div className="text-center">COVID</div>
+          <div className="text-center">Grippe</div>
         </div>
         
         {/* Lignes des créneaux */}
@@ -249,14 +249,14 @@ const CalendarPage = () => {
                   <div className="text-xs text-muted-foreground mt-1">{appointment.phone}</div>
                 )}
               </div>
-              <div className="text-center">
+              <div className="flex justify-center">
                 {covidVaccines > 0 && (
                   <Badge variant="outline" className="text-xs">
                     {covidVaccines}
                   </Badge>
                 )}
               </div>
-              <div className="text-center">
+              <div className="flex justify-center">
                 {grippeVaccines > 0 && (
                   <Badge variant="outline" className="text-xs">
                     {grippeVaccines}
