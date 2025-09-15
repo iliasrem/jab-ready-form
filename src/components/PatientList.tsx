@@ -115,34 +115,99 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     setEditedPatient(null);
   };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     if (!editedPatient) return;
 
-    setPatients(prev => 
-      prev.map(patient => 
-        patient.id === editedPatient.id ? editedPatient : patient
-      )
-    );
+    try {
+      // Split name into first_name and last_name
+      const nameParts = editedPatient.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
-    toast({
-      title: "Patient Updated",
-      description: `${editedPatient.name}'s information has been updated successfully.`,
-    });
+      const { error } = await supabase
+        .from('patients')
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          email: editedPatient.email,
+          phone: editedPatient.phone,
+          birth_date: editedPatient.birthDate ? editedPatient.birthDate.toISOString().split('T')[0] : null,
+          status: editedPatient.status.toLowerCase() as 'active' | 'inactive',
+          notes: editedPatient.notes
+        })
+        .eq('id', editedPatient.id);
 
-    setEditingId(null);
-    setEditedPatient(null);
+      if (error) {
+        console.error('Erreur lors de la mise à jour:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de mettre à jour le patient.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setPatients(prev => 
+        prev.map(patient => 
+          patient.id === editedPatient.id ? editedPatient : patient
+        )
+      );
+
+      toast({
+        title: "Patient mis à jour",
+        description: `Les informations de ${editedPatient.name} ont été mises à jour avec succès.`,
+      });
+
+      setEditingId(null);
+      setEditedPatient(null);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deletePatient = (patientId: string) => {
+  const deletePatient = async (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     if (!patient) return;
 
-    setPatients(prev => prev.filter(p => p.id !== patientId));
-    
-    toast({
-      title: "Patient Removed",
-      description: `${patient.name} has been removed from the patient list.`,
-    });
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${patient.name} ?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', patientId);
+
+      if (error) {
+        console.error('Erreur lors de la suppression:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer le patient.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setPatients(prev => prev.filter(p => p.id !== patientId));
+      
+      toast({
+        title: "Patient supprimé",
+        description: `${patient.name} a été supprimé de la liste.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression.",
+        variant: "destructive",
+      });
+    }
   };
 
   const updateEditedField = (field: keyof Patient, value: any) => {
