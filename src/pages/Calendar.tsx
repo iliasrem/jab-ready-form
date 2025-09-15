@@ -211,36 +211,58 @@ const CalendarPage = () => {
 
   const DayView = () => {
     const appointments = getAppointmentsForDate(selectedDate);
+    // Créneaux de 15 minutes de 09:00 à 17:00
     const timeSlots = [
-      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-      "15:00", "15:30", "16:00", "16:30", "17:00"
+      "09:00", "09:15", "09:30", "09:45",
+      "10:00", "10:15", "10:30", "10:45", 
+      "11:00", "11:15", "11:30", "11:45",
+      "12:00", "12:15", "12:30", "12:45",
+      "13:00", "13:15", "13:30", "13:45",
+      "14:00", "14:15", "14:30", "14:45",
+      "15:00", "15:15", "15:30", "15:45",
+      "16:00", "16:15", "16:30", "16:45",
+      "17:00"
     ];
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1">
+        {/* En-tête du tableau */}
+        <div className="grid grid-cols-4 gap-2 p-2 bg-muted/50 rounded font-medium text-sm">
+          <div>Heure</div>
+          <div>Patient</div>
+          <div>COVID</div>
+          <div>Grippe</div>
+        </div>
+        
+        {/* Lignes des créneaux */}
         {timeSlots.map(time => {
           const appointment = appointments.find(apt => apt.time === time);
+          const covidVaccines = appointment?.services?.filter(s => s === 'covid').length || 0;
+          const grippeVaccines = appointment?.services?.filter(s => s === 'grippe').length || 0;
+          
           return (
-            <div key={time} className="flex items-center space-x-4 p-2 border rounded">
-              <div className="w-16 text-sm font-medium">{time}</div>
-              {appointment ? (
-                <div className="flex-1 flex items-center justify-between bg-primary/10 p-2 rounded">
-                  <div>
-                    <div className="font-medium">{appointment.patientName}</div>
-                    {appointment.phone && (
-                      <div className="text-xs text-muted-foreground mt-1">{appointment.phone}</div>
-                    )}
-                    {appointment.services && appointment.services.length > 0 && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {appointment.services.map(serviceId => serviceLabels[serviceId] || serviceId).join(", ")}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 text-muted-foreground text-sm">Disponible</div>
-              )}
+            <div key={time} className={`grid grid-cols-4 gap-2 p-2 border rounded text-sm ${appointment ? 'bg-primary/10' : 'bg-background'}`}>
+              <div className="font-medium">{time}</div>
+              <div className="font-medium">
+                {appointment ? appointment.patientName : 'Disponible'}
+                {appointment?.phone && (
+                  <div className="text-xs text-muted-foreground mt-1">{appointment.phone}</div>
+                )}
+              </div>
+              <div className="text-center">
+                {covidVaccines > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {covidVaccines}
+                  </Badge>
+                )}
+              </div>
+              <div className="text-center">
+                {grippeVaccines > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {grippeVaccines}
+                  </Badge>
+                )}
+              </div>
             </div>
           );
         })}
