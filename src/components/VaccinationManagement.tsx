@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Calendar, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +52,24 @@ export const VaccinationManagement = () => {
   });
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
   const { toast } = useToast();
+
+  const formatExpiryDate = (dateStr: string) => {
+    try {
+      // Si c'est déjà au format DD/MM/YYYY, on le retourne tel quel
+      if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        return dateStr;
+      }
+      // Si c'est au format YYYY-MM-DD, on le convertit
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(dateStr);
+        return format(date, "dd/MM/yyyy");
+      }
+      // Sinon on retourne tel quel
+      return dateStr;
+    } catch {
+      return dateStr;
+    }
+  };
 
   useEffect(() => {
     fetchVaccinations();
@@ -311,7 +328,7 @@ export const VaccinationManagement = () => {
                 <SelectContent>
                   {inventory.map((item) => (
                     <SelectItem key={item.id} value={item.lot_number}>
-                      {item.lot_number} - Exp: {item.expiry_date} ({item.vials_count - item.vials_used} restants)
+                      {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)} ({item.vials_count - item.vials_used} restants)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -373,7 +390,7 @@ export const VaccinationManagement = () => {
                     {vaccination.patients?.last_name} {vaccination.patients?.first_name}
                   </TableCell>
                   <TableCell>{vaccination.lot_number}</TableCell>
-                  <TableCell>{vaccination.expiry_date}</TableCell>
+                  <TableCell>{formatExpiryDate(vaccination.expiry_date)}</TableCell>
                   
                   <TableCell>
                     <Button

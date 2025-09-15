@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Plus, Package } from "lucide-react";
+import { Trash2, Plus, Package, Edit2, Check, X } from "lucide-react";
+import { format, parse } from "date-fns";
 
 interface VaccineInventoryItem {
   id: string;
@@ -23,6 +24,11 @@ export const VaccineInventory = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    lot_number: "",
+    expiry_date: "",
+  });
   const [formData, setFormData] = useState({
     lot_number: "",
     expiry_date: "",
@@ -48,6 +54,24 @@ export const VaccineInventory = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatExpiryDate = (dateStr: string) => {
+    try {
+      // Si c'est déjà au format DD/MM/YYYY, on le retourne tel quel
+      if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        return dateStr;
+      }
+      // Si c'est au format YYYY-MM-DD, on le convertit
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(dateStr);
+        return format(date, "dd/MM/yyyy");
+      }
+      // Sinon on retourne tel quel
+      return dateStr;
+    } catch {
+      return dateStr;
     }
   };
 
@@ -104,6 +128,47 @@ export const VaccineInventory = () => {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer la boîte",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditing = (item: VaccineInventoryItem) => {
+    setEditingRow(item.id);
+    setEditFormData({
+      lot_number: item.lot_number,
+      expiry_date: formatExpiryDate(item.expiry_date),
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingRow(null);
+    setEditFormData({ lot_number: "", expiry_date: "" });
+  };
+
+  const saveEdit = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('vaccine_inventory')
+        .update({
+          lot_number: editFormData.lot_number,
+          expiry_date: editFormData.expiry_date,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Informations mises à jour"
+      });
+      setEditingRow(null);
+      fetchInventory();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour les informations",
         variant: "destructive"
       });
     }
@@ -187,7 +252,7 @@ export const VaccineInventory = () => {
                       id="expiry_date"
                       value={formData.expiry_date}
                       onChange={(e) => setFormData({...formData, expiry_date: e.target.value})}
-                      placeholder="Ex: 09/2025"
+                      placeholder="DD/MM/YYYY (ex: 22/12/2025)"
                       required
                     />
                   </div>
@@ -232,8 +297,29 @@ export const VaccineInventory = () => {
               <TableBody>
                 {inventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.lot_number}</TableCell>
-                    <TableCell>{item.expiry_date}</TableCell>
+                    <TableCell className="font-medium">
+                      {editingRow === item.id ? (
+                        <Input
+                          value={editFormData.lot_number}
+                          onChange={(e) => setEditFormData({...editFormData, lot_number: e.target.value})}
+                          className="w-32"
+                        />
+                      ) : (
+                        item.lot_number
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingRow === item.id ? (
+                        <Input
+                          value={editFormData.expiry_date}
+                          onChange={(e) => setEditFormData({...editFormData, expiry_date: e.target.value})}
+                          placeholder="DD/MM/YYYY"
+                          className="w-32"
+                        />
+                      ) : (
+                        formatExpiryDate(item.expiry_date)
+                      )}
+                    </TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
                     <TableCell>
                       <span className={item.vials_count - item.vials_used === 0 ? "text-red-600 font-semibold" : ""}>
@@ -251,13 +337,43 @@ export const VaccineInventory = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        {editingRow === item.id ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => saveEdit(item.id)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={cancelEditing}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => startEditing(item)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
