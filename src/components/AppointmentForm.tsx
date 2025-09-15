@@ -5,6 +5,7 @@ import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,11 +36,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { DayAvailability } from "./AvailabilityManager";
+
+interface SpecificAvailability {
+  date: string; // Format YYYY-MM-DD
+  timeSlots: string[]; // Array of available times like ["09:00", "09:15"]
+}
 
 interface AppointmentFormProps {
-  availability?: DayAvailability[];
+  availability?: any[]; // Keeping for backward compatibility but not used
 }
 
 const appointmentSchema = z.object({
@@ -80,6 +84,8 @@ type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
 export function AppointmentForm({ availability }: AppointmentFormProps) {
   const { toast } = useToast();
+  const [realAvailability, setRealAvailability] = useState<SpecificAvailability[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -95,6 +101,65 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       notes: "",
     },
   });
+
+  // Charger les vraies disponibilités depuis Supabase
+  const loadRealAvailability = async () => {
+    try {
+      setLoading(true);
+      console.log('=== CHARGEMENT DISPONIBILITÉS FORM ===');
+      
+      // Charger les prochains 3 mois
+      const currentDate = new Date();
+      const startDate = format(currentDate, 'yyyy-MM-dd');
+      const endDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 0), 'yyyy-MM-dd');
+      
+      console.log('Période form:', startDate, 'à', endDate);
+
+      const { data, error } = await supabase
+        .from('specific_date_availability')
+        .select('*')
+        .eq('is_available', true)
+        .gte('specific_date', startDate)
+        .lte('specific_date', endDate)
+        .order('specific_date', { ascending: true });
+
+      if (error) {
+        console.error('Erreur chargement form:', error);
+        setRealAvailability([]);
+        return;
+      }
+
+      console.log('Données disponibilités form:', data?.length || 0);
+
+      // Grouper par date
+      const groupedAvailability: { [key: string]: string[] } = {};
+      data?.forEach(item => {
+        if (!groupedAvailability[item.specific_date]) {
+          groupedAvailability[item.specific_date] = [];
+        }
+        groupedAvailability[item.specific_date].push(item.start_time);
+      });
+
+      // Convertir en format final
+      const formattedAvailability = Object.entries(groupedAvailability).map(([date, timeSlots]) => ({
+        date,
+        timeSlots: timeSlots.sort() // Trier les créneaux
+      }));
+
+      console.log('Disponibilités formatées form:', formattedAvailability);
+      setRealAvailability(formattedAvailability);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des disponibilités form:', error);
+      setRealAvailability([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRealAvailability();
+  }, []);
 
   async function onSubmit(data: AppointmentFormValues) {
     try {
@@ -219,36 +284,39 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   // Get available time slots based on selected date
   const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
-    if (!selectedDate || !availability) {
-      return []; // No slots available if no date selected or no availability configured
+    if (!selectedDate || !realAvailability) {
+      return [];
     }
     
-    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayAvailability = availability.find(day => day.day === dayName);
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const dayAvailability = realAvailability.find(av => av.date === dateStr);
     
-    if (!dayAvailability || !dayAvailability.enabled) {
-      return []; // Day not available
-    }
-    
-    return dayAvailability.timeSlots
-      .filter(slot => slot.available)
-      .map(slot => slot.time);
+    return dayAvailability?.timeSlots || [];
   };
 
   const isDateAvailable = (date: Date) => {
-    if (!availability) return false;
+    if (!realAvailability) return false;
     
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayAvailability = availability.find(day => day.day === dayName);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayAvailability = realAvailability.find(av => av.date === dateStr);
     
-    return dayAvailability?.enabled && 
-           dayAvailability.timeSlots.some(slot => slot.available);
+    return dayAvailability && dayAvailability.timeSlots.length > 0;
   };
 
   const selectedDate = form.watch("date");
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
-
   const [phonePrefix, setPhonePrefix] = useState<string>("+32 ");
+
+  if (loading) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des disponibilités...</p>
+        </CardContent>
+      </Card>
+    );
+  }
   const countryOptions = [
     { code: "BE", label: "Belgique (+32)", prefix: "+32 " },
     { code: "AL", label: "Albanie (+355)", prefix: "+355 " },
