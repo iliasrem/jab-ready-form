@@ -45,7 +45,7 @@ export const VaccinationManagement = () => {
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
+  
   const [newPatientForm, setNewPatientForm] = useState({
     first_name: "",
     last_name: "",
@@ -196,7 +196,7 @@ export const VaccinationManagement = () => {
         vaccination_time: vaccinationTime,
         lot_number: selectedLotNumber,
         expiry_date: selectedInventoryItem.expiry_date,
-        notes: notes || null
+        
       }]);
 
     if (error) {
@@ -211,7 +211,7 @@ export const VaccinationManagement = () => {
       // Reset form
       setSelectedPatientId("");
       setSelectedLotNumber("");
-      setNotes("");
+      
       setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
       setVaccinationTime(format(new Date(), "HH:mm"));
       
@@ -336,14 +336,6 @@ export const VaccinationManagement = () => {
               />
             </div>
 
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="notes">Notes (optionnel)</Label>
-              <Textarea
-                placeholder="Notes sur la vaccination..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
           </div>
 
           <Button onClick={handleAddVaccination} className="w-full">
@@ -368,7 +360,7 @@ export const VaccinationManagement = () => {
                 <TableHead>Patient</TableHead>
                 <TableHead>Lot N°</TableHead>
                 <TableHead>Expiration</TableHead>
-                <TableHead>Notes</TableHead>
+                
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -382,7 +374,7 @@ export const VaccinationManagement = () => {
                   </TableCell>
                   <TableCell>{vaccination.lot_number}</TableCell>
                   <TableCell>{vaccination.expiry_date}</TableCell>
-                  <TableCell>{vaccination.notes || "-"}</TableCell>
+                  
                   <TableCell>
                     <Button
                       variant="outline"
