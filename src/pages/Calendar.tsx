@@ -51,7 +51,7 @@ const serviceLabels: { [key: string]: string } = {
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "4weeks">("4weeks");
+  const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "4weeks">("day");
 
   const getAppointmentsForDate = (date: Date) => {
     return mockAppointments.filter(apt => isSameDay(apt.date, date));
