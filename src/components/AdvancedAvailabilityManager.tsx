@@ -405,10 +405,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     }
   };
 
-  // Charger les disponibilités au changement de mois
+  // Charger les disponibilités au changement de mois ET au montage du composant
   useEffect(() => {
     loadAvailabilityFromSupabase();
   }, [currentMonth]);
+
+  // Recharger les données à chaque fois que le composant est monté
+  useEffect(() => {
+    loadAvailabilityFromSupabase();
+  }, []);
 
   // Naviguer entre les mois
   const navigateMonth = (direction: "prev" | "next") => {
