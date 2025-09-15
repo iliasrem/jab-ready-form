@@ -230,12 +230,10 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     setSelectedWeek(newWeek);
   };
 
-  // Sauvegarder les disponibilités dans Supabase
   const saveAvailabilityToSupabase = async () => {
     try {
       console.log('=== DÉBUT SAUVEGARDE ===');
-      console.log('specificAvailability:', specificAvailability);
-      console.log('currentMonth:', currentMonth);
+      console.log('specificAvailability avant sauvegarde:', JSON.stringify(specificAvailability, null, 2));
       
       // Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
@@ -252,27 +250,37 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       }
 
       // Filtrer seulement les jours avec des créneaux disponibles
-      const availableDays = specificAvailability.filter(day => 
-        day.enabled && day.timeSlots.some(slot => slot.available)
-      );
+      const availableDays = specificAvailability.filter(day => {
+        const hasAvailableSlots = day.enabled && day.timeSlots.some(slot => slot.available);
+        console.log(`Jour ${format(day.date, 'yyyy-MM-dd')} - enabled: ${day.enabled}, créneaux disponibles: ${day.timeSlots.filter(s => s.available).length}`);
+        return hasAvailableSlots;
+      });
 
       console.log('Jours avec créneaux disponibles:', availableDays.length);
+      console.log('Détail des jours disponibles:', availableDays.map(d => ({
+        date: format(d.date, 'yyyy-MM-dd'),
+        enabled: d.enabled,
+        availableSlots: d.timeSlots.filter(s => s.available).map(s => s.time)
+      })));
 
       // Convertir les disponibilités locales en format Supabase
       const supabaseAvailabilities = availableDays.flatMap(dayAvailability => 
         dayAvailability.timeSlots
           .filter(slot => slot.available) // Seulement les créneaux disponibles
-          .map(slot => ({
-            user_id: user.id,
-            specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
-            start_time: slot.time,
-            end_time: slot.time,
-            is_available: true
-          }))
+          .map(slot => {
+            const record = {
+              user_id: user.id,
+              specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
+              start_time: slot.time,
+              end_time: slot.time,
+              is_available: true
+            };
+            console.log('Création enregistrement:', record);
+            return record;
+          })
       );
       
-      console.log('Créneaux à sauvegarder:', supabaseAvailabilities.length);
-      console.log('Données:', supabaseAvailabilities);
+      console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
 
       // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
       const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
@@ -306,7 +314,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         }
         console.log('Insertion réussie');
       } else {
-        console.log('Aucune donnée à insérer');
+        console.log('Aucune donnée à insérer - aucun créneau disponible configuré');
       }
 
       console.log('=== SAUVEGARDE TERMINÉE ===');
