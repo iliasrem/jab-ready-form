@@ -304,14 +304,34 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       
       if (supabaseAvailabilities.length > 0) {
         console.log('Insertion des données...');
-        const { error: insertError } = await supabase
-          .from('specific_date_availability')
-          .insert(supabaseAvailabilities);
+        
+        // Supprimer les doublons potentiels
+        const uniqueAvailabilities = supabaseAvailabilities.filter((item, index, self) => 
+          index === self.findIndex(t => 
+            t.user_id === item.user_id && 
+            t.specific_date === item.specific_date && 
+            t.start_time === item.start_time
+          )
+        );
+        
+        console.log(`Données filtrées: ${uniqueAvailabilities.length} créneaux uniques`);
+        
+        // Traiter par lots de 100 pour éviter les problèmes de taille
+        const batchSize = 100;
+        for (let i = 0; i < uniqueAvailabilities.length; i += batchSize) {
+          const batch = uniqueAvailabilities.slice(i, i + batchSize);
+          console.log(`Insertion du lot ${Math.floor(i/batchSize) + 1}/${Math.ceil(uniqueAvailabilities.length/batchSize)}: ${batch.length} éléments`);
+          
+          const { error: insertError } = await supabase
+            .from('specific_date_availability')
+            .insert(batch);
 
-        if (insertError) {
-          console.error('Erreur d\'insertion:', insertError);
-          throw insertError;
+          if (insertError) {
+            console.error('Erreur d\'insertion du lot:', insertError);
+            throw insertError;
+          }
         }
+        
         console.log('Insertion réussie');
       } else {
         console.log('Aucune donnée à insérer - aucun créneau disponible configuré');
@@ -324,9 +344,25 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       });
     } catch (error) {
       console.error('=== ERREUR SAUVEGARDE ===', error);
+      
+      // Afficher plus de détails sur l'erreur
+      let errorMessage = "Une erreur est survenue lors de la sauvegarde.";
+      if (error && typeof error === 'object') {
+        if ('message' in error) {
+          errorMessage = `Erreur: ${error.message}`;
+        }
+        if ('details' in error) {
+          console.error('Détails de l\'erreur:', error.details);
+          errorMessage += ` Détails: ${error.details}`;
+        }
+        if ('hint' in error) {
+          console.error('Suggestion:', error.hint);
+        }
+      }
+      
       toast({
         title: "Erreur de sauvegarde",
-        description: "Une erreur est survenue lors de la sauvegarde.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
