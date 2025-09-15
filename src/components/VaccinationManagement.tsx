@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 
 interface Patient {
   id: string;
@@ -45,7 +46,9 @@ export const VaccinationManagement = () => {
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
-  
+  const [filterStartDate, setFilterStartDate] = useState<string>("");
+  const [filterEndDate, setFilterEndDate] = useState<string>("");
+  const [filteredVaccinations, setFilteredVaccinations] = useState<Vaccination[]>([]);
   const [newPatientForm, setNewPatientForm] = useState({
     first_name: "",
     last_name: "",
@@ -72,11 +75,67 @@ export const VaccinationManagement = () => {
     }
   };
 
+  const applyDateFilter = () => {
+    let filtered = vaccinations;
+
+    if (filterStartDate || filterEndDate) {
+      filtered = vaccinations.filter(vaccination => {
+        const vaccinationDate = new Date(vaccination.vaccination_date);
+        const startDate = filterStartDate ? new Date(filterStartDate) : null;
+        const endDate = filterEndDate ? new Date(filterEndDate) : null;
+
+        if (startDate && vaccinationDate < startDate) return false;
+        if (endDate && vaccinationDate > endDate) return false;
+        
+        return true;
+      });
+    }
+
+    setFilteredVaccinations(filtered);
+  };
+
+  const exportToExcel = () => {
+    const dataToExport = filteredVaccinations.map(vaccination => ({
+      'Date': format(new Date(vaccination.vaccination_date), "dd/MM/yyyy"),
+      'Heure': vaccination.vaccination_time,
+      'Patient': `${vaccination.patients?.last_name} ${vaccination.patients?.first_name}`,
+      'Email': vaccination.patients?.email || '-',
+      'Lot N°': vaccination.lot_number,
+      'Date d\'expiration': formatExpiryDate(vaccination.expiry_date)
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Vaccinations');
+
+    // Génère le nom de fichier avec les dates
+    let fileName = 'historique-vaccinations';
+    if (filterStartDate || filterEndDate) {
+      if (filterStartDate) fileName += `_du-${filterStartDate}`;
+      if (filterEndDate) fileName += `_au-${filterEndDate}`;
+    } else {
+      fileName += `_${format(new Date(), "yyyy-MM-dd")}`;
+    }
+    fileName += '.xlsx';
+
+    XLSX.writeFile(workbook, fileName);
+    
+    toast({
+      title: "Export réussi",
+      description: `Fichier ${fileName} téléchargé avec succès`
+    });
+  };
+
   useEffect(() => {
     fetchVaccinations();
     fetchPatients();
     fetchInventory();
   }, []);
+
+  // Applique le filtre quand les vaccinations ou les dates changent
+  useEffect(() => {
+    applyDateFilter();
+  }, [vaccinations, filterStartDate, filterEndDate]);
 
   const fetchVaccinations = async () => {
     const { data, error } = await supabase
@@ -97,6 +156,7 @@ export const VaccinationManagement = () => {
       toast({ title: "Erreur", description: "Impossible de charger les vaccinations" });
     } else {
       setVaccinations(data || []);
+      setFilteredVaccinations(data || []); // Initialise les données filtrées
     }
   };
 
@@ -367,12 +427,70 @@ export const VaccinationManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Historique des Vaccinations
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              <CardTitle>Historique des Vaccinations</CardTitle>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Button
+                variant="outline"
+                onClick={exportToExcel}
+                disabled={filteredVaccinations.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exporter Excel
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
+          {/* Filtres par période */}
+          <Card className="mb-6 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="h-4 w-4" />
+              <h3 className="text-sm font-medium">Filtrer par période</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Date de début</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Date de fin</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFilterStartDate("");
+                    setFilterEndDate("");
+                  }}
+                >
+                  Réinitialiser
+                </Button>
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-muted-foreground">
+              {filteredVaccinations.length} vaccination(s) trouvée(s)
+              {filterStartDate || filterEndDate ? 
+                ` pour la période ${filterStartDate ? `du ${format(new Date(filterStartDate), "dd/MM/yyyy")} ` : ''}${filterEndDate ? `au ${format(new Date(filterEndDate), "dd/MM/yyyy")}` : ''}` : 
+                ' au total'
+              }
+            </div>
+          </Card>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -381,12 +499,11 @@ export const VaccinationManagement = () => {
                 <TableHead>Patient</TableHead>
                 <TableHead>Lot N°</TableHead>
                 <TableHead>Expiration</TableHead>
-                
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vaccinations.map((vaccination) => (
+              {filteredVaccinations.map((vaccination) => (
                 <TableRow key={vaccination.id}>
                   <TableCell>{format(new Date(vaccination.vaccination_date), "dd/MM/yyyy")}</TableCell>
                   <TableCell>{vaccination.vaccination_time}</TableCell>
@@ -395,7 +512,6 @@ export const VaccinationManagement = () => {
                   </TableCell>
                   <TableCell>{vaccination.lot_number}</TableCell>
                   <TableCell>{formatExpiryDate(vaccination.expiry_date)}</TableCell>
-                  
                   <TableCell>
                     <Button
                       variant="outline"
