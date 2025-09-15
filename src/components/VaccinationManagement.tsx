@@ -23,6 +23,7 @@ interface VaccineInventoryItem {
   expiry_date: string;
   vials_count: number;
   vials_used: number;
+  doses_used: number;
 }
 
 interface Vaccination {
@@ -156,13 +157,16 @@ export const VaccinationManagement = () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
       .select("*")
-      .gt("vials_count", "vials_used")
       .order("expiry_date");
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger l'inventaire" });
     } else {
-      setInventory(data || []);
+      // Filter client-side to show only items with available doses
+      const availableInventory = (data || []).filter(item => 
+        item.doses_used < (item.vials_count * 7)
+      );
+      setInventory(availableInventory);
     }
   };
 
@@ -219,10 +223,10 @@ export const VaccinationManagement = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
-      // Update inventory (increment vials used)
+      // Update inventory (increment doses used)
       await supabase
         .from("vaccine_inventory")
-        .update({ vials_used: selectedInventoryItem.vials_used + 1 })
+        .update({ doses_used: selectedInventoryItem.doses_used + 1 })
         .eq("id", selectedInventoryItem.id);
 
       // Reset form
@@ -328,7 +332,7 @@ export const VaccinationManagement = () => {
                 <SelectContent>
                   {inventory.map((item) => (
                     <SelectItem key={item.id} value={item.lot_number}>
-                      {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)} ({item.vials_count - item.vials_used} restants)
+                      {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)} ({(item.vials_count * 7) - item.doses_used} doses restantes)
                     </SelectItem>
                   ))}
                 </SelectContent>

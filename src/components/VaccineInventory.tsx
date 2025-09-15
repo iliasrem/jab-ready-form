@@ -17,6 +17,7 @@ interface VaccineInventoryItem {
   reception_date: string;
   vials_count: number;
   vials_used: number;
+  doses_used: number;
   created_at: string;
 }
 
@@ -174,11 +175,13 @@ export const VaccineInventory = () => {
     }
   };
 
-  const updateVialsUsed = async (id: string, newCount: number) => {
-    if (newCount < 0 || newCount > 10) {
+  const updateDosesUsed = async (id: string, newCount: number) => {
+    const maxDoses = 10 * 7; // 10 flacons × 7 doses = 70 doses max
+    
+    if (newCount < 0 || newCount > maxDoses) {
       toast({
         title: "Erreur",
-        description: "Le nombre de flacons utilisés doit être entre 0 et 10",
+        description: `Le nombre de doses utilisées doit être entre 0 et ${maxDoses}`,
         variant: "destructive"
       });
       return;
@@ -187,21 +190,21 @@ export const VaccineInventory = () => {
     try {
       const { error } = await supabase
         .from('vaccine_inventory')
-        .update({ vials_used: newCount })
+        .update({ doses_used: newCount })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Succès",
-        description: "Nombre de flacons utilisés mis à jour"
+        description: "Nombre de doses utilisées mis à jour"
       });
       fetchInventory();
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le nombre de flacons",
+        description: "Impossible de mettre à jour le nombre de doses",
         variant: "destructive"
       });
     }
@@ -289,8 +292,8 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
-                  <TableHead>Flacons restants</TableHead>
-                  <TableHead>Flacons utilisés</TableHead>
+                  <TableHead>Doses restantes</TableHead>
+                  <TableHead>Doses utilisées</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -322,17 +325,20 @@ export const VaccineInventory = () => {
                     </TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
                     <TableCell>
-                      <span className={item.vials_count - item.vials_used === 0 ? "text-red-600 font-semibold" : ""}>
-                        {item.vials_count - item.vials_used} / {item.vials_count}
+                      <span className={(item.vials_count * 7) - item.doses_used === 0 ? "text-red-600 font-semibold" : ""}>
+                        {(item.vials_count * 7) - item.doses_used} / {item.vials_count * 7} doses
                       </span>
+                      <div className="text-xs text-muted-foreground">
+                        ({Math.floor(((item.vials_count * 7) - item.doses_used) / 7)} flacons entiers restants)
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         min="0"
-                        max="10"
-                        value={item.vials_used}
-                        onChange={(e) => updateVialsUsed(item.id, parseInt(e.target.value) || 0)}
+                        max={item.vials_count * 7}
+                        value={item.doses_used}
+                        onChange={(e) => updateDosesUsed(item.id, parseInt(e.target.value) || 0)}
                         className="w-20"
                       />
                     </TableCell>
