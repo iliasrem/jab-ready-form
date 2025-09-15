@@ -8,11 +8,11 @@ import { fr } from "date-fns/locale";
 
 interface AvailabilitySlot {
   id: string;
-  day_of_week?: number;
-  specific_date?: string;
   start_time: string;
   end_time: string;
   is_available: boolean;
+  label: string;
+  type: 'weekly' | 'specific';
 }
 
 const DAYS_OF_WEEK = [
@@ -20,8 +20,7 @@ const DAYS_OF_WEEK = [
 ];
 
 export const AvailabilityOverview = () => {
-  const [weeklyAvailability, setWeeklyAvailability] = useState<AvailabilitySlot[]>([]);
-  const [specificAvailability, setSpecificAvailability] = useState<AvailabilitySlot[]>([]);
+  const [allAvailability, setAllAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +29,8 @@ export const AvailabilityOverview = () => {
 
   const fetchAvailability = async () => {
     try {
+      const combinedSlots: AvailabilitySlot[] = [];
+
       // Fetch weekly availability
       const { data: weeklyData, error: weeklyError } = await supabase
         .from('availability')
@@ -38,6 +39,22 @@ export const AvailabilityOverview = () => {
         .order('start_time', { ascending: true });
 
       if (weeklyError) throw weeklyError;
+
+      // Transform weekly data
+      if (weeklyData) {
+        weeklyData.forEach(slot => {
+          if (slot.day_of_week !== undefined) {
+            combinedSlots.push({
+              id: slot.id,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              is_available: slot.is_available,
+              label: `${DAYS_OF_WEEK[slot.day_of_week]} (récurrent)`,
+              type: 'weekly'
+            });
+          }
+        });
+      }
 
       // Fetch specific date availability
       const { data: specificData, error: specificError } = await supabase
@@ -48,8 +65,23 @@ export const AvailabilityOverview = () => {
 
       if (specificError) throw specificError;
 
-      setWeeklyAvailability(weeklyData || []);
-      setSpecificAvailability(specificData || []);
+      // Transform specific data
+      if (specificData) {
+        specificData.forEach(slot => {
+          if (slot.specific_date) {
+            combinedSlots.push({
+              id: slot.id,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              is_available: slot.is_available,
+              label: format(new Date(slot.specific_date), 'EEEE d MMMM yyyy', { locale: fr }),
+              type: 'specific'
+            });
+          }
+        });
+      }
+
+      setAllAvailability(combinedSlots);
     } catch (error) {
       console.error('Erreur lors du chargement des disponibilités:', error);
     } finally {
@@ -61,32 +93,6 @@ export const AvailabilityOverview = () => {
     return time.slice(0, 5); // Remove seconds
   };
 
-  const groupWeeklyByDay = () => {
-    const grouped: { [key: number]: AvailabilitySlot[] } = {};
-    weeklyAvailability.forEach(slot => {
-      if (slot.day_of_week !== undefined) {
-        if (!grouped[slot.day_of_week]) {
-          grouped[slot.day_of_week] = [];
-        }
-        grouped[slot.day_of_week].push(slot);
-      }
-    });
-    return grouped;
-  };
-
-  const groupSpecificByDate = () => {
-    const grouped: { [key: string]: AvailabilitySlot[] } = {};
-    specificAvailability.forEach(slot => {
-      if (slot.specific_date) {
-        if (!grouped[slot.specific_date]) {
-          grouped[slot.specific_date] = [];
-        }
-        grouped[slot.specific_date].push(slot);
-      }
-    });
-    return grouped;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -95,99 +101,81 @@ export const AvailabilityOverview = () => {
     );
   }
 
-  const weeklyGrouped = groupWeeklyByDay();
-  const specificGrouped = groupSpecificByDate();
+  if (allAvailability.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Toutes les Disponibilités
+          </CardTitle>
+          <CardDescription>
+            Aperçu de tous vos créneaux disponibles
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center py-8">
+            Aucune disponibilité configurée pour le moment
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Group slots by their label (day or date)
+  const groupedSlots: { [key: string]: AvailabilitySlot[] } = {};
+  allAvailability.forEach(slot => {
+    if (!groupedSlots[slot.label]) {
+      groupedSlots[slot.label] = [];
+    }
+    groupedSlots[slot.label].push(slot);
+  });
+
+  const availableCount = allAvailability.filter(s => s.is_available).length;
+  const weeklyCount = allAvailability.filter(s => s.type === 'weekly' && s.is_available).length;
+  const specificCount = allAvailability.filter(s => s.type === 'specific' && s.is_available).length;
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        
-        {/* Weekly Availability */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Disponibilités Hebdomadaires
-            </CardTitle>
-            <CardDescription>
-              Créneaux récurrents par jour de la semaine
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {Object.keys(weeklyGrouped).length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucune disponibilité hebdomadaire configurée
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {Object.entries(weeklyGrouped).map(([dayOfWeek, slots]) => (
-                  <div key={dayOfWeek} className="border rounded-lg p-3">
-                    <h4 className="font-medium mb-2">
-                      {DAYS_OF_WEEK[parseInt(dayOfWeek)]}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {slots.map(slot => (
-                        <Badge 
-                          key={slot.id} 
-                          variant={slot.is_available ? "default" : "secondary"}
-                          className="flex items-center gap-1"
-                        >
-                          <Clock className="h-3 w-3" />
-                          {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+      
+      {/* All Availability */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Toutes les Disponibilités
+          </CardTitle>
+          <CardDescription>
+            Aperçu de tous vos créneaux disponibles
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(groupedSlots).map(([label, slots]) => (
+              <div key={label} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium">{label}</h4>
+                  <Badge variant="outline" className="text-xs">
+                    {slots.filter(s => s.is_available).length} créneaux
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {slots.map(slot => (
+                    <Badge 
+                      key={slot.id} 
+                      variant={slot.is_available ? "default" : "secondary"}
+                      className="flex items-center gap-1"
+                    >
+                      <Clock className="h-3 w-3" />
+                      {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Specific Date Availability */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Disponibilités Spécifiques
-            </CardTitle>
-            <CardDescription>
-              Créneaux pour des dates particulières
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {Object.keys(specificGrouped).length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucune disponibilité spécifique configurée
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {Object.entries(specificGrouped)
-                  .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-                  .map(([date, slots]) => (
-                  <div key={date} className="border rounded-lg p-3">
-                    <h4 className="font-medium mb-2">
-                      {format(new Date(date), 'EEEE d MMMM yyyy', { locale: fr })}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {slots.map(slot => (
-                        <Badge 
-                          key={slot.id} 
-                          variant={slot.is_available ? "default" : "secondary"}
-                          className="flex items-center gap-1"
-                        >
-                          <Clock className="h-3 w-3" />
-                          {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Stats */}
       <Card>
@@ -198,15 +186,23 @@ export const AvailabilityOverview = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-primary">
-                {weeklyAvailability.filter(s => s.is_available).length}
+                {availableCount}
               </div>
               <div className="text-sm text-muted-foreground">
-                Créneaux hebdomadaires
+                Total créneaux
               </div>
             </div>
             <div>
               <div className="text-2xl font-bold text-primary">
-                {specificAvailability.filter(s => s.is_available).length}
+                {weeklyCount}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Créneaux récurrents
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary">
+                {specificCount}
               </div>
               <div className="text-sm text-muted-foreground">
                 Créneaux spécifiques
@@ -214,18 +210,10 @@ export const AvailabilityOverview = () => {
             </div>
             <div>
               <div className="text-2xl font-bold text-primary">
-                {Object.keys(weeklyGrouped).length}
+                {Object.keys(groupedSlots).length}
               </div>
               <div className="text-sm text-muted-foreground">
-                Jours configurés
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-primary">
-                {Object.keys(specificGrouped).length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Dates spécifiques
+                Jours/dates configurés
               </div>
             </div>
           </div>
