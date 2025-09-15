@@ -41,6 +41,12 @@ const CalendarPage = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
+      console.log("=== CHARGEMENT RENDEZ-VOUS CALENDRIER ===");
+      
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Utilisateur authentifié:", user ? user.id : "Non authentifié");
+      
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -56,7 +62,10 @@ const CalendarPage = () => {
             phone
           )
         `)
-        .eq('status', 'confirmed');
+        .eq('status', 'pending');
+
+      console.log("Données brutes rendez-vous:", data);
+      console.log("Erreur récupération:", error);
 
       if (error) {
         console.error('Error fetching appointments:', error);
@@ -77,6 +86,7 @@ const CalendarPage = () => {
         services: apt.services || []
       }));
 
+      console.log("Rendez-vous formatés:", formattedAppointments);
       setAppointments(formattedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
