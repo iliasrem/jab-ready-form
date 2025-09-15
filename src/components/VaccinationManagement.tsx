@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Calendar, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 interface Patient {
@@ -16,10 +16,9 @@ interface Patient {
   first_name: string;
   last_name: string;
   email?: string;
-  phone?: string;
 }
 
-interface VaccineInventory {
+interface VaccineInventoryItem {
   id: string;
   lot_number: string;
   expiry_date: string;
@@ -41,19 +40,19 @@ interface Vaccination {
 export const VaccinationManagement = () => {
   const [vaccinations, setVaccinations] = useState<Vaccination[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [inventory, setInventory] = useState<VaccineInventory[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState("");
-  const [selectedLotNumber, setSelectedLotNumber] = useState("");
-  const [vaccinationDate, setVaccinationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [vaccinationTime, setVaccinationTime] = useState(format(new Date(), 'HH:mm'));
-  const [notes, setNotes] = useState("");
-  const [isAddPatientDialogOpen, setIsAddPatientDialogOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState({
+  const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
+  const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [newPatientForm, setNewPatientForm] = useState({
     first_name: "",
     last_name: "",
-    email: "",
-    phone: ""
+    email: ""
   });
+  const [showNewPatientForm, setShowNewPatientForm] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchVaccinations();
@@ -62,200 +61,140 @@ export const VaccinationManagement = () => {
   }, []);
 
   const fetchVaccinations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('vaccinations')
-        .select(`
-          *,
-          patients:patient_id (
-            id,
-            first_name,
-            last_name,
-            email,
-            phone
-          )
-        `)
-        .order('vaccination_date', { ascending: false })
-        .order('vaccination_time', { ascending: false });
+    const { data, error } = await supabase
+      .from("vaccinations")
+      .select(`
+        *,
+        patients:patient_id (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .order("vaccination_date", { ascending: false })
+      .order("vaccination_time", { ascending: false });
 
-      if (error) throw error;
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de charger les vaccinations" });
+    } else {
       setVaccinations(data || []);
-    } catch (error) {
-      console.error('Error fetching vaccinations:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les vaccinations",
-        variant: "destructive",
-      });
     }
   };
 
   const fetchPatients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('status', 'active')
-        .order('last_name');
+    const { data, error } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, email")
+      .eq("status", "active")
+      .order("last_name");
 
-      if (error) throw error;
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de charger les patients" });
+    } else {
       setPatients(data || []);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
     }
   };
 
   const fetchInventory = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('vaccine_inventory')
-        .select('*')
-        .gt('vials_count', 'vials_used')
-        .order('expiry_date');
+    const { data, error } = await supabase
+      .from("vaccine_inventory")
+      .select("*")
+      .gt("vials_count", "vials_used")
+      .order("expiry_date");
 
-      if (error) throw error;
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de charger l'inventaire" });
+    } else {
       setInventory(data || []);
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
     }
   };
 
   const handleAddPatient = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('patients')
-        .insert([{
-          first_name: newPatient.first_name,
-          last_name: newPatient.last_name,
-          email: newPatient.email || null,
-          phone: newPatient.phone || null,
-          status: 'active'
-        }])
-        .select()
-        .single();
+    if (!newPatientForm.first_name || !newPatientForm.last_name) {
+      toast({ title: "Erreur", description: "Nom et prénom obligatoires" });
+      return;
+    }
 
-      if (error) throw error;
+    const { data, error } = await supabase
+      .from("patients")
+      .insert([{
+        first_name: newPatientForm.first_name,
+        last_name: newPatientForm.last_name,
+        email: newPatientForm.email || null
+      }])
+      .select()
+      .single();
 
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible d'ajouter le patient" });
+    } else {
       setPatients([...patients, data]);
       setSelectedPatientId(data.id);
-      setNewPatient({ first_name: "", last_name: "", email: "", phone: "" });
-      setIsAddPatientDialogOpen(false);
-      
-      toast({
-        title: "Patient ajouté",
-        description: "Le patient a été ajouté avec succès",
-      });
-    } catch (error) {
-      console.error('Error adding patient:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le patient",
-        variant: "destructive",
-      });
+      setNewPatientForm({ first_name: "", last_name: "", email: "" });
+      setShowNewPatientForm(false);
+      toast({ title: "Succès", description: "Patient ajouté avec succès" });
     }
   };
 
   const handleAddVaccination = async () => {
     if (!selectedPatientId || !selectedLotNumber) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un patient et un lot de vaccin",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Veuillez sélectionner un patient et un lot de vaccin" });
       return;
     }
 
     const selectedInventoryItem = inventory.find(item => item.lot_number === selectedLotNumber);
     if (!selectedInventoryItem) {
-      toast({
-        title: "Erreur",
-        description: "Lot de vaccin introuvable",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Lot de vaccin introuvable" });
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('vaccinations')
-        .insert([{
-          patient_id: selectedPatientId,
-          vaccination_date: vaccinationDate,
-          vaccination_time: vaccinationTime,
-          lot_number: selectedLotNumber,
-          expiry_date: selectedInventoryItem.expiry_date,
-          notes: notes || null
-        }]);
+    const { error } = await supabase
+      .from("vaccinations")
+      .insert([{
+        patient_id: selectedPatientId,
+        vaccination_date: vaccinationDate,
+        vaccination_time: vaccinationTime,
+        lot_number: selectedLotNumber,
+        expiry_date: selectedInventoryItem.expiry_date,
+        notes: notes || null
+      }]);
 
-      if (error) throw error;
-
-      // Update vaccine inventory
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
+    } else {
+      // Update inventory (increment vials used)
       await supabase
-        .from('vaccine_inventory')
-        .update({ 
-          vials_used: selectedInventoryItem.vials_used + 1 
-        })
-        .eq('id', selectedInventoryItem.id);
+        .from("vaccine_inventory")
+        .update({ vials_used: selectedInventoryItem.vials_used + 1 })
+        .eq("id", selectedInventoryItem.id);
 
       // Reset form
       setSelectedPatientId("");
       setSelectedLotNumber("");
-      setVaccinationDate(format(new Date(), 'yyyy-MM-dd'));
-      setVaccinationTime(format(new Date(), 'HH:mm'));
       setNotes("");
-
+      setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+      setVaccinationTime(format(new Date(), "HH:mm"));
+      
       // Refresh data
       fetchVaccinations();
       fetchInventory();
-
-      toast({
-        title: "Vaccination enregistrée",
-        description: "La vaccination a été enregistrée avec succès",
-      });
-    } catch (error) {
-      console.error('Error adding vaccination:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer la vaccination",
-        variant: "destructive",
-      });
+      
+      toast({ title: "Succès", description: "Vaccination enregistrée avec succès" });
     }
   };
 
-  const handleDeleteVaccination = async (vaccinationId: string, lotNumber: string) => {
-    try {
-      const { error } = await supabase
-        .from('vaccinations')
-        .delete()
-        .eq('id', vaccinationId);
+  const handleDeleteVaccination = async (id: string) => {
+    const { error } = await supabase
+      .from("vaccinations")
+      .delete()
+      .eq("id", id);
 
-      if (error) throw error;
-
-      // Update vaccine inventory (decrease vials_used)
-      const inventoryItem = inventory.find(item => item.lot_number === lotNumber);
-      if (inventoryItem) {
-        await supabase
-          .from('vaccine_inventory')
-          .update({ 
-            vials_used: Math.max(0, inventoryItem.vials_used - 1) 
-          })
-          .eq('lot_number', lotNumber);
-      }
-
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de supprimer la vaccination" });
+    } else {
       fetchVaccinations();
-      fetchInventory();
-
-      toast({
-        title: "Vaccination supprimée",
-        description: "La vaccination a été supprimée avec succès",
-      });
-    } catch (error) {
-      console.error('Error deleting vaccination:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la vaccination",
-        variant: "destructive",
-      });
+      toast({ title: "Succès", description: "Vaccination supprimée avec succès" });
     }
   };
 
@@ -263,8 +202,10 @@ export const VaccinationManagement = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Nouvelle Vaccination</CardTitle>
-          <CardDescription>Enregistrer une nouvelle vaccination</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Nouvelle Vaccination
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,69 +219,47 @@ export const VaccinationManagement = () => {
                   <SelectContent>
                     {patients.map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
-                        {patient.first_name} {patient.last_name}
+                        {patient.last_name} {patient.first_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Ajouter un nouveau patient</DialogTitle>
-                      <DialogDescription>
-                        Saisissez les informations du nouveau patient
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="firstName">Prénom</Label>
-                        <Input
-                          id="firstName"
-                          value={newPatient.first_name}
-                          onChange={(e) => setNewPatient({ ...newPatient, first_name: e.target.value })}
-                          placeholder="Prénom"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName">Nom</Label>
-                        <Input
-                          id="lastName"
-                          value={newPatient.last_name}
-                          onChange={(e) => setNewPatient({ ...newPatient, last_name: e.target.value })}
-                          placeholder="Nom de famille"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={newPatient.email}
-                          onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
-                          placeholder="Email (optionnel)"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Téléphone</Label>
-                        <Input
-                          id="phone"
-                          value={newPatient.phone}
-                          onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                          placeholder="Téléphone (optionnel)"
-                        />
-                      </div>
-                      <Button onClick={handleAddPatient} className="w-full">
-                        Ajouter le patient
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowNewPatientForm(!showNewPatientForm)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {showNewPatientForm && (
+                <Card className="p-4 mt-2">
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Prénom"
+                      value={newPatientForm.first_name}
+                      onChange={(e) => setNewPatientForm({...newPatientForm, first_name: e.target.value})}
+                    />
+                    <Input
+                      placeholder="Nom"
+                      value={newPatientForm.last_name}
+                      onChange={(e) => setNewPatientForm({...newPatientForm, last_name: e.target.value})}
+                    />
+                    <Input
+                      placeholder="Email (optionnel)"
+                      value={newPatientForm.email}
+                      onChange={(e) => setNewPatientForm({...newPatientForm, email: e.target.value})}
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleAddPatient} size="sm">Ajouter</Button>
+                      <Button variant="outline" onClick={() => setShowNewPatientForm(false)} size="sm">
+                        Annuler
                       </Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                  </div>
+                </Card>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -360,9 +279,8 @@ export const VaccinationManagement = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Date de vaccination</Label>
               <Input
-                id="date"
                 type="date"
                 value={vaccinationDate}
                 onChange={(e) => setVaccinationDate(e.target.value)}
@@ -370,25 +288,22 @@ export const VaccinationManagement = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="time">Heure</Label>
+              <Label htmlFor="time">Heure de vaccination</Label>
               <Input
-                id="time"
                 type="time"
                 value={vaccinationTime}
                 onChange={(e) => setVaccinationTime(e.target.value)}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optionnel)</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes additionnelles..."
-              rows={3}
-            />
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Notes (optionnel)</Label>
+              <Textarea
+                placeholder="Notes sur la vaccination..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
           </div>
 
           <Button onClick={handleAddVaccination} className="w-full">
@@ -399,55 +314,48 @@ export const VaccinationManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Historique des vaccinations</CardTitle>
-          <CardDescription>Liste des vaccinations effectuées</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Historique des Vaccinations
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {vaccinations.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Aucune vaccination enregistrée
-              </p>
-            ) : (
-              vaccinations.map((vaccination) => (
-                <div key={vaccination.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <div className="font-semibold">
-                        {vaccination.patients.first_name} {vaccination.patients.last_name}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {vaccination.vaccination_date}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {vaccination.vaccination_time}
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <strong>Lot:</strong> {vaccination.lot_number} - 
-                        <strong> Exp:</strong> {vaccination.expiry_date}
-                      </div>
-                      {vaccination.notes && (
-                        <div className="text-sm text-muted-foreground">
-                          <strong>Notes:</strong> {vaccination.notes}
-                        </div>
-                      )}
-                    </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Heure</TableHead>
+                <TableHead>Patient</TableHead>
+                <TableHead>Lot N°</TableHead>
+                <TableHead>Expiration</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vaccinations.map((vaccination) => (
+                <TableRow key={vaccination.id}>
+                  <TableCell>{format(new Date(vaccination.vaccination_date), "dd/MM/yyyy")}</TableCell>
+                  <TableCell>{vaccination.vaccination_time}</TableCell>
+                  <TableCell>
+                    {vaccination.patients?.last_name} {vaccination.patients?.first_name}
+                  </TableCell>
+                  <TableCell>{vaccination.lot_number}</TableCell>
+                  <TableCell>{vaccination.expiry_date}</TableCell>
+                  <TableCell>{vaccination.notes || "-"}</TableCell>
+                  <TableCell>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteVaccination(vaccination.id, vaccination.lot_number)}
+                      onClick={() => handleDeleteVaccination(vaccination.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
