@@ -7,6 +7,7 @@ import { PatientList } from "@/components/PatientList";
 import { VaccineReservationForm } from "@/components/VaccineReservationForm";
 import { VaccineList } from "@/components/VaccineList";
 import { VaccineReservationsList } from "@/components/VaccineReservationsList";
+import { AvailabilityOverview } from "@/components/AvailabilityOverview";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -43,9 +44,10 @@ const AdminDashboard = () => {
             
             <TabsContent value="availability" className="mt-6">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold">Gestion des Disponibilités</h3>
-                <p className="text-sm text-muted-foreground">Définir les créneaux disponibles de base</p>
+                <h3 className="text-lg font-semibold">Aperçu des Disponibilités</h3>
+                <p className="text-sm text-muted-foreground">Visualisez toutes les disponibilités enregistrées</p>
               </div>
+              <AvailabilityOverview />
             </TabsContent>
             
             <TabsContent value="patients" className="mt-6">
