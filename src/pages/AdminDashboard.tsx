@@ -17,23 +17,26 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <div className="bg-background border-b py-3 px-4">
+        <div className="container mx-auto">
+          <div className="flex gap-4">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/">
+                Réservation
+              </Link>
+            </Button>
+            <Button variant="default" size="sm">
+              Administration
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="appointments" className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex gap-4">
-                  <Button asChild variant="secondary" size="sm">
-                    <Link to="/">
-                      Réservation
-                    </Link>
-                  </Button>
-                  <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/20">
-                    Administration
-                  </Button>
-                </div>
-              </div>
-            
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
