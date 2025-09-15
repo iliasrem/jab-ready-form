@@ -202,6 +202,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vaccine_inventory: {
+        Row: {
+          created_at: string
+          expiry_date: string
+          id: string
+          lot_number: string
+          reception_date: string
+          updated_at: string
+          vials_count: number
+          vials_used: number
+        }
+        Insert: {
+          created_at?: string
+          expiry_date: string
+          id?: string
+          lot_number: string
+          reception_date?: string
+          updated_at?: string
+          vials_count?: number
+          vials_used?: number
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          lot_number?: string
+          reception_date?: string
+          updated_at?: string
+          vials_count?: number
+          vials_used?: number
+        }
+        Relationships: []
+      }
       vaccine_reservations: {
         Row: {
           created_at: string
