@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isSameMonth, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Appointment {
   id: string;
@@ -17,32 +19,6 @@ interface Appointment {
   services?: string[];
 }
 
-// Mock appointments data avec plus de données pour 4 semaines
-const mockAppointments: Appointment[] = [
-  // Semaine 1
-  { id: "1", time: "09:00", patientName: "Marie Dupont", date: new Date(), services: ["covid"] },
-  { id: "2", time: "10:30", patientName: "Pierre Martin", date: new Date(), services: ["grippe"] },
-  { id: "3", time: "14:00", patientName: "Sophie Bernard", date: addDays(new Date(), 1), services: ["covid", "grippe"] },
-  { id: "4", time: "11:15", patientName: "Jean Moreau", date: addDays(new Date(), 2), services: ["covid"] },
-  
-  // Semaine 2
-  { id: "5", time: "09:30", patientName: "Claire Dubois", date: addDays(new Date(), 7), services: ["grippe"] },
-  { id: "6", time: "15:45", patientName: "Marc Leroy", date: addDays(new Date(), 8), services: ["covid", "grippe"] },
-  { id: "7", time: "10:00", patientName: "Anne Petit", date: addDays(new Date(), 9), services: ["covid"] },
-  { id: "8", time: "16:30", patientName: "Paul Roux", date: addDays(new Date(), 10), services: ["grippe"] },
-  
-  // Semaine 3
-  { id: "9", time: "09:15", patientName: "Lucie Blanc", date: addDays(new Date(), 14), services: ["covid"] },
-  { id: "10", time: "14:30", patientName: "Thomas Noir", date: addDays(new Date(), 15), services: ["covid", "grippe"] },
-  { id: "11", time: "11:00", patientName: "Emma Vert", date: addDays(new Date(), 16), services: ["grippe"] },
-  { id: "12", time: "15:15", patientName: "Louis Bleu", date: addDays(new Date(), 17), services: ["covid"] },
-  
-  // Semaine 4
-  { id: "13", time: "10:45", patientName: "Julie Rose", date: addDays(new Date(), 21), services: ["covid", "grippe"] },
-  { id: "14", time: "16:00", patientName: "Hugo Gris", date: addDays(new Date(), 22), services: ["grippe"] },
-  { id: "15", time: "09:45", patientName: "Léa Violet", date: addDays(new Date(), 23), services: ["covid"] },
-  { id: "16", time: "14:45", patientName: "Nathan Orange", date: addDays(new Date(), 24), services: ["covid", "grippe"] },
-];
 
 const serviceLabels: { [key: string]: string } = {
   covid: "COVID",
@@ -52,15 +28,103 @@ const serviceLabels: { [key: string]: string } = {
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "4weeks">("day");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fonction pour formater l'heure correctement (09:00 au lieu de 09:00:00)
+  const formatTime = (timeString: string) => {
+    return timeString.substring(0, 5); // Garde seulement HH:MM
+  };
+
+  // Fonction pour récupérer les rendez-vous depuis Supabase
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          appointment_date,
+          appointment_time,
+          services,
+          status,
+          notes,
+          patients!inner (
+            first_name,
+            last_name,
+            phone
+          )
+        `)
+        .eq('status', 'confirmed');
+
+      if (error) {
+        console.error('Error fetching appointments:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les rendez-vous",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const formattedAppointments: Appointment[] = (data || []).map((apt: any) => ({
+        id: apt.id,
+        time: formatTime(apt.appointment_time),
+        patientName: `${apt.patients.first_name} ${apt.patients.last_name}`,
+        phone: apt.patients.phone,
+        date: new Date(apt.appointment_date),
+        services: apt.services || []
+      }));
+
+      setAppointments(formattedAppointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Charger les données au montage du composant
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Écouter les changements en temps réel
+  useEffect(() => {
+    const channel = supabase
+      .channel('appointments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        () => {
+          fetchAppointments(); // Recharger les données en cas de changement
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const getAppointmentsForDate = (date: Date) => {
-    return mockAppointments.filter(apt => isSameDay(apt.date, date));
+    return appointments.filter(apt => isSameDay(apt.date, date));
   };
 
   const getAppointmentsForWeek = (date: Date) => {
     const weekStart = startOfWeek(date, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
-    return mockAppointments.filter(apt => 
+    return appointments.filter(apt => 
       apt.date >= weekStart && apt.date <= weekEnd
     );
   };
@@ -338,6 +402,21 @@ const CalendarPage = () => {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background py-8 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Chargement des rendez-vous...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
