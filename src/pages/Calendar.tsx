@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer, X } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isSameMonth, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,16 +251,12 @@ const CalendarPage = () => {
               </div>
               <div className="flex justify-center">
                 {covidVaccines > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    {covidVaccines}
-                  </Badge>
+                  <X className="h-4 w-4 text-primary" />
                 )}
               </div>
               <div className="flex justify-center">
                 {grippeVaccines > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    {grippeVaccines}
-                  </Badge>
+                  <X className="h-4 w-4 text-primary" />
                 )}
               </div>
             </div>
