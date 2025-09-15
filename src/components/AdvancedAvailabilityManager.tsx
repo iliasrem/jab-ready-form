@@ -233,14 +233,16 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Sauvegarder les disponibilités dans Supabase
   const saveAvailabilityToSupabase = async () => {
     try {
-      alert('Début de la sauvegarde...');
-      console.log('Début de la sauvegarde, specificAvailability:', specificAvailability);
+      console.log('=== DÉBUT SAUVEGARDE ===');
+      console.log('specificAvailability:', specificAvailability);
+      console.log('currentMonth:', currentMonth);
       
       // Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Utilisateur:', user);
+      console.log('Utilisateur connecté:', user?.id);
       
       if (!user) {
+        console.error('Pas d\'utilisateur connecté');
         toast({
           title: "Erreur d'authentification",
           description: "Vous devez être connecté pour sauvegarder les disponibilités.",
@@ -249,42 +251,48 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         return;
       }
 
-      if (!specificAvailability || specificAvailability.length === 0) {
-        alert('Aucune disponibilité à sauvegarder - specificAvailability est vide');
-        toast({
-          title: "Aucune donnée",
-          description: "Aucune disponibilité à sauvegarder.",
-          variant: "destructive"
-        });
-        return;
-      }
+      // Filtrer seulement les jours avec des créneaux disponibles
+      const availableDays = specificAvailability.filter(day => 
+        day.enabled && day.timeSlots.some(slot => slot.available)
+      );
+
+      console.log('Jours avec créneaux disponibles:', availableDays.length);
 
       // Convertir les disponibilités locales en format Supabase
-      const supabaseAvailabilities = specificAvailability.flatMap(dayAvailability => 
-        dayAvailability.timeSlots.map(slot => ({
-          user_id: user.id,
-          specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
-          start_time: slot.time,
-          end_time: slot.time, // Pour des créneaux de 15 minutes, on utilise la même heure
-          is_available: slot.available && dayAvailability.enabled
-        }))
+      const supabaseAvailabilities = availableDays.flatMap(dayAvailability => 
+        dayAvailability.timeSlots
+          .filter(slot => slot.available) // Seulement les créneaux disponibles
+          .map(slot => ({
+            user_id: user.id,
+            specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
+            start_time: slot.time,
+            end_time: slot.time,
+            is_available: true
+          }))
       );
       
-      alert(`Préparation de ${supabaseAvailabilities.length} créneaux à sauvegarder`);
-      console.log('Données à sauvegarder:', supabaseAvailabilities);
+      console.log('Créneaux à sauvegarder:', supabaseAvailabilities.length);
+      console.log('Données:', supabaseAvailabilities);
 
       // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
+      const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+      
+      console.log('Suppression période:', monthStart, 'à', monthEnd);
+      
       const { error: deleteError } = await supabase
         .from('specific_date_availability')
         .delete()
         .eq('user_id', user.id)
-        .gte('specific_date', format(startOfMonth(currentMonth), 'yyyy-MM-dd'))
-        .lte('specific_date', format(endOfMonth(currentMonth), 'yyyy-MM-dd'));
+        .gte('specific_date', monthStart)
+        .lte('specific_date', monthEnd);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Erreur suppression:', deleteError);
+        throw deleteError;
+      }
 
-      alert(`Suppression terminée, ${supabaseAvailabilities.length} créneaux à insérer`);
-      console.log('Nombre de créneaux à insérer:', supabaseAvailabilities.length);
+      console.log('Suppression terminée');
       
       if (supabaseAvailabilities.length > 0) {
         console.log('Insertion des données...');
@@ -294,23 +302,20 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
         if (insertError) {
           console.error('Erreur d\'insertion:', insertError);
-          alert('Erreur lors de l\'insertion: ' + insertError.message);
           throw insertError;
         }
         console.log('Insertion réussie');
-        alert('Insertion réussie!');
       } else {
         console.log('Aucune donnée à insérer');
-        alert('Aucune donnée à insérer');
       }
 
-      alert('Sauvegarde terminée avec succès!');
+      console.log('=== SAUVEGARDE TERMINÉE ===');
       toast({
         title: "Sauvegarde réussie",
-        description: "Les disponibilités ont été sauvegardées dans la base de données.",
+        description: `${supabaseAvailabilities.length} créneaux sauvegardés avec succès.`,
       });
     } catch (error) {
-      console.error('Error saving availability:', error);
+      console.error('=== ERREUR SAUVEGARDE ===', error);
       toast({
         title: "Erreur de sauvegarde",
         description: "Une erreur est survenue lors de la sauvegarde.",
