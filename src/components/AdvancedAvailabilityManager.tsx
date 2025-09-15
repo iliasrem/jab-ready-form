@@ -372,10 +372,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
       // Créer un set des créneaux réservés pour une recherche rapide
       const reservedSlots = new Set(
-        appointmentsData?.map(apt => `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`) || []
+        appointmentsData?.map(apt => {
+          console.log('Rendez-vous brut:', apt.appointment_date, apt.appointment_time);
+          const key = `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`;
+          console.log('Clé générée pour réservation:', key);
+          return key;
+        }) || []
       );
 
-      console.log('Créneaux réservés:', Array.from(reservedSlots));
+      console.log('TOUS les créneaux réservés:', Array.from(reservedSlots));
 
        // Convertir les données Supabase en format local
        const groupedByDate = availabilityData?.reduce((acc, item) => {
@@ -383,9 +388,11 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
          if (!acc[dateKey]) {
            acc[dateKey] = [];
          }
-         // Normaliser le format d'heure : "09:00:00" -> "09:00"
-         const normalizedTime = item.start_time.slice(0, 5);
-         const isReserved = reservedSlots.has(`${dateKey}_${normalizedTime}`);
+          // Normaliser le format d'heure : "09:00:00" -> "09:00"
+          const normalizedTime = item.start_time.slice(0, 5);
+          const slotKey = `${dateKey}_${normalizedTime}`;
+          const isReserved = reservedSlots.has(slotKey);
+          console.log(`Vérification créneau: ${slotKey} - réservé: ${isReserved}`);
          
          acc[dateKey].push({
            time: normalizedTime,
