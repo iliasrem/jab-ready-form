@@ -358,18 +358,20 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       console.log('Créneaux disponibles chargés:', data?.length || 0);
       console.log('Données:', data);
 
-      // Convertir les données Supabase en format local
-      const groupedByDate = data?.reduce((acc, item) => {
-        const dateKey = item.specific_date;
-        if (!acc[dateKey]) {
-          acc[dateKey] = [];
-        }
-        acc[dateKey].push({
-          time: item.start_time,
-          available: true // Tous les créneaux chargés sont disponibles
-        });
-        return acc;
-      }, {} as Record<string, { time: string; available: boolean; }[]>);
+       // Convertir les données Supabase en format local
+       const groupedByDate = data?.reduce((acc, item) => {
+         const dateKey = item.specific_date;
+         if (!acc[dateKey]) {
+           acc[dateKey] = [];
+         }
+         // Normaliser le format d'heure : "09:00:00" -> "09:00"
+         const normalizedTime = item.start_time.slice(0, 5);
+         acc[dateKey].push({
+           time: normalizedTime,
+           available: true // Tous les créneaux chargés sont disponibles
+         });
+         return acc;
+       }, {} as Record<string, { time: string; available: boolean; }[]>);
 
       const loadedAvailabilities: SpecificDateAvailability[] = Object.entries(groupedByDate || {}).map(([dateStr, slots]) => {
         const date = new Date(dateStr);
