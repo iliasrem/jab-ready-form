@@ -8,17 +8,24 @@ const PatientBooking = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-brand text-brand-foreground py-8">
-        <div className="container mx-auto px-4 flex flex-col items-center gap-4">
-          <div className="text-center flex-1">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-4">
+              <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/20">
+                Réservation
+              </Button>
+              <Button asChild variant="secondary" size="sm">
+                <Link to="/admin">
+                  Administration
+                </Link>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="text-center">
             <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
             <p className="text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
           </div>
-          <Button asChild variant="secondary" size="sm" className="gap-2">
-            <Link to="/admin">
-              <Settings className="h-4 w-4" />
-              Administration
-            </Link>
-          </Button>
         </div>
       </div>
 

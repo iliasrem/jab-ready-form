@@ -21,9 +21,17 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold mb-4">Administration</h2>
-                <p className="text-xl opacity-90">Gérer la disponibilité et les réservations des patients</p>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex gap-4">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link to="/">
+                      Réservation
+                    </Link>
+                  </Button>
+                  <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/20">
+                    Administration
+                  </Button>
+                </div>
               </div>
             
               <TabsList className="grid w-full grid-cols-6">
