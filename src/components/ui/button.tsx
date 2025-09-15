@@ -11,7 +11,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-brand text-brand-foreground hover:bg-brand/90",
         brand: "bg-brand text-brand-foreground hover:bg-brand/90",
-        success: "bg-brand text-brand-foreground hover:bg-brand/90",
+        success: "bg-success text-success-foreground hover:bg-success/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
