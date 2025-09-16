@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 
-import { cn, formatDateForDb } from "@/lib/utils";
+import { cn, formatDateForDb, formatTimeForDisplay } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -139,7 +139,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         if (!groupedAvailability[item.specific_date]) {
           groupedAvailability[item.specific_date] = [];
         }
-        groupedAvailability[item.specific_date].push(item.start_time);
+        groupedAvailability[item.specific_date].push(formatTimeForDisplay(item.start_time));
       });
 
       // Convertir en format final
