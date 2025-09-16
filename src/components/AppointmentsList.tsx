@@ -10,6 +10,7 @@ import { format, parseISO, compareAsc } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatTimeForDisplay } from "@/lib/utils";
 
 export interface Appointment {
   id: string;
@@ -343,8 +344,8 @@ export function AppointmentsList() {
                                   {format(parseISO(appointment.date), "EEEE d MMMM yyyy", { locale: fr })}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {appointment.time}
-                                </div>
+                                   {formatTimeForDisplay(appointment.time)}
+                                 </div>
                               </>
                             )}
                           </div>
