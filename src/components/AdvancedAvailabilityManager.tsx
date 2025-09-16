@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Save, X, Calendar as CalendarIcon } from "lucide-react";
 import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { formatTimeForDisplay } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SpecificDateAvailability {
@@ -410,7 +411,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const reservedSlots = new Set(
         appointmentsData?.map(apt => {
           console.log('Rendez-vous brut:', apt.appointment_date, apt.appointment_time);
-          const key = `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`;
+          const key = `${apt.appointment_date}_${formatTimeForDisplay(apt.appointment_time)}`;
           console.log('Clé générée pour réservation:', key);
           return key;
         }) || []

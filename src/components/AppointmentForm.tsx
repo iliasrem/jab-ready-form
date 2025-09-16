@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, formatDateForDb } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -189,7 +189,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           last_name: data.lastName,
           email: normalizedEmail,
           phone: normalizedPhone,
-          birth_date: birthDate.toISOString().split('T')[0],
+          birth_date: formatDateForDb(birthDate),
           notes: normalizedNotes,
         });
 
@@ -215,7 +215,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         .from('appointments')
         .insert({
           patient_id: newPatientId,
-          appointment_date: data.date.toISOString().split('T')[0],
+          appointment_date: formatDateForDb(data.date),
           appointment_time: data.time,
           services: data.services as any, // Force type conversion
           notes: data.notes || null,

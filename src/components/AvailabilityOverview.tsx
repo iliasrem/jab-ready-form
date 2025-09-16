@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
+import { formatTimeForDisplay } from "@/lib/utils";
 
 interface WeeklyAvailability {
   id: string;
@@ -79,7 +80,7 @@ export const AvailabilityOverview = () => {
 
       // Create a set of reserved slots for quick lookup
       const reservedSlotsSet = new Set(
-        appointmentsData?.map(apt => `${apt.appointment_date}_${apt.appointment_time.slice(0, 5)}`) || []
+        appointmentsData?.map(apt => `${apt.appointment_date}_${formatTimeForDisplay(apt.appointment_time)}`) || []
       );
 
       setWeeklyAvailability(weeklyData || []);

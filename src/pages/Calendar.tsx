@@ -9,6 +9,7 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, ad
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatTimeForDisplay } from "@/lib/utils";
 
 interface Appointment {
   id: string;
@@ -33,9 +34,7 @@ const CalendarPage = () => {
   const { toast } = useToast();
 
   // Fonction pour formater l'heure correctement (09:00 au lieu de 09:00:00)
-  const formatTime = (timeString: string) => {
-    return timeString.substring(0, 5); // Garde seulement HH:MM
-  };
+  const formatTime = formatTimeForDisplay;
 
   // Fonction pour récupérer les rendez-vous depuis Supabase
   const fetchAppointments = async () => {

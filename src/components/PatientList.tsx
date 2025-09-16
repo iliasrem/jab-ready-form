@@ -8,6 +8,7 @@ import { Edit, Save, X, Trash2, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDateForDb } from "@/lib/utils";
 
 export interface Patient {
   id: string;
@@ -131,7 +132,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           last_name: lastName,
           email: editedPatient.email,
           phone: editedPatient.phone,
-          birth_date: editedPatient.birthDate ? editedPatient.birthDate.toISOString().split('T')[0] : null,
+          birth_date: editedPatient.birthDate ? formatDateForDb(editedPatient.birthDate) : null,
           status: editedPatient.status.toLowerCase() as 'active' | 'inactive',
           notes: editedPatient.notes
         })

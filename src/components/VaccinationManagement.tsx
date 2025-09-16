@@ -9,6 +9,8 @@ import { Plus, Trash2, Calendar, Clock, Download, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { formatTimeForDisplay } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 interface Patient {

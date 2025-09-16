@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateForDb } from "@/lib/utils";
 import { Trash2, Plus, Package, Edit2, Check, X } from "lucide-react";
 import { format, parse } from "date-fns";
 
@@ -33,7 +34,7 @@ export const VaccineInventory = () => {
   const [formData, setFormData] = useState({
     lot_number: "",
     expiry_date: "",
-    reception_date: new Date().toISOString().split('T')[0]
+    reception_date: formatDateForDb(new Date())
   });
   const { toast } = useToast();
 
@@ -94,7 +95,7 @@ export const VaccineInventory = () => {
       setFormData({
         lot_number: "",
         expiry_date: "",
-        reception_date: new Date().toISOString().split('T')[0]
+        reception_date: formatDateForDb(new Date())
       });
       setIsDialogOpen(false);
       fetchInventory();
