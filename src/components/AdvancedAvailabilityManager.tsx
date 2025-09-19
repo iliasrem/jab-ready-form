@@ -283,59 +283,43 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       
       console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
 
-      // Supprimer les anciennes disponibilités pour ce mois et cet utilisateur
-      const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
-      
-      console.log('Suppression période:', monthStart, 'à', monthEnd);
-      
-      const { error: deleteError } = await supabase
-        .from('specific_date_availability')
-        .delete()
-        .eq('user_id', user.id)
-        .gte('specific_date', monthStart)
-        .lte('specific_date', monthEnd);
-
-      if (deleteError) {
-        console.error('Erreur suppression:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('Suppression terminée');
-      
+      // Utiliser upsert au lieu de delete+insert pour éviter les erreurs de contrainte
       if (supabaseAvailabilities.length > 0) {
-        console.log('Insertion des données...');
+        console.log('Upsert des données...');
         
         // Supprimer les doublons potentiels
         const uniqueAvailabilities = supabaseAvailabilities.filter((item, index, self) => 
           index === self.findIndex(t => 
             t.user_id === item.user_id && 
             t.specific_date === item.specific_date && 
-            t.start_time === item.start_time
+            t.start_time === item.start_time &&
+            t.end_time === item.end_time
           )
         );
         
         console.log(`Données filtrées: ${uniqueAvailabilities.length} créneaux uniques`);
         
-        // Traiter par lots de 100 pour éviter les problèmes de taille
+        // Traiter par lots avec upsert
         const batchSize = 100;
         for (let i = 0; i < uniqueAvailabilities.length; i += batchSize) {
           const batch = uniqueAvailabilities.slice(i, i + batchSize);
-          console.log(`Insertion du lot ${Math.floor(i/batchSize) + 1}/${Math.ceil(uniqueAvailabilities.length/batchSize)}: ${batch.length} éléments`);
+          console.log(`Upsert du lot ${Math.floor(i/batchSize) + 1}/${Math.ceil(uniqueAvailabilities.length/batchSize)}: ${batch.length} éléments`);
           
-          const { error: insertError } = await supabase
+          const { error: upsertError } = await supabase
             .from('specific_date_availability')
-            .insert(batch);
+            .upsert(batch, {
+              onConflict: 'user_id,specific_date,start_time,end_time'
+            });
 
-          if (insertError) {
-            console.error('Erreur d\'insertion du lot:', insertError);
-            throw insertError;
+          if (upsertError) {
+            console.error('Erreur d\'upsert du lot:', upsertError);
+            throw upsertError;
           }
         }
         
-        console.log('Insertion réussie');
+        console.log('Upsert réussi');
       } else {
-        console.log('Aucune donnée à insérer - aucun créneau disponible configuré');
+        console.log('Aucune donnée à sauvegarder');
       }
 
       console.log('=== SAUVEGARDE TERMINÉE ===');
