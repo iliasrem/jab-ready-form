@@ -116,9 +116,8 @@ export function ExistingPatientAppointment() {
       const endDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 0), 'yyyy-MM-dd');
 
       const { data, error } = await supabase
-        .from('specific_date_availability')
+        .from('public_available_slots')
         .select('*')
-        .eq('is_available', true)
         .gte('specific_date', startDate)
         .lte('specific_date', endDate)
         .order('specific_date', { ascending: true });

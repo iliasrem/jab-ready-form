@@ -118,9 +118,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       console.log('Période form:', startDate, 'à', endDate);
 
       const { data, error } = await supabase
-        .from('specific_date_availability')
+        .from('public_available_slots')
         .select('*')
-        .eq('is_available', true)
         .gte('specific_date', startDate)
         .lte('specific_date', endDate)
         .order('specific_date', { ascending: true });

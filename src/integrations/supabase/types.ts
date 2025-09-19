@@ -365,7 +365,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_available_slots: {
+        Row: {
+          created_at: string | null
+          end_time: string | null
+          specific_date: string | null
+          start_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time?: string | null
+          specific_date?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string | null
+          specific_date?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_user_role: {
