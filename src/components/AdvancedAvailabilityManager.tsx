@@ -445,7 +445,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         // Compléter avec tous les créneaux par défaut
         const allSlots = defaultTimeSlots.map(time => {
           const existingSlot = slots.find(s => s.time === time);
-          return existingSlot || { time, available: false, reserved: false };
+          if (existingSlot) {
+            return existingSlot;
+          }
+          // Si le créneau n'existe pas mais que d'autres créneaux existent pour ce jour,
+          // le marquer comme fermé plutôt que non disponible
+          const slotKey = `${dateStr}_${time}`;
+          const isReserved = reservedSlots.has(slotKey);
+          return { time, available: false, reserved: isReserved };
         });
         
         return {
