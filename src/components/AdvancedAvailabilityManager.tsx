@@ -382,12 +382,11 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
-      // Charger SEULEMENT les créneaux disponibles
+      // Charger TOUS les créneaux pour l'administration
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('specific_date_availability')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_available', true) // SEULEMENT les créneaux disponibles
         .gte('specific_date', rangeStart)
         .lte('specific_date', rangeEnd);
 
