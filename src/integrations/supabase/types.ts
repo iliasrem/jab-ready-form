@@ -249,6 +249,7 @@ export type Database = {
       vaccine_inventory: {
         Row: {
           created_at: string
+          doses_per_vial: number
           doses_used: number
           expiry_date: string
           id: string
@@ -260,6 +261,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          doses_per_vial?: number
           doses_used?: number
           expiry_date: string
           id?: string
@@ -271,6 +273,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          doses_per_vial?: number
           doses_used?: number
           expiry_date?: string
           id?: string

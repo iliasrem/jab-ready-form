@@ -33,13 +33,15 @@ export const VaccineInventory = () => {
     expiry_date: "",
     vials_count: 10,
     vials_used: 0,
+    doses_per_vial: 7,
   });
   const [formData, setFormData] = useState({
     lot_number: "",
     expiry_date: "",
     reception_date: formatDateForDb(new Date()),
     vials_count: 10,
-    vials_used: 0
+    vials_used: 0,
+    doses_per_vial: 7,
   });
   const { toast } = useToast();
 
@@ -51,7 +53,12 @@ export const VaccineInventory = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInventory(data || []);
+      // Ensure doses_per_vial has a default value for existing records
+      const dataWithDefaults = (data || []).map(item => ({
+        ...item,
+        doses_per_vial: item.doses_per_vial || 7
+      }));
+      setInventory(dataWithDefaults);
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'inventaire:', error);
       toast({
@@ -102,7 +109,8 @@ export const VaccineInventory = () => {
         expiry_date: "",
         reception_date: formatDateForDb(new Date()),
         vials_count: 10,
-        vials_used: 0
+        vials_used: 0,
+        doses_per_vial: 7,
       });
       setIsDialogOpen(false);
       fetchInventory();
@@ -149,12 +157,19 @@ export const VaccineInventory = () => {
       expiry_date: formatExpiryDate(item.expiry_date),
       vials_count: item.vials_count,
       vials_used: item.vials_used,
+      doses_per_vial: item.doses_per_vial || 7,
     });
   };
 
   const cancelEditing = () => {
     setEditingRow(null);
-    setEditFormData({ lot_number: "", expiry_date: "", vials_count: 10, vials_used: 0 });
+    setEditFormData({ 
+      lot_number: "", 
+      expiry_date: "", 
+      vials_count: 10, 
+      vials_used: 0, 
+      doses_per_vial: 7 
+    });
   };
 
   const saveEdit = async (id: string) => {
@@ -166,6 +181,7 @@ export const VaccineInventory = () => {
           expiry_date: editFormData.expiry_date,
           vials_count: editFormData.vials_count,
           vials_used: editFormData.vials_used,
+          doses_per_vial: editFormData.doses_per_vial,
         })
         .eq('id', id);
 
@@ -189,7 +205,7 @@ export const VaccineInventory = () => {
 
   const updateDosesUsed = async (id: string, newCount: number) => {
     const item = inventory.find(i => i.id === id);
-    const maxDoses = item ? item.vials_count * 7 : 70; // Calcul dynamique basé sur le nombre de flacons
+    const maxDoses = item ? item.vials_count * item.doses_per_vial : 70; // Calcul dynamique basé sur le nombre de flacons et doses par flacon
     
     if (newCount < 0 || newCount > maxDoses) {
       toast({
@@ -304,6 +320,17 @@ export const VaccineInventory = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="doses_per_vial">Doses par flacon</Label>
+                    <Input
+                      id="doses_per_vial"
+                      type="number"
+                      min="1"
+                      value={formData.doses_per_vial}
+                      onChange={(e) => setFormData({...formData, doses_per_vial: parseInt(e.target.value) || 7})}
+                      required
+                    />
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Annuler
@@ -328,6 +355,7 @@ export const VaccineInventory = () => {
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
                   <TableHead>Flacons</TableHead>
+                  <TableHead>Doses/flacon</TableHead>
                   <TableHead>Doses restantes</TableHead>
                   <TableHead>Doses utilisées</TableHead>
                   <TableHead>Actions</TableHead>
@@ -395,18 +423,31 @@ export const VaccineInventory = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className={(item.vials_count * 7) - item.doses_used === 0 ? "text-red-600 font-semibold" : ""}>
-                        {(item.vials_count * 7) - item.doses_used} / {item.vials_count * 7} doses
+                      {editingRow === item.id ? (
+                        <Input
+                          type="number"
+                          min="1"
+                          value={editFormData.doses_per_vial}
+                          onChange={(e) => setEditFormData({...editFormData, doses_per_vial: parseInt(e.target.value) || 7})}
+                          className="w-16"
+                        />
+                      ) : (
+                        item.doses_per_vial || 7
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className={(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used === 0 ? "text-red-600 font-semibold" : ""}>
+                        {(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used} / {item.vials_count * (item.doses_per_vial || 7)} doses
                       </span>
                       <div className="text-xs text-muted-foreground">
-                        ({Math.floor(((item.vials_count * 7) - item.doses_used) / 7)} flacons entiers restants)
+                        ({Math.floor(((item.vials_count * (item.doses_per_vial || 7)) - item.doses_used) / (item.doses_per_vial || 7))} flacons entiers restants)
                       </div>
                     </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         min="0"
-                        max={item.vials_count * 7}
+                        max={item.vials_count * (item.doses_per_vial || 7)}
                         value={item.doses_used}
                         onChange={(e) => updateDosesUsed(item.id, parseInt(e.target.value) || 0)}
                         className="w-20"
