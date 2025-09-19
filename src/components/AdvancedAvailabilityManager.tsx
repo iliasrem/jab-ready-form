@@ -250,36 +250,37 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         return;
       }
 
-      // Filtrer seulement les jours avec des créneaux disponibles
-      const availableDays = specificAvailability.filter(day => {
-        const hasAvailableSlots = day.enabled && day.timeSlots.some(slot => slot.available);
-        console.log(`Jour ${format(day.date, 'yyyy-MM-dd')} - enabled: ${day.enabled}, créneaux disponibles: ${day.timeSlots.filter(s => s.available).length}`);
-        return hasAvailableSlots;
-      });
-
-      console.log('Jours avec créneaux disponibles:', availableDays.length);
-      console.log('Détail des jours disponibles:', availableDays.map(d => ({
-        date: format(d.date, 'yyyy-MM-dd'),
-        enabled: d.enabled,
-        availableSlots: d.timeSlots.filter(s => s.available).map(s => s.time)
-      })));
-
-      // Convertir les disponibilités locales en format Supabase
-      const supabaseAvailabilities = availableDays.flatMap(dayAvailability => 
-        dayAvailability.timeSlots
-          .filter(slot => slot.available) // Seulement les créneaux disponibles
-          .map(slot => {
-            const record = {
-              user_id: user.id,
-              specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
-              start_time: slot.time,
-              end_time: slot.time,
-              is_available: true
-            };
-            console.log('Création enregistrement:', record);
-            return record;
-          })
+      // Convertir TOUS les créneaux configurés (disponibles ET non disponibles)
+      const supabaseAvailabilities = specificAvailability.flatMap(dayAvailability => 
+        dayAvailability.timeSlots.map(slot => ({
+          user_id: user.id,
+          specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
+          start_time: slot.time,
+          end_time: slot.time,
+          is_available: dayAvailability.enabled && slot.available
+        }))
       );
+
+      console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
+      console.log('Créneaux disponibles:', supabaseAvailabilities.filter(s => s.is_available).length);
+      console.log('Créneaux fermés:', supabaseAvailabilities.filter(s => !s.is_available).length);
+
+      // Supprimer d'abord tous les anciens créneaux pour cette période
+      const dates = [...new Set(supabaseAvailabilities.map(s => s.specific_date))];
+      console.log('Suppression des anciens créneaux pour les dates:', dates);
+      
+      for (const date of dates) {
+        const { error: deleteError } = await supabase
+          .from('specific_date_availability')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('specific_date', date);
+
+        if (deleteError) {
+          console.error('Erreur lors de la suppression pour', date, ':', deleteError);
+          throw deleteError;
+        }
+      }
       
       console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
 
