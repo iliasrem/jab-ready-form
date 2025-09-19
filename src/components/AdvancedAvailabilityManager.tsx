@@ -376,9 +376,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Charger une plage plus large : 3 mois avant et après le mois courant
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 3)), 'yyyy-MM-dd');
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 3)), 'yyyy-MM-dd');
+      // Charger une plage plus large : 6 mois avant et après le mois courant
+      const rangeStart = format(startOfMonth(subMonths(currentMonth, 6)), 'yyyy-MM-dd');
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 6)), 'yyyy-MM-dd');
       
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
