@@ -376,10 +376,11 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+      // Charger une plage plus large : 3 mois avant et après le mois courant
+      const rangeStart = format(startOfMonth(subMonths(currentMonth, 3)), 'yyyy-MM-dd');
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 3)), 'yyyy-MM-dd');
       
-      console.log('Chargement période:', monthStart, 'à', monthEnd);
+      console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
       // Charger SEULEMENT les créneaux disponibles
       const { data: availabilityData, error: availabilityError } = await supabase
@@ -387,8 +388,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         .select('*')
         .eq('user_id', user.id)
         .eq('is_available', true) // SEULEMENT les créneaux disponibles
-        .gte('specific_date', monthStart)
-        .lte('specific_date', monthEnd);
+        .gte('specific_date', rangeStart)
+        .lte('specific_date', rangeEnd);
 
       if (availabilityError) throw availabilityError;
 
@@ -396,8 +397,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('appointments')
         .select('appointment_date, appointment_time, status')
-        .gte('appointment_date', monthStart)
-        .lte('appointment_date', monthEnd)
+        .gte('appointment_date', rangeStart)
+        .lte('appointment_date', rangeEnd)
         .neq('status', 'cancelled'); // Exclure les rendez-vous annulés
 
       if (appointmentsError) throw appointmentsError;
