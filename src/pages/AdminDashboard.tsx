@@ -6,6 +6,7 @@ import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
 import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
+import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,9 +22,10 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
+                <TabsTrigger value="existing-booking">RDV Patient Existant</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
                 <TabsTrigger value="manager">Manager</TabsTrigger>
                 <TabsTrigger value="inventory">Inventaire</TabsTrigger>
@@ -44,6 +46,10 @@ const AdminDashboard = () => {
             
             <TabsContent value="patients" className="mt-6">
               <PatientList />
+            </TabsContent>
+
+            <TabsContent value="existing-booking" className="mt-6">
+              <ExistingPatientAppointment />
             </TabsContent>
             
             <TabsContent value="calendar" className="mt-6">
