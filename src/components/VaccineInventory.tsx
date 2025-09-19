@@ -30,11 +30,15 @@ export const VaccineInventory = () => {
   const [editFormData, setEditFormData] = useState({
     lot_number: "",
     expiry_date: "",
+    vials_count: 10,
+    vials_used: 0,
   });
   const [formData, setFormData] = useState({
     lot_number: "",
     expiry_date: "",
-    reception_date: formatDateForDb(new Date())
+    reception_date: formatDateForDb(new Date()),
+    vials_count: 10,
+    vials_used: 0
   });
   const { toast } = useToast();
 
@@ -95,7 +99,9 @@ export const VaccineInventory = () => {
       setFormData({
         lot_number: "",
         expiry_date: "",
-        reception_date: formatDateForDb(new Date())
+        reception_date: formatDateForDb(new Date()),
+        vials_count: 10,
+        vials_used: 0
       });
       setIsDialogOpen(false);
       fetchInventory();
@@ -140,12 +146,14 @@ export const VaccineInventory = () => {
     setEditFormData({
       lot_number: item.lot_number,
       expiry_date: formatExpiryDate(item.expiry_date),
+      vials_count: item.vials_count,
+      vials_used: item.vials_used,
     });
   };
 
   const cancelEditing = () => {
     setEditingRow(null);
-    setEditFormData({ lot_number: "", expiry_date: "" });
+    setEditFormData({ lot_number: "", expiry_date: "", vials_count: 10, vials_used: 0 });
   };
 
   const saveEdit = async (id: string) => {
@@ -155,6 +163,8 @@ export const VaccineInventory = () => {
         .update({
           lot_number: editFormData.lot_number,
           expiry_date: editFormData.expiry_date,
+          vials_count: editFormData.vials_count,
+          vials_used: editFormData.vials_used,
         })
         .eq('id', id);
 
@@ -177,7 +187,8 @@ export const VaccineInventory = () => {
   };
 
   const updateDosesUsed = async (id: string, newCount: number) => {
-    const maxDoses = 10 * 7; // 10 flacons × 7 doses = 70 doses max
+    const item = inventory.find(i => i.id === id);
+    const maxDoses = item ? item.vials_count * 7 : 70; // Calcul dynamique basé sur le nombre de flacons
     
     if (newCount < 0 || newCount > maxDoses) {
       toast({
@@ -270,6 +281,28 @@ export const VaccineInventory = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="vials_count">Nombre de flacons</Label>
+                    <Input
+                      id="vials_count"
+                      type="number"
+                      min="1"
+                      value={formData.vials_count}
+                      onChange={(e) => setFormData({...formData, vials_count: parseInt(e.target.value) || 1})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="vials_used">Flacons utilisés</Label>
+                    <Input
+                      id="vials_used"
+                      type="number"
+                      min="0"
+                      value={formData.vials_used}
+                      onChange={(e) => setFormData({...formData, vials_used: parseInt(e.target.value) || 0})}
+                      required
+                    />
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Annuler
@@ -293,6 +326,7 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
+                  <TableHead>Flacons</TableHead>
                   <TableHead>Doses restantes</TableHead>
                   <TableHead>Doses utilisées</TableHead>
                   <TableHead>Actions</TableHead>
@@ -325,6 +359,40 @@ export const VaccineInventory = () => {
                       )}
                     </TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>
+                      {editingRow === item.id ? (
+                        <div className="space-y-1">
+                          <div>
+                            <Label className="text-xs">Total</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={editFormData.vials_count}
+                              onChange={(e) => setEditFormData({...editFormData, vials_count: parseInt(e.target.value) || 1})}
+                              className="w-16 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Utilisés</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max={editFormData.vials_count}
+                              value={editFormData.vials_used}
+                              onChange={(e) => setEditFormData({...editFormData, vials_used: parseInt(e.target.value) || 0})}
+                              className="w-16 text-xs"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm">
+                          <div>{item.vials_used} / {item.vials_count} utilisés</div>
+                          <div className="text-xs text-muted-foreground">
+                            {item.vials_count - item.vials_used} restants
+                          </div>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <span className={(item.vials_count * 7) - item.doses_used === 0 ? "text-red-600 font-semibold" : ""}>
                         {(item.vials_count * 7) - item.doses_used} / {item.vials_count * 7} doses
