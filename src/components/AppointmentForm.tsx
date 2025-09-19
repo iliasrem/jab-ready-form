@@ -682,11 +682,13 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() || 
-                            date < new Date("1900-01-01") ||
-                            !isDateAvailable(date)
-                          }
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today || 
+                                   date < new Date("1900-01-01") ||
+                                   !isDateAvailable(date);
+                          }}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                         />
