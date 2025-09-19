@@ -75,10 +75,22 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     onAvailabilityChange(newAvailability);
   };
 
-  // Basculer l'activation d'un jour
+  // Basculer l'activation d'un jour - ouvre/ferme tous les créneaux
   const toggleDay = (date: Date) => {
     const current = getAvailabilityForDate(date);
-    const updated = { ...current, enabled: !current.enabled };
+    const newEnabled = !current.enabled;
+    
+    // Si on active le jour, ouvrir tous les créneaux, sinon les fermer tous
+    const updatedTimeSlots = current.timeSlots.map(slot => ({
+      ...slot,
+      available: newEnabled && !slot.reserved // Respecter les réservations existantes
+    }));
+    
+    const updated = { 
+      ...current, 
+      enabled: newEnabled,
+      timeSlots: updatedTimeSlots
+    };
     updateDateAvailability(updated);
   };
 
@@ -251,13 +263,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       }
 
       // Convertir TOUS les créneaux configurés (disponibles ET non disponibles)
+      // Respecter directement la valeur available du slot, sans dépendre de enabled
       const supabaseAvailabilities = specificAvailability.flatMap(dayAvailability => 
         dayAvailability.timeSlots.map(slot => ({
           user_id: user.id,
           specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
           start_time: slot.time,
           end_time: slot.time,
-          is_available: dayAvailability.enabled && slot.available
+          is_available: slot.available // Respecter directement la valeur available du slot
         }))
       );
 
@@ -442,9 +455,12 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           return { time, available: false, reserved: isReserved };
         });
         
+        // Déterminer si le jour est enabled en fonction des créneaux disponibles
+        const hasAvailableSlots = allSlots.some(slot => slot.available);
+        
         return {
           date,
-          enabled: true, // Le jour est ouvert s'il a des créneaux disponibles
+          enabled: hasAvailableSlots, // Le jour est ouvert seulement s'il a des créneaux disponibles
           timeSlots: allSlots
         };
       });
