@@ -19,6 +19,7 @@ interface VaccineInventoryItem {
   vials_count: number;
   vials_used: number;
   doses_used: number;
+  doses_per_vial: number;
   created_at: string;
 }
 
