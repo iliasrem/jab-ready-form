@@ -380,13 +380,30 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
-      // Charger TOUS les créneaux pour l'administration
-      const { data: availabilityData, error: availabilityError } = await supabase
+      // Charger TOUS les créneaux - pour les admins tous, pour les autres seulement les disponibles
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      const isAdmin = userProfile?.role === 'admin';
+
+      let query = supabase
         .from('specific_date_availability')
         .select('*')
-        .eq('user_id', user.id)
         .gte('specific_date', rangeStart)
         .lte('specific_date', rangeEnd);
+
+      // Si c'est un admin, charger tous les créneaux de cet utilisateur
+      // Si c'est un visiteur/patient, charger seulement les créneaux disponibles
+      if (isAdmin) {
+        query = query.eq('user_id', user.id);
+      } else {
+        query = query.eq('is_available', true);
+      }
+
+      const { data: availabilityData, error: availabilityError } = await query;
 
       console.log(`Données chargées: ${availabilityData?.length || 0} créneaux`);
       console.log('Aperçu des données:', availabilityData?.slice(0, 5));
