@@ -110,12 +110,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       setLoading(true);
       console.log('=== CHARGEMENT DISPONIBILITÉS FORM ===');
       
-      // Charger les prochains 3 mois
+      // Charger les prochains 6 mois pour permettre les réservations à l'avance
       const currentDate = new Date();
       const startDate = format(currentDate, 'yyyy-MM-dd');
-      const endDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 0), 'yyyy-MM-dd');
+      const endDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 6, 0), 'yyyy-MM-dd');
       
-      console.log('Période form:', startDate, 'à', endDate);
+      console.log('Période form (6 mois):', startDate, 'à', endDate);
 
       const { data, error } = await supabase
         .from('public_available_slots')
