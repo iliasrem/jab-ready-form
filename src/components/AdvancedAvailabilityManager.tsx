@@ -376,9 +376,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Charger une plage plus large : 6 mois avant et après le mois courant
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 6)), 'yyyy-MM-dd');
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 6)), 'yyyy-MM-dd');
+      // Charger une plage beaucoup plus large pour voir tous les créneaux
+      const rangeStart = format(startOfMonth(subMonths(currentMonth, 12)), 'yyyy-MM-dd');
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 12)), 'yyyy-MM-dd');
       
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
@@ -389,6 +389,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         .eq('user_id', user.id)
         .gte('specific_date', rangeStart)
         .lte('specific_date', rangeEnd);
+
+      console.log(`Données chargées: ${availabilityData?.length || 0} créneaux`);
+      console.log('Aperçu des données:', availabilityData?.slice(0, 5));
 
       if (availabilityError) throw availabilityError;
 
@@ -783,7 +786,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                </Card>
              </div>
          </CardContent>
-       </Card>
-     </div>
-   );
- }
+        </Card>
+      </div>
+    );
+  };
