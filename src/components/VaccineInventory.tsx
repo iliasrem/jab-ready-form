@@ -20,6 +20,7 @@ interface VaccineInventoryItem {
   vials_used: number;
   doses_used: number;
   doses_per_vial: number;
+  doses_lost: number;
   created_at: string;
 }
 
@@ -34,6 +35,7 @@ export const VaccineInventory = () => {
     vials_count: 10,
     vials_used: 0,
     doses_per_vial: 7,
+    doses_lost: 0,
   });
   const [formData, setFormData] = useState({
     lot_number: "",
@@ -42,6 +44,7 @@ export const VaccineInventory = () => {
     vials_count: 10,
     vials_used: 0,
     doses_per_vial: 7,
+    doses_lost: 0,
   });
   const { toast } = useToast();
 
@@ -53,10 +56,11 @@ export const VaccineInventory = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Ensure doses_per_vial has a default value for existing records
+      // Ensure doses_per_vial and doses_lost have default values for existing records
       const dataWithDefaults = (data || []).map(item => ({
         ...item,
-        doses_per_vial: item.doses_per_vial || 7
+        doses_per_vial: item.doses_per_vial || 7,
+        doses_lost: item.doses_lost || 0
       }));
       setInventory(dataWithDefaults);
     } catch (error) {
@@ -111,6 +115,7 @@ export const VaccineInventory = () => {
         vials_count: 10,
         vials_used: 0,
         doses_per_vial: 7,
+        doses_lost: 0,
       });
       setIsDialogOpen(false);
       fetchInventory();
@@ -158,6 +163,7 @@ export const VaccineInventory = () => {
       vials_count: item.vials_count,
       vials_used: item.vials_used,
       doses_per_vial: item.doses_per_vial || 7,
+      doses_lost: item.doses_lost || 0,
     });
   };
 
@@ -168,7 +174,8 @@ export const VaccineInventory = () => {
       expiry_date: "", 
       vials_count: 10, 
       vials_used: 0, 
-      doses_per_vial: 7 
+      doses_per_vial: 7,
+      doses_lost: 0 
     });
   };
 
@@ -182,6 +189,7 @@ export const VaccineInventory = () => {
           vials_count: editFormData.vials_count,
           vials_used: editFormData.vials_used,
           doses_per_vial: editFormData.doses_per_vial,
+          doses_lost: editFormData.doses_lost,
         })
         .eq('id', id);
 
@@ -205,7 +213,7 @@ export const VaccineInventory = () => {
 
   const updateDosesUsed = async (id: string, newCount: number) => {
     const item = inventory.find(i => i.id === id);
-    const maxDoses = item ? item.vials_count * item.doses_per_vial : 70; // Calcul dynamique basé sur le nombre de flacons et doses par flacon
+    const maxDoses = item ? (item.vials_count * item.doses_per_vial) - item.doses_lost : 70; // Calcul dynamique basé sur le nombre de flacons, doses par flacon moins les doses perdues
     
     if (newCount < 0 || newCount > maxDoses) {
       toast({
@@ -331,6 +339,16 @@ export const VaccineInventory = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="doses_lost">Doses perdues</Label>
+                    <Input
+                      id="doses_lost"
+                      type="number"
+                      min="0"
+                      value={formData.doses_lost}
+                      onChange={(e) => setFormData({...formData, doses_lost: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Annuler
@@ -356,6 +374,7 @@ export const VaccineInventory = () => {
                   <TableHead>Date de réception</TableHead>
                   <TableHead>Flacons</TableHead>
                   <TableHead>Doses/flacon</TableHead>
+                  <TableHead>Doses perdues</TableHead>
                   <TableHead>Doses restantes</TableHead>
                   <TableHead>Doses utilisées</TableHead>
                   <TableHead>Actions</TableHead>
@@ -436,18 +455,31 @@ export const VaccineInventory = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className={(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used === 0 ? "text-red-600 font-semibold" : ""}>
-                        {(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used} / {item.vials_count * (item.doses_per_vial || 7)} doses
+                      {editingRow === item.id ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editFormData.doses_lost}
+                          onChange={(e) => setEditFormData({...editFormData, doses_lost: parseInt(e.target.value) || 0})}
+                          className="w-16"
+                        />
+                      ) : (
+                        item.doses_lost || 0
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className={(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0) === 0 ? "text-red-600 font-semibold" : ""}>
+                        {(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0)} / {item.vials_count * (item.doses_per_vial || 7)} doses
                       </span>
                       <div className="text-xs text-muted-foreground">
-                        ({Math.floor(((item.vials_count * (item.doses_per_vial || 7)) - item.doses_used) / (item.doses_per_vial || 7))} flacons entiers restants)
+                        ({Math.floor(((item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0)) / (item.doses_per_vial || 7))} flacons entiers restants)
                       </div>
                     </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         min="0"
-                        max={item.vials_count * (item.doses_per_vial || 7)}
+                        max={item.vials_count * (item.doses_per_vial || 7) - (item.doses_lost || 0)}
                         value={item.doses_used}
                         onChange={(e) => updateDosesUsed(item.id, parseInt(e.target.value) || 0)}
                         className="w-20"
