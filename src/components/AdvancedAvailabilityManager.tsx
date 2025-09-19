@@ -419,11 +419,11 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           const isReserved = reservedSlots.has(slotKey);
           console.log(`Vérification créneau: ${slotKey} - réservé: ${isReserved}`);
          
-         acc[dateKey].push({
-           time: normalizedTime,
-           available: true, // Tous les créneaux chargés sont disponibles
-           reserved: isReserved // Marquer si le créneau est réservé
-         });
+          acc[dateKey].push({
+            time: normalizedTime,
+            available: item.is_available, // Respecter la valeur is_available de la base de données
+            reserved: isReserved // Marquer si le créneau est réservé
+          });
          return acc;
        }, {} as Record<string, { time: string; available: boolean; reserved: boolean; }[]>);
 
