@@ -390,14 +390,20 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         .gte('blocked_date', rangeStart)
         .lte('blocked_date', rangeEnd);
 
-      if (blockedError) throw blockedError;
+      if (blockedError) {
+        console.error('Erreur lors du chargement des jours bloqués:', blockedError);
+        throw blockedError;
+      }
 
       console.log('Jours bloqués chargés:', blockedDatesData?.length || 0);
+      console.log('Détail des jours bloqués:', blockedDatesData);
       
       // Créer un map des jours bloqués pour une recherche rapide
       const blockedDatesMap = new Map(
         blockedDatesData?.map(blocked => [blocked.blocked_date, blocked.activity]) || []
       );
+      
+      console.log('Map des jours bloqués:', blockedDatesMap);
 
       // Charger TOUS les créneaux - pour les admins tous, pour les autres seulement les disponibles
       const { data: userProfile } = await supabase
@@ -498,6 +504,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         const isBlocked = blockedDatesMap.has(dateStr);
         const blockActivity = blockedDatesMap.get(dateStr);
         
+        console.log(`Date ${dateStr}: isBlocked=${isBlocked}, activity=${blockActivity}`);
+        
         return {
           date,
           enabled: hasAvailableSlots && !isBlocked, // Le jour est ouvert seulement s'il a des créneaux disponibles ET n'est pas bloqué
@@ -571,6 +579,27 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Recharger les données à chaque fois que le composant est monté
   useEffect(() => {
     loadAvailabilityFromSupabase();
+    
+    // S'abonner aux changements en temps réel des jours bloqués
+    const channel = supabase
+      .channel('blocked-dates-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'blocked_dates'
+        },
+        (payload) => {
+          console.log('Changement détecté dans blocked_dates:', payload);
+          loadAvailabilityFromSupabase(); // Recharger les données
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Naviguer entre les mois
