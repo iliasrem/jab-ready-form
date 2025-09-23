@@ -24,15 +24,15 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-8">
-                <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
-                <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
-                <TabsTrigger value="existing-booking">RDV Patient Existant</TabsTrigger>
-                <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-                <TabsTrigger value="manager">Disponibilités</TabsTrigger>
-                <TabsTrigger value="inventory">Inventaire</TabsTrigger>
-                <TabsTrigger value="vaccination">Vaccination</TabsTrigger>
-                <TabsTrigger value="blocked-dates">Jours bloqués</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-1">
+                <TabsTrigger value="appointments" className="text-xs">RDV</TabsTrigger>
+                <TabsTrigger value="patients" className="text-xs">Patients</TabsTrigger>
+                <TabsTrigger value="existing-booking" className="text-xs">RDV Existant</TabsTrigger>
+                <TabsTrigger value="calendar" className="text-xs">Calendrier</TabsTrigger>
+                <TabsTrigger value="manager" className="text-xs">Disponibilités</TabsTrigger>
+                <TabsTrigger value="inventory" className="text-xs">Inventaire</TabsTrigger>
+                <TabsTrigger value="vaccination" className="text-xs">Vaccination</TabsTrigger>
+                <TabsTrigger value="blocked-dates" className="text-xs">Jours bloqués</TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
             </div>
