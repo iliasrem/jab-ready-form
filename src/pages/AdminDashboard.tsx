@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
-import { AvailabilityOverview } from "@/components/AvailabilityOverview";
 import { AppointmentsList } from "@/components/AppointmentsList";
 import { PatientList } from "@/components/PatientList";
 import { VaccineInventory } from "@/components/VaccineInventory";
@@ -66,7 +65,6 @@ const AdminDashboard = () => {
                   <h3 className="text-lg font-semibold">Manager les Disponibilités Avancées</h3>
                   <p className="text-sm text-muted-foreground">Configuration complète des créneaux disponibles par date</p>
                 </div>
-                <AvailabilityOverview />
                 <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
               </div>
             </TabsContent>
