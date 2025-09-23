@@ -30,10 +30,17 @@ interface TimeSlot {
   reserved?: boolean;
 }
 
+interface BlockedDate {
+  id: string;
+  blocked_date: string;
+  activity: string;
+}
+
 export const AvailabilityOverview = () => {
   const [weeklyAvailability, setWeeklyAvailability] = useState<WeeklyAvailability[]>([]);
   const [specificAvailability, setSpecificAvailability] = useState<SpecificAvailability[]>([]);
   const [reservedSlots, setReservedSlots] = useState<Set<string>>(new Set());
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [loading, setLoading] = useState(true);
 
@@ -83,9 +90,19 @@ export const AvailabilityOverview = () => {
         appointmentsData?.map(apt => `${apt.appointment_date}_${formatTimeForDisplay(apt.appointment_time)}`) || []
       );
 
+      // Fetch blocked dates for the current week
+      const { data: blockedDatesData, error: blockedDatesError } = await supabase
+        .from('blocked_dates')
+        .select('*')
+        .gte('blocked_date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('blocked_date', format(weekEnd, 'yyyy-MM-dd'));
+
+      if (blockedDatesError) throw blockedDatesError;
+
       setWeeklyAvailability(weeklyData || []);
       setSpecificAvailability(specificData || []);
       setReservedSlots(reservedSlotsSet);
+      setBlockedDates(blockedDatesData || []);
     } catch (error) {
       console.error('Erreur lors du chargement des disponibilités:', error);
     } finally {
@@ -156,8 +173,15 @@ export const AvailabilityOverview = () => {
     return start1 < end2 && start2 < end1;
   };
 
-  const getSlotStyle = (hour: number, slots: TimeSlot[]) => {
+  const getSlotStyle = (hour: number, slots: TimeSlot[], date: Date) => {
     const hourString = `${hour.toString().padStart(2, '0')}:00`;
+    const dateString = format(date, 'yyyy-MM-dd');
+    
+    // Check if this date is blocked
+    const isBlocked = blockedDates.some(blocked => blocked.blocked_date === dateString);
+    if (isBlocked) {
+      return "bg-red-500 border-red-600 text-white"; // Rouge foncé pour jour bloqué
+    }
     
     // Check if this hour falls within any slot
     for (const slot of slots) {
@@ -176,8 +200,15 @@ export const AvailabilityOverview = () => {
     return "bg-gray-100 border-gray-200 text-gray-400";
   };
 
-  const getSlotText = (hour: number, slots: TimeSlot[]) => {
+  const getSlotText = (hour: number, slots: TimeSlot[], date: Date) => {
     const hourString = `${hour.toString().padStart(2, '0')}:00`;
+    const dateString = format(date, 'yyyy-MM-dd');
+    
+    // Check if this date is blocked
+    const blockedDate = blockedDates.find(blocked => blocked.blocked_date === dateString);
+    if (blockedDate) {
+      return '🚫'; // Icône pour jour bloqué
+    }
     
     for (const slot of slots) {
       if (slot.start <= hourString && slot.end > hourString) {
@@ -269,8 +300,8 @@ export const AvailabilityOverview = () => {
                 {/* Day columns */}
                 {weekDays.map((day) => {
                   const slots = getTimeSlotsForDay(day);
-                  const slotStyle = getSlotStyle(hour, slots);
-                  const slotText = getSlotText(hour, slots);
+                  const slotStyle = getSlotStyle(hour, slots, day);
+                  const slotText = getSlotText(hour, slots, day);
                   
                   return (
                     <div
@@ -294,6 +325,10 @@ export const AvailabilityOverview = () => {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-200 border border-red-300 rounded"></div>
               <span className="text-sm">Réservé</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-500 border border-red-600 rounded"></div>
+              <span className="text-sm">Jour bloqué</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
