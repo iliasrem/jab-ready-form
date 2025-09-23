@@ -645,7 +645,57 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           </div>
         </CardHeader>
         <CardContent>
-          <div>
+          <div className="space-y-6">
+            {/* Navigation du mois */}
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateMonth("prev")}
+                  className="flex items-center space-x-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Mois précédent</span>
+                </Button>
+                
+                <div className="text-center">
+                  <h3 className="font-medium text-lg">
+                    {format(currentMonth, "MMMM yyyy", { locale: fr })}
+                  </h3>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateMonth("next")}
+                  className="flex items-center space-x-1"
+                >
+                  <span>Mois suivant</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentMonth(new Date())}
+                >
+                  Mois actuel
+                </Button>
+                
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentMonth(new Date('2025-11-01'))}
+                >
+                  Novembre 2025 (jour bloqué)
+                </Button>
+              </div>
+            </div>
+
+            {/* Gestion par semaine */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
@@ -653,232 +703,232 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                   Configurez rapidement les disponibilités pour une semaine entière
                 </CardDescription>
               </CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedWeek && (
-                    <div className="space-y-4">
-                       <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                         <div className="flex items-center space-x-3">
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => navigateWeek("prev")}
-                             className="flex items-center space-x-1"
-                           >
-                             <ChevronLeft className="h-4 w-4" />
-                             <span>Précédente</span>
-                           </Button>
-                           
-                           <div className="text-center">
-                             <p className="font-medium">
-                               Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
-                             </p>
-                             <p className="text-sm text-muted-foreground">
-                               {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
-                             </p>
-                           </div>
+              <CardContent className="space-y-4">
+                {selectedWeek && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigateWeek("prev")}
+                          className="flex items-center space-x-1"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span>Précédente</span>
+                        </Button>
+                        
+                        <div className="text-center">
+                          <p className="font-medium">
+                            Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
+                          </p>
+                        </div>
 
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => navigateWeek("next")}
-                             className="flex items-center space-x-1"
-                           >
-                             <span>Suivante</span>
-                             <ChevronRight className="h-4 w-4" />
-                           </Button>
-                         </div>
-                         
-                         <div className="flex items-center space-x-2">
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => setSelectedWeek(new Date())}
-                           >
-                             Semaine actuelle
-                           </Button>
-                           
-                           <Button
-                             variant="default"
-                             size="sm"
-                             onClick={() => applyDefaultToWeek(selectedWeek)}
-                           >
-                             Horaires par défaut
-                           </Button>
-                           
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => closeWeek(selectedWeek)}
-                           >
-                             Fermer la semaine
-                           </Button>
-                           
-                           <Button
-                             variant="secondary"
-                             size="sm"
-                             onClick={() => {
-                               const weeks = eachWeekOfInterval(
-                                 { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
-                                 { weekStartsOn: 1 }
-                               );
-                               weeks.forEach(week => {
-                                 if (!isSameWeek(week, selectedWeek)) {
-                                   const weekDays = getWeekDays(selectedWeek);
-                                   const templateDays = getWeekDays(week);
-                                   
-                                   const newAvailabilities = templateDays.map((date, index) => {
-                                     const templateDay = weekDays[index];
-                                     const template = getAvailabilityForDate(templateDay);
-                                     return {
-                                       ...template,
-                                       date: new Date(date)
-                                     };
-                                   });
-                                   
-                                   const updatedAvailability = [
-                                     ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
-                                     ...newAvailabilities
-                                   ];
-                                   
-                                   setSpecificAvailability(updatedAvailability);
-                                   onAvailabilityChange(updatedAvailability);
-                                 }
-                               });
-                               
-                               toast({
-                                 title: "Modèle appliqué",
-                                 description: "Les horaires ont été appliqués à toutes les semaines du mois.",
-                               });
-                             }}
-                           >
-                             Appliquer au mois
-                           </Button>
-                         </div>
-                       </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigateWeek("next")}
+                          className="flex items-center space-x-1"
+                        >
+                          <span>Suivante</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedWeek(new Date())}
+                        >
+                          Semaine actuelle
+                        </Button>
+                        
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => applyDefaultToWeek(selectedWeek)}
+                        >
+                          Horaires par défaut
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => closeWeek(selectedWeek)}
+                        >
+                          Fermer la semaine
+                        </Button>
+                        
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            const weeks = eachWeekOfInterval(
+                              { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
+                              { weekStartsOn: 1 }
+                            );
+                            weeks.forEach(week => {
+                              if (!isSameWeek(week, selectedWeek)) {
+                                const weekDays = getWeekDays(selectedWeek);
+                                const templateDays = getWeekDays(week);
+                                
+                                const newAvailabilities = templateDays.map((date, index) => {
+                                  const templateDay = weekDays[index];
+                                  const template = getAvailabilityForDate(templateDay);
+                                  return {
+                                    ...template,
+                                    date: new Date(date)
+                                  };
+                                });
+                                
+                                const updatedAvailability = [
+                                  ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
+                                  ...newAvailabilities
+                                ];
+                                
+                                setSpecificAvailability(updatedAvailability);
+                                onAvailabilityChange(updatedAvailability);
+                              }
+                            });
+                            
+                            toast({
+                              title: "Modèle appliqué",
+                              description: "Les horaires ont été appliqués à toutes les semaines du mois.",
+                            });
+                          }}
+                        >
+                          Appliquer au mois
+                        </Button>
+                      </div>
+                    </div>
 
-                      <div className="grid grid-cols-7 gap-2">
-                        {getWeekDays(selectedWeek).map((day) => {
-                          const dayAvailability = getAvailabilityForDate(day);
-                          const isSelected = selectedDate && isSameDay(day, selectedDate);
-                          const availableSlots = dayAvailability.timeSlots.filter(slot => slot.available).length;
-                          
-                          return (
-                            <div
-                              key={day.toISOString()}
-                              className={`p-2 rounded-lg border text-center transition-colors ${
-                                isSelected 
-                                  ? 'border-primary bg-primary/10' 
-                                  : 'border-border hover:border-primary/50'
-                              }`}
-                            >
-                              <div className="text-xs font-medium">
-                                {format(day, "EEE", { locale: fr })}
-                              </div>
-                              <div className="text-sm font-bold mb-2">
-                                {format(day, "d", { locale: fr })}
-                              </div>
-                              
-                               {/* Checkbox pour activer/désactiver le jour */}
-                               <div className="flex items-center justify-center mb-2">
-                                 {dayAvailability.blocked ? (
-                                   <Badge variant="destructive" className="text-xs">
-                                     Bloqué
-                                   </Badge>
-                                 ) : (
-                                   <Checkbox
-                                     checked={dayAvailability.enabled}
-                                     onCheckedChange={() => toggleDay(day)}
-                                   />
-                                 )}
-                               </div>
-                              
-                               {dayAvailability.blocked && (
-                                 <div className="text-xs text-destructive text-center">
-                                   {dayAvailability.blockActivity}
-                                 </div>
-                               )}
-                               
-                               {dayAvailability.enabled && !dayAvailability.blocked && (
-                                <div className="space-y-1">
-                                  <div className="text-xs text-muted-foreground mb-1">
-                                    {availableSlots}/{dayAvailability.timeSlots.length}
-                                  </div>
-                                  
-                                  {/* Affichage de tous les créneaux de 15 minutes verticalement */}
-                                  <div className="space-y-1">
-                                     {dayAvailability.timeSlots.map((slot, slotIndex) => {
-                                       let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
-                                       let buttonClass = "text-xs h-6 w-full";
-                                       let isDisabled = false;
-                                       
-                                       // Debug pour vérifier les données des créneaux
-                                       console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
-                                       
-                                       if (slot.reserved) {
-                                         buttonVariant = "destructive"; // 🔴 Rouge pour réservé
-                                         buttonClass += " opacity-75";
-                                         isDisabled = true;
-                                       } else if (slot.available) {
-                                         buttonVariant = "success"; // 🟢 Vert pour disponible
-                                       } else {
-                                         buttonVariant = "secondary"; // ⚫ Gris pour fermé
-                                       }
-                                      
-                                      return (
-                                        <Button
-                                          key={slot.time}
-                                          variant={buttonVariant}
-                                          size="sm"
-                                          className={buttonClass}
-                                          onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
-                                          disabled={isDisabled}
-                                          title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
-                                        >
-                                          {slot.time}
-                                          {slot.reserved && <span className="ml-1 text-xs">📅</span>}
-                                        </Button>
-                                      );
-                                    })}
-                                  </div>
-                                  
-                                  {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
-                                  <div className="flex gap-1 mt-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-xs h-6 flex-1"
-                                      onClick={() => toggleAllTimeSlotsForDay(day, true)}
-                                    >
-                                      Tout
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-xs h-6 flex-1"
-                                      onClick={() => toggleAllTimeSlotsForDay(day, false)}
-                                    >
-                                      Rien
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                              
-                               {!dayAvailability.enabled && !dayAvailability.blocked && (
-                                 <div className="text-xs text-muted-foreground">
-                                   Fermé
-                                 </div>
-                               )}
+                    <div className="grid grid-cols-7 gap-2">
+                      {getWeekDays(selectedWeek).map((day) => {
+                        const dayAvailability = getAvailabilityForDate(day);
+                        const isSelected = selectedDate && isSameDay(day, selectedDate);
+                        const availableSlots = dayAvailability.timeSlots.filter(slot => slot.available).length;
+                        
+                        return (
+                          <div
+                            key={day.toISOString()}
+                            className={`p-2 rounded-lg border text-center transition-colors ${
+                              isSelected 
+                                ? 'border-primary bg-primary/10' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="text-xs font-medium">
+                              {format(day, "EEE", { locale: fr })}
                             </div>
-                          );
-                        })}
-                       </div>
-                     </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-           </CardContent>
-          </Card>
-        </div>
-      );
+                            <div className="text-sm font-bold mb-2">
+                              {format(day, "d", { locale: fr })}
+                            </div>
+                            
+                            {/* Checkbox pour activer/désactiver le jour */}
+                            <div className="flex items-center justify-center mb-2">
+                              {dayAvailability.blocked ? (
+                                <Badge variant="destructive" className="text-xs">
+                                  Bloqué
+                                </Badge>
+                              ) : (
+                                <Checkbox
+                                  checked={dayAvailability.enabled}
+                                  onCheckedChange={() => toggleDay(day)}
+                                />
+                              )}
+                            </div>
+                            
+                            {dayAvailability.blocked && (
+                              <div className="text-xs text-destructive text-center">
+                                {dayAvailability.blockActivity}
+                              </div>
+                            )}
+                            
+                            {dayAvailability.enabled && !dayAvailability.blocked && (
+                              <div className="space-y-1">
+                                <div className="text-xs text-muted-foreground mb-1">
+                                  {availableSlots}/{dayAvailability.timeSlots.length}
+                                </div>
+                                
+                                {/* Affichage de tous les créneaux de 15 minutes verticalement */}
+                                <div className="space-y-1">
+                                  {dayAvailability.timeSlots.map((slot, slotIndex) => {
+                                    let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
+                                    let buttonClass = "text-xs h-6 w-full";
+                                    let isDisabled = false;
+                                    
+                                    // Debug pour vérifier les données des créneaux
+                                    console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
+                                    
+                                    if (slot.reserved) {
+                                      buttonVariant = "destructive"; // 🔴 Rouge pour réservé
+                                      buttonClass += " opacity-75";
+                                      isDisabled = true;
+                                    } else if (slot.available) {
+                                      buttonVariant = "success"; // 🟢 Vert pour disponible
+                                    } else {
+                                      buttonVariant = "secondary"; // ⚫ Gris pour fermé
+                                    }
+                                    
+                                    return (
+                                      <Button
+                                        key={slot.time}
+                                        variant={buttonVariant}
+                                        size="sm"
+                                        className={buttonClass}
+                                        onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
+                                        disabled={isDisabled}
+                                        title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
+                                      >
+                                        {slot.time}
+                                        {slot.reserved && <span className="ml-1 text-xs">📅</span>}
+                                      </Button>
+                                    );
+                                  })}
+                                </div>
+                                
+                                {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
+                                <div className="flex gap-1 mt-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs h-6 flex-1"
+                                    onClick={() => toggleAllTimeSlotsForDay(day, true)}
+                                  >
+                                    Tout
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs h-6 flex-1"
+                                    onClick={() => toggleAllTimeSlotsForDay(day, false)}
+                                  >
+                                    Rien
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {!dayAvailability.enabled && !dayAvailability.blocked && (
+                              <div className="text-xs text-muted-foreground">
+                                Fermé
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
   };
