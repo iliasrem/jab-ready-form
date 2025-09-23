@@ -49,6 +49,26 @@ export const AvailabilityOverview = () => {
 
   useEffect(() => {
     fetchAvailability();
+    
+    // Subscribe to real-time updates for blocked dates
+    const channel = supabase
+      .channel('blocked-dates-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'blocked_dates'
+        },
+        () => {
+          fetchAvailability(); // Refresh data when blocked dates change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentWeek]);
 
   const fetchAvailability = async () => {

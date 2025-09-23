@@ -85,7 +85,8 @@ export function BlockedDatesManager() {
         activity: data.activity
       };
 
-      setBlockedDates([...blockedDates, newBlocked]);
+      const updatedBlockedDates = [...blockedDates, newBlocked].sort((a, b) => a.date.getTime() - b.date.getTime());
+      setBlockedDates(updatedBlockedDates);
       setNewBlockedDate("");
       setNewActivity("");
 
@@ -112,7 +113,8 @@ export function BlockedDatesManager() {
 
       if (error) throw error;
 
-      setBlockedDates(blockedDates.filter(blocked => blocked.id !== id));
+      const updatedBlockedDates = blockedDates.filter(blocked => blocked.id !== id);
+      setBlockedDates(updatedBlockedDates);
 
       toast({
         title: "Jour débloqué",
@@ -131,6 +133,27 @@ export function BlockedDatesManager() {
   // Charger les jours bloqués au montage du composant
   useEffect(() => {
     loadBlockedDatesFromSupabase();
+    
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('blocked-dates-manager')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'blocked_dates'
+        },
+        (payload) => {
+          // Reload data when changes occur from other sources
+          loadBlockedDatesFromSupabase();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
