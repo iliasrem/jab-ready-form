@@ -94,6 +94,33 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_dates: {
+        Row: {
+          activity: string
+          blocked_date: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity: string
+          blocked_date: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: string
+          blocked_date?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           birth_date: string | null
