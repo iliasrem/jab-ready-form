@@ -27,7 +27,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="existing-booking">RDV Patient Existant</TabsTrigger>
                 <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-                <TabsTrigger value="manager">Manager</TabsTrigger>
+                <TabsTrigger value="manager">Disponibilités</TabsTrigger>
                 <TabsTrigger value="inventory">Inventaire</TabsTrigger>
                 <TabsTrigger value="vaccination">Vaccination</TabsTrigger>
               </TabsList>
