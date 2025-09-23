@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface SpecificDateAvailability {
   date: Date;
   enabled: boolean;
+  blocked?: boolean;
+  blockActivity?: string;
   timeSlots: { time: string; available: boolean; reserved?: boolean; }[];
 }
 
@@ -380,6 +382,23 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
+      // Charger les jours bloqués
+      const { data: blockedDatesData, error: blockedError } = await supabase
+        .from('blocked_dates')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('blocked_date', rangeStart)
+        .lte('blocked_date', rangeEnd);
+
+      if (blockedError) throw blockedError;
+
+      console.log('Jours bloqués chargés:', blockedDatesData?.length || 0);
+      
+      // Créer un map des jours bloqués pour une recherche rapide
+      const blockedDatesMap = new Map(
+        blockedDatesData?.map(blocked => [blocked.blocked_date, blocked.activity]) || []
+      );
+
       // Charger TOUS les créneaux - pour les admins tous, pour les autres seulement les disponibles
       const { data: userProfile } = await supabase
         .from('profiles')
@@ -475,10 +494,16 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         // Déterminer si le jour est enabled en fonction des créneaux disponibles
         const hasAvailableSlots = allSlots.some(slot => slot.available);
         
+        // Vérifier si ce jour est bloqué
+        const isBlocked = blockedDatesMap.has(dateStr);
+        const blockActivity = blockedDatesMap.get(dateStr);
+        
         return {
           date,
-          enabled: hasAvailableSlots, // Le jour est ouvert seulement s'il a des créneaux disponibles
-          timeSlots: allSlots
+          enabled: hasAvailableSlots && !isBlocked, // Le jour est ouvert seulement s'il a des créneaux disponibles ET n'est pas bloqué
+          blocked: isBlocked,
+          blockActivity: blockActivity,
+          timeSlots: isBlocked ? allSlots.map(slot => ({ ...slot, available: false })) : allSlots // Si bloqué, tous les créneaux sont fermés
         };
       });
 
@@ -493,15 +518,23 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           end: endOfMonth(currentMonth)
         });
         
-        const defaultAvailabilities: SpecificDateAvailability[] = monthDays.map(date => ({
-          date,
-          enabled: false, // Par défaut, les jours sont fermés
-          timeSlots: defaultTimeSlots.map(time => ({
-            time,
-            available: false,
-            reserved: reservedSlots.has(`${format(date, 'yyyy-MM-dd')}_${time}`)
-          }))
-        }));
+        const defaultAvailabilities: SpecificDateAvailability[] = monthDays.map(date => {
+          const dateStr = format(date, 'yyyy-MM-dd');
+          const isBlocked = blockedDatesMap.has(dateStr);
+          const blockActivity = blockedDatesMap.get(dateStr);
+          
+          return {
+            date,
+            enabled: false, // Par défaut, les jours sont fermés
+            blocked: isBlocked,
+            blockActivity: blockActivity,
+            timeSlots: defaultTimeSlots.map(time => ({
+              time,
+              available: false,
+              reserved: reservedSlots.has(`${dateStr}_${time}`)
+            }))
+          };
+        });
         
         setSpecificAvailability(defaultAvailabilities);
         onAvailabilityChange(defaultAvailabilities);
@@ -716,15 +749,27 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                 {format(day, "d", { locale: fr })}
                               </div>
                               
-                              {/* Checkbox pour activer/désactiver le jour */}
-                              <div className="flex items-center justify-center mb-2">
-                                <Checkbox
-                                  checked={dayAvailability.enabled}
-                                  onCheckedChange={() => toggleDay(day)}
-                                />
-                              </div>
+                               {/* Checkbox pour activer/désactiver le jour */}
+                               <div className="flex items-center justify-center mb-2">
+                                 {dayAvailability.blocked ? (
+                                   <Badge variant="destructive" className="text-xs">
+                                     Bloqué
+                                   </Badge>
+                                 ) : (
+                                   <Checkbox
+                                     checked={dayAvailability.enabled}
+                                     onCheckedChange={() => toggleDay(day)}
+                                   />
+                                 )}
+                               </div>
                               
-                              {dayAvailability.enabled && (
+                               {dayAvailability.blocked && (
+                                 <div className="text-xs text-destructive text-center">
+                                   {dayAvailability.blockActivity}
+                                 </div>
+                               )}
+                               
+                               {dayAvailability.enabled && !dayAvailability.blocked && (
                                 <div className="space-y-1">
                                   <div className="text-xs text-muted-foreground mb-1">
                                     {availableSlots}/{dayAvailability.timeSlots.length}
@@ -789,11 +834,11 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                 </div>
                               )}
                               
-                              {!dayAvailability.enabled && (
-                                <div className="text-xs text-muted-foreground">
-                                  Fermé
-                                </div>
-                              )}
+                               {!dayAvailability.enabled && !dayAvailability.blocked && (
+                                 <div className="text-xs text-muted-foreground">
+                                   Fermé
+                                 </div>
+                               )}
                             </div>
                           );
                         })}
