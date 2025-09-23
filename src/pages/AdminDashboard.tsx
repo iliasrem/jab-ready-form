@@ -7,6 +7,7 @@ import { PatientList } from "@/components/PatientList";
 import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
+import { BlockedDatesManager } from "@/components/BlockedDatesManager";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +23,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="appointments">Liste de RDV</TabsTrigger>
                 <TabsTrigger value="patients">Liste des Patients</TabsTrigger>
                 <TabsTrigger value="existing-booking">RDV Patient Existant</TabsTrigger>
@@ -30,6 +31,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="manager">Disponibilités</TabsTrigger>
                 <TabsTrigger value="inventory">Inventaire</TabsTrigger>
                 <TabsTrigger value="vaccination">Vaccination</TabsTrigger>
+                <TabsTrigger value="blocked-dates">Jours bloqués</TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
             </div>
@@ -73,6 +75,10 @@ const AdminDashboard = () => {
             
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
+            </TabsContent>
+            
+            <TabsContent value="blocked-dates" className="mt-6">
+              <BlockedDatesManager />
             </TabsContent>
           </div>
         </div>
