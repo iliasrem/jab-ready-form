@@ -7,6 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 // Fonction pour formater une date en YYYY-MM-DD sans conversion UTC
 export function formatDateForDb(date: Date): string {
+  // Vérifier si la date est valide
+  if (isNaN(date.getTime())) {
+    throw new Error('Date invalide fournie à formatDateForDb');
+  }
+  
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');

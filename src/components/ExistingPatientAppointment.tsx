@@ -176,6 +176,16 @@ export function ExistingPatientAppointment() {
 
   async function onSubmit(data: AppointmentFormValues) {
     try {
+      // Vérifier que la date de rendez-vous est valide
+      if (!data.date || isNaN(data.date.getTime())) {
+        toast({
+          title: "Erreur",
+          description: "Date de rendez-vous invalide. Veuillez sélectionner une date valide.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('appointments')
         .insert({

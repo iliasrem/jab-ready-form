@@ -178,7 +178,31 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       const newPatientId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
       // Créer la date de naissance à partir des champs séparés
-      const birthDate = new Date(parseInt(data.birthYear), parseInt(data.birthMonth) - 1, parseInt(data.birthDay));
+      const birthYear = parseInt(data.birthYear);
+      const birthMonth = parseInt(data.birthMonth) - 1;
+      const birthDay = parseInt(data.birthDay);
+      
+      // Vérifier que tous les champs de date sont valides
+      if (isNaN(birthYear) || isNaN(birthMonth) || isNaN(birthDay)) {
+        toast({
+          title: "Erreur",
+          description: "Date de naissance invalide. Veuillez vérifier les champs.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const birthDate = new Date(birthYear, birthMonth, birthDay);
+      
+      // Vérifier que la date créée est valide
+      if (isNaN(birthDate.getTime())) {
+        toast({
+          title: "Erreur",
+          description: "Date de naissance invalide. Veuillez vérifier les champs.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { error: patientError } = await supabase
         .from('patients')
@@ -210,6 +234,16 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       }
 
       // 2. Créer le rendez-vous
+      // Vérifier que la date de rendez-vous est valide
+      if (!data.date || isNaN(data.date.getTime())) {
+        toast({
+          title: "Erreur",
+          description: "Date de rendez-vous invalide. Veuillez sélectionner une date valide.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert({
