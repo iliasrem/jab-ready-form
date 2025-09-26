@@ -27,7 +27,7 @@ const serviceLabels: { [key: string]: string } = {
 };
 
 const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date('2025-09-19'));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "4weeks">("day");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
