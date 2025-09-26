@@ -77,6 +77,7 @@ export function ExistingPatientAppointment() {
   const [searchTerm, setSearchTerm] = useState("");
   const [realAvailability, setRealAvailability] = useState<SpecificAvailability[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -155,9 +156,29 @@ export function ExistingPatientAppointment() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadPatients(), loadRealAvailability()]);
+      await Promise.all([loadPatients(), loadRealAvailability(), fetchBookedSlots()]);
     };
     loadData();
+
+    // Écouter les changements de rendez-vous en temps réel
+    const channel = supabase
+      .channel('appointments_booking_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        () => {
+          fetchBookedSlots(); // Recharger les créneaux réservés
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Filtrer les patients selon le terme de recherche
@@ -286,6 +307,36 @@ export function ExistingPatientAppointment() {
     }
   }
 
+  // Fonction pour récupérer les créneaux déjà réservés
+  const fetchBookedSlots = async () => {
+    try {
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select('appointment_date, appointment_time')
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('Erreur lors de la récupération des créneaux réservés:', error);
+        return;
+      }
+
+      const booked: { [date: string]: string[] } = {};
+      appointments?.forEach((apt) => {
+        const dateStr = apt.appointment_date;
+        const timeStr = formatTimeForDisplay(apt.appointment_time);
+        
+        if (!booked[dateStr]) {
+          booked[dateStr] = [];
+        }
+        booked[dateStr].push(timeStr);
+      });
+
+      setBookedSlots(booked);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des créneaux réservés:', error);
+    }
+  };
+
   const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
     if (!selectedDate || !realAvailability) {
       return [];
@@ -293,8 +344,11 @@ export function ExistingPatientAppointment() {
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const dayAvailability = realAvailability.find(av => av.date === dateStr);
+    const bookedTimes = bookedSlots[dateStr] || [];
     
-    return dayAvailability?.timeSlots || [];
+    // Filtrer les créneaux disponibles en excluant ceux déjà réservés
+    const availableSlots = dayAvailability?.timeSlots || [];
+    return availableSlots.filter(timeSlot => !bookedTimes.includes(timeSlot));
   };
 
   const isDateAvailable = (date: Date) => {
