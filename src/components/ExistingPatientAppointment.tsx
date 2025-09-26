@@ -185,6 +185,33 @@ export function ExistingPatientAppointment() {
         });
         return;
       }
+
+      // Vérifier si le créneau est déjà pris
+      const { data: existingAppointments, error: checkError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('appointment_date', formatDateForDb(data.date))
+        .eq('appointment_time', data.time)
+        .eq('status', 'pending');
+
+      if (checkError) {
+        console.error('Erreur lors de la vérification du créneau:', checkError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de vérifier la disponibilité du créneau. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existingAppointments && existingAppointments.length > 0) {
+        toast({
+          title: "Créneau déjà pris",
+          description: `Le créneau du ${format(data.date, "PPP", { locale: fr })} à ${data.time} est déjà réservé. Veuillez choisir un autre horaire.`,
+          variant: "destructive",
+        });
+        return;
+      }
       
       const { error } = await supabase
         .from('appointments')
