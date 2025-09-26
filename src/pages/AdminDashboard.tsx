@@ -12,7 +12,16 @@ import { BlockedDatesManager } from "@/components/BlockedDatesManager";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Users } from "lucide-react";
+import { 
+  Calendar as CalendarIcon, 
+  Users, 
+  Clock, 
+  UserPlus, 
+  Settings, 
+  Package, 
+  Syringe, 
+  Ban 
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
@@ -24,14 +33,38 @@ const AdminDashboard = () => {
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-1">
-                <TabsTrigger value="appointments" className="text-xs">RDV</TabsTrigger>
-                <TabsTrigger value="patients" className="text-xs">Patients</TabsTrigger>
-                <TabsTrigger value="existing-booking" className="text-xs">RDV Existant</TabsTrigger>
-                <TabsTrigger value="calendar" className="text-xs">Calendrier</TabsTrigger>
-                <TabsTrigger value="manager" className="text-xs">Disponibilités</TabsTrigger>
-                <TabsTrigger value="inventory" className="text-xs">Inventaire</TabsTrigger>
-                <TabsTrigger value="vaccination" className="text-xs">Vaccination</TabsTrigger>
-                <TabsTrigger value="blocked-dates" className="text-xs">Jours bloqués</TabsTrigger>
+                <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  RDV
+                </TabsTrigger>
+                <TabsTrigger value="patients" className="text-xs flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  Patients
+                </TabsTrigger>
+                <TabsTrigger value="existing-booking" className="text-xs flex items-center gap-1">
+                  <UserPlus className="h-3 w-3" />
+                  RDV Existant
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  Calendrier
+                </TabsTrigger>
+                <TabsTrigger value="manager" className="text-xs flex items-center gap-1">
+                  <Settings className="h-3 w-3" />
+                  Disponibilités
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="text-xs flex items-center gap-1">
+                  <Package className="h-3 w-3" />
+                  Inventaire
+                </TabsTrigger>
+                <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
+                  <Syringe className="h-3 w-3" />
+                  Vaccination
+                </TabsTrigger>
+                <TabsTrigger value="blocked-dates" className="text-xs flex items-center gap-1">
+                  <Ban className="h-3 w-3" />
+                  Jours bloqués
+                </TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
             </div>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Syringe, Printer, X, Sun, CalendarDays, Grid3x3 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isSameMonth, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -511,10 +511,22 @@ const CalendarPage = () => {
               <div className="flex items-center gap-2">
                 <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as "day" | "week" | "month" | "4weeks")}>
                   <TabsList>
-                    <TabsTrigger value="day">Jour</TabsTrigger>
-                    <TabsTrigger value="week">Semaine</TabsTrigger>
-                    <TabsTrigger value="4weeks">4 Semaines</TabsTrigger>
-                    <TabsTrigger value="month">Mois</TabsTrigger>
+                    <TabsTrigger value="day" className="flex items-center gap-1">
+                      <Sun className="h-3 w-3" />
+                      Jour
+                    </TabsTrigger>
+                    <TabsTrigger value="week" className="flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" />
+                      Semaine
+                    </TabsTrigger>
+                    <TabsTrigger value="4weeks" className="flex items-center gap-1">
+                      <Grid3x3 className="h-3 w-3" />
+                      4 Semaines
+                    </TabsTrigger>
+                    <TabsTrigger value="month" className="flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      Mois
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
                 {currentView === "day" && (
