@@ -467,8 +467,20 @@ export function AppointmentsList() {
 
           {!loading && upcomingAppointments.length > 0 && (
             <div className="space-y-4">
-              {Object.entries(upcomingByDay).map(([date, dayAppointments]) => (
-                <Card key={date} className="border-l-4 border-l-primary">
+              {Object.entries(upcomingByDay).map(([date, dayAppointments], index) => {
+                const backgroundColors = [
+                  'bg-blue-50/50',
+                  'bg-green-50/50', 
+                  'bg-purple-50/50',
+                  'bg-orange-50/50',
+                  'bg-pink-50/50',
+                  'bg-indigo-50/50',
+                  'bg-cyan-50/50'
+                ];
+                const bgColor = backgroundColors[index % backgroundColors.length];
+                
+                return (
+                <Card key={date} className={`border-l-4 border-l-primary ${bgColor}`}>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center space-x-2">
                       <Calendar className="h-5 w-5" />
@@ -682,7 +694,8 @@ export function AppointmentsList() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
