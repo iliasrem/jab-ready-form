@@ -209,7 +209,9 @@ const CalendarPage = () => {
   };
 
   const DayView = () => {
-    const appointments = getAppointmentsForDate(selectedDate);
+    const appointments = getAppointmentsForDate(selectedDate)
+      .slice()
+      .sort((a, b) => a.time.localeCompare(b.time));
     // Créneaux de 15 minutes de 09:00 à 17:00
     const timeSlots = [
       "09:00", "09:15", "09:30", "09:45",
@@ -273,7 +275,9 @@ const CalendarPage = () => {
     return (
       <div className="grid grid-cols-6 gap-2">
         {weekDays.map(day => {
-          const appointments = getAppointmentsForDate(day);
+          const appointments = getAppointmentsForDate(day)
+            .slice()
+            .sort((a, b) => a.time.localeCompare(b.time));
           return (
             <Card key={day.toString()} className="min-h-32">
               <CardHeader className="pb-2">
@@ -327,7 +331,9 @@ const CalendarPage = () => {
               {/* Jours de la semaine */}
               <div className="space-y-2">
                 {weekDays.map(day => {
-                  const appointments = getAppointmentsForDate(day);
+                  const appointments = getAppointmentsForDate(day)
+                    .slice()
+                    .sort((a, b) => a.time.localeCompare(b.time));
                   const isToday = isSameDay(day, new Date());
                   return (
                     <Card key={day.toString()} className={`min-h-20 ${isToday ? 'ring-2 ring-primary' : ''}`}>
