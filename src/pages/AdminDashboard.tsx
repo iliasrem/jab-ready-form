@@ -8,6 +8,7 @@ import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { BlockedDatesManager } from "@/components/BlockedDatesManager";
+import { Statistics } from "@/components/Statistics";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +21,8 @@ import {
   Settings, 
   Package, 
   Syringe, 
-  Ban 
+  Ban,
+  BarChart3
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -32,7 +34,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-1">
+              <TabsList className="grid w-full grid-cols-4 md:grid-cols-9 gap-1">
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   RDV
@@ -64,6 +66,10 @@ const AdminDashboard = () => {
                 <TabsTrigger value="blocked-dates" className="text-xs flex items-center gap-1">
                   <Ban className="h-3 w-3" />
                   Jours bloqués
+                </TabsTrigger>
+                <TabsTrigger value="statistics" className="text-xs flex items-center gap-1">
+                  <BarChart3 className="h-3 w-3" />
+                  Statistiques
                 </TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
@@ -112,6 +118,10 @@ const AdminDashboard = () => {
             
             <TabsContent value="blocked-dates" className="mt-6">
               <BlockedDatesManager />
+            </TabsContent>
+            
+            <TabsContent value="statistics" className="mt-6">
+              <Statistics />
             </TabsContent>
           </div>
         </div>
