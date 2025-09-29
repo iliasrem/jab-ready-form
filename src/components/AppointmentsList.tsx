@@ -167,7 +167,7 @@ export function AppointmentsList() {
     const appointment = appointments.find(a => a.id === appointmentId);
     if (!appointment) return;
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le rendez-vous de ${appointment.firstName} ${appointment.lastName} ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le rendez-vous de ${capitalizeName(appointment.firstName)} ${capitalizeName(appointment.lastName)} ?`)) {
       return;
     }
 
@@ -191,7 +191,7 @@ export function AppointmentsList() {
       
       toast({
         title: "Rendez-vous supprimé",
-        description: `Le rendez-vous de ${appointment.firstName} ${appointment.lastName} a été supprimé.`,
+        description: `Le rendez-vous de ${capitalizeName(appointment.firstName)} ${capitalizeName(appointment.lastName)} a été supprimé.`,
       });
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -265,7 +265,7 @@ export function AppointmentsList() {
             ) : (
               <>
                 <div className={`font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>
-                  {appointment.firstName} {appointment.lastName}
+                  {capitalizeName(appointment.firstName)} {capitalizeName(appointment.lastName)}
                 </div>
                 {!isCompact && (
                   <div className="text-xs text-muted-foreground">
