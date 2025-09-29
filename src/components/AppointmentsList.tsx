@@ -222,6 +222,16 @@ export function AppointmentsList() {
     return compareAsc(dateA, dateB);
   });
 
+  // Grouper les rendez-vous à venir par jour
+  const upcomingByDay = upcomingAppointments.reduce((acc, appointment) => {
+    const date = appointment.date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(appointment);
+    return acc;
+  }, {} as Record<string, Appointment[]>);
+
   const pastAppointments = appointments.filter(appointment => {
     const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
     return isBefore(appointmentDateTime, now);
@@ -456,22 +466,223 @@ export function AppointmentsList() {
           )}
 
           {!loading && upcomingAppointments.length > 0 && (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Date & Heure</TableHead>
-                    <TableHead>Services</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingAppointments.map((appointment) => renderAppointmentRow(appointment, false))}
-                </TableBody>
-              </Table>
+            <div className="space-y-4">
+              {Object.entries(upcomingByDay).map(([date, dayAppointments]) => (
+                <Card key={date} className="border-l-4 border-l-primary">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <Calendar className="h-5 w-5" />
+                      <span>{format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })}</span>
+                      <span className="text-sm text-muted-foreground font-normal">
+                        ({dayAppointments.length} rendez-vous)
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Patient</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Heure</TableHead>
+                            <TableHead>Services</TableHead>
+                            <TableHead>Notes</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dayAppointments.map(appointment => (
+                            <TableRow key={appointment.id}>
+                              <TableCell>
+                                <div className="flex items-center space-x-2">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                  <div className="space-y-1">
+                                    {editingId === appointment.id ? (
+                                      <div className="space-y-1">
+                                        <Input
+                                          value={editedAppointment?.firstName || ""}
+                                          onChange={(e) => updateEditedField("firstName", e.target.value)}
+                                          placeholder="Prénom"
+                                          className="w-full text-sm"
+                                        />
+                                        <Input
+                                          value={editedAppointment?.lastName || ""}
+                                          onChange={(e) => updateEditedField("lastName", e.target.value)}
+                                          placeholder="Nom"
+                                          className="w-full text-sm"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="font-medium text-sm">
+                                          {appointment.firstName} {appointment.lastName}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          ID: {appointment.id}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {editingId === appointment.id ? (
+                                  <div className="space-y-1">
+                                    <Input
+                                      type="email"
+                                      value={editedAppointment?.email || ""}
+                                      onChange={(e) => updateEditedField("email", e.target.value)}
+                                      placeholder="Email"
+                                      className="w-full text-sm"
+                                    />
+                                    <Input
+                                      value={editedAppointment?.phone || ""}
+                                      onChange={(e) => updateEditedField("phone", e.target.value)}
+                                      placeholder="Téléphone"
+                                      className="w-full text-sm"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    {appointment.email && (
+                                      <div className="flex items-center space-x-1 text-sm">
+                                        <Mail className="h-3 w-3 text-muted-foreground" />
+                                        <span>{appointment.email}</span>
+                                      </div>
+                                    )}
+                                    {appointment.phone && (
+                                      <div className="flex items-center space-x-1 text-sm">
+                                        <Phone className="h-3 w-3 text-muted-foreground" />
+                                        <span>{appointment.phone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center space-x-2">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <div className="space-y-1">
+                                    {editingId === appointment.id ? (
+                                      <div className="space-y-1">
+                                        <Input
+                                          type="date"
+                                          value={editedAppointment?.date || ""}
+                                          onChange={(e) => updateEditedField("date", e.target.value)}
+                                          className="w-full text-sm"
+                                        />
+                                        <Input
+                                          type="time"
+                                          value={editedAppointment?.time || ""}
+                                          onChange={(e) => updateEditedField("time", e.target.value)}
+                                          className="w-full text-sm"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="font-medium text-sm">
+                                        {formatTimeForDisplay(appointment.time)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {editingId === appointment.id ? (
+                                  <Select 
+                                    value={editedAppointment?.services?.[0] || ""}
+                                    onValueChange={(value) => updateEditedField("services", [value])}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Sélectionner un service" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="covid">Vaccin 2025-2026 contre le COVID</SelectItem>
+                                      <SelectItem value="grippe">Vaccin contre la grippe 2025-2026</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  appointment.services && appointment.services.length > 0 && (
+                                    <div className="space-y-1">
+                                      {appointment.services.map((serviceId, index) => (
+                                        <div key={index} className="text-sm bg-primary/10 text-primary px-2 py-1 rounded inline-block mr-1">
+                                          {serviceLabels[serviceId] || serviceId}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {editingId === appointment.id ? (
+                                  <Textarea
+                                    value={editedAppointment?.notes || ""}
+                                    onChange={(e) => updateEditedField("notes", e.target.value)}
+                                    placeholder="Notes..."
+                                    className="w-full text-sm min-h-[60px]"
+                                  />
+                                ) : (
+                                  appointment.notes && (
+                                    <div className="flex items-center space-x-1">
+                                      <FileText className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-sm" title={appointment.notes}>
+                                        {appointment.notes}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center space-x-2">
+                                  {editingId === appointment.id ? (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="default"
+                                        onClick={saveChanges}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Save className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={cancelEditing}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => startEditing(appointment)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => deleteAppointment(appointment.id)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
