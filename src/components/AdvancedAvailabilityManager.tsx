@@ -497,19 +497,18 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           return { time, available: false, reserved: isReserved };
         });
         
-        // Déterminer si le jour a été configuré (au moins un créneau existe dans la DB)
-        const hasBeenConfigured = slots.length > 0;
+        // Déterminer si le jour est enabled en fonction des créneaux disponibles
         const hasAvailableSlots = allSlots.some(slot => slot.available);
         
         // Vérifier si ce jour est bloqué
         const isBlocked = blockedDatesMap.has(dateStr);
         const blockActivity = blockedDatesMap.get(dateStr);
         
-        console.log(`Date ${dateStr}: isBlocked=${isBlocked}, activity=${blockActivity}, configured=${hasBeenConfigured}`);
+        console.log(`Date ${dateStr}: isBlocked=${isBlocked}, activity=${blockActivity}`);
         
         return {
           date,
-          enabled: hasBeenConfigured && !isBlocked, // Le jour est considéré comme configuré s'il a des créneaux dans la DB ET n'est pas bloqué
+          enabled: hasAvailableSlots && !isBlocked, // Le jour est ouvert seulement s'il a des créneaux disponibles ET n'est pas bloqué
           blocked: isBlocked,
           blockActivity: blockActivity,
           timeSlots: isBlocked ? allSlots.map(slot => ({ ...slot, available: false })) : allSlots // Si bloqué, tous les créneaux sont fermés

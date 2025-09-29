@@ -10,7 +10,7 @@ import { format, parseISO, compareAsc, isBefore, startOfToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatTimeForDisplay, capitalizeName } from "@/lib/utils";
+import { formatTimeForDisplay } from "@/lib/utils";
 
 export interface Appointment {
   id: string;
@@ -131,8 +131,8 @@ export function AppointmentsList() {
         const { error: patientError } = await supabase
           .from('patients')
           .update({
-            first_name: capitalizeName(editedAppointment.firstName),
-            last_name: capitalizeName(editedAppointment.lastName),
+            first_name: editedAppointment.firstName,
+            last_name: editedAppointment.lastName,
             email: editedAppointment.email,
             phone: editedAppointment.phone,
           })
@@ -167,7 +167,7 @@ export function AppointmentsList() {
     const appointment = appointments.find(a => a.id === appointmentId);
     if (!appointment) return;
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le rendez-vous de ${capitalizeName(appointment.firstName)} ${capitalizeName(appointment.lastName)} ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le rendez-vous de ${appointment.firstName} ${appointment.lastName} ?`)) {
       return;
     }
 
@@ -191,7 +191,7 @@ export function AppointmentsList() {
       
       toast({
         title: "Rendez-vous supprimé",
-        description: `Le rendez-vous de ${capitalizeName(appointment.firstName)} ${capitalizeName(appointment.lastName)} a été supprimé.`,
+        description: `Le rendez-vous de ${appointment.firstName} ${appointment.lastName} a été supprimé.`,
       });
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -265,7 +265,7 @@ export function AppointmentsList() {
             ) : (
               <>
                 <div className={`font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>
-                  {capitalizeName(appointment.firstName)} {capitalizeName(appointment.lastName)}
+                  {appointment.firstName} {appointment.lastName}
                 </div>
                 {!isCompact && (
                   <div className="text-xs text-muted-foreground">

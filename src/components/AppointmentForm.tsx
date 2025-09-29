@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 
-import { cn, formatDateForDb, formatTimeForDisplay, capitalizeName } from "@/lib/utils";
+import { cn, formatDateForDb, formatTimeForDisplay } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -230,8 +230,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         .from('patients')
         .insert({
           id: newPatientId,
-          first_name: capitalizeName(data.firstName),
-          last_name: capitalizeName(data.lastName),
+          first_name: data.firstName,
+          last_name: data.lastName,
           email: normalizedEmail,
           phone: normalizedPhone,
           birth_date: formatDateForDb(birthDate),
