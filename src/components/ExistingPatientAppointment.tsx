@@ -260,6 +260,9 @@ export function ExistingPatientAppointment() {
         description: `Rendez-vous créé pour ${selectedPatient?.first_name} ${selectedPatient?.last_name} le ${format(data.date, "PPP", { locale: fr })} à ${data.time}`,
       });
 
+      // Recharger les créneaux disponibles pour mettre à jour l'interface
+      await fetchBookedSlots();
+
       // Envoyer l'email de confirmation si l'email du patient est disponible
       if (selectedPatient?.email) {
         const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
