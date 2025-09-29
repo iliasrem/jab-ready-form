@@ -319,6 +319,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été créé. Services: ${data.services.join(", ")}`,
       });
 
+      // 3.5. Recharger les créneaux disponibles pour mettre à jour l'interface
+      await fetchBookedSlots();
+
       // 4. Envoyer l'email de confirmation si l'email est fourni
       if (data.email && data.email.includes("@")) {
         const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
