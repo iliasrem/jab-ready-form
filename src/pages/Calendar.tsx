@@ -409,7 +409,10 @@ const CalendarPage = () => {
           <CardContent>
             {getAppointmentsForDate(selectedDate).length > 0 ? (
               <div className="space-y-2">
-                {getAppointmentsForDate(selectedDate).map(apt => (
+                {getAppointmentsForDate(selectedDate)
+                  .slice()
+                  .sort((a, b) => a.time.localeCompare(b.time))
+                  .map(apt => (
                   <div key={apt.id} className="flex items-center justify-between p-3 border rounded">
                     <div>
                       <div className="font-medium">{apt.patientName}</div>
