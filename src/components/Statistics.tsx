@@ -24,10 +24,17 @@ export const Statistics = () => {
     try {
       setLoading(true);
       
-      // Récupérer toutes les vaccinations
+      // Récupérer toutes les vaccinations avec les informations des patients
       const { data: vaccinations, error } = await supabase
         .from('vaccinations')
-        .select('*');
+        .select(`
+          *,
+          patients (
+            first_name,
+            last_name,
+            email
+          )
+        `);
 
       if (error) {
         console.error('Erreur lors de la récupération des vaccinations:', error);
@@ -40,23 +47,50 @@ export const Statistics = () => {
       }
 
       // Analyser les lots pour déterminer le type de vaccin
-      // Nous devons analyser le lot_number pour déterminer si c'est COVID ou grippe
-      // Pour l'instant, nous allons supposer que si le lot contient "COVID", c'est COVID, sinon grippe
+      // Basé sur les numéros de lot réels de la base de données
       let covidCount = 0;
       let grippeCount = 0;
 
       vaccinations.forEach((vaccination) => {
-        const lotNumber = vaccination.lot_number?.toLowerCase() || '';
+        const lotNumber = vaccination.lot_number?.toUpperCase() || '';
         
-        // Logique pour identifier le type de vaccin basé sur le lot_number
-        if (lotNumber.includes('covid') || lotNumber.includes('pfizer') || lotNumber.includes('moderna') || lotNumber.includes('bnt')) {
+        // Logique pour identifier le type de vaccin basé sur les lots réels
+        // Lots COVID typiques : commencent par des codes Pfizer/Moderna/etc.
+        // Lots grippe typiques : autres codes
+        if (
+          lotNumber.includes('PF') ||    // Pfizer
+          lotNumber.includes('FF') ||    // Pfizer 
+          lotNumber.includes('FD') ||    // Pfizer variants
+          lotNumber.includes('EW') ||    // Pfizer
+          lotNumber.includes('FA') ||    // Pfizer
+          lotNumber.includes('FB') ||    // Pfizer
+          lotNumber.includes('FC') ||    // Pfizer
+          lotNumber.includes('COVID') || 
+          lotNumber.includes('COMIRNATY') ||
+          lotNumber.includes('3K3') ||   // Moderna
+          lotNumber.includes('038') ||   // Moderna
+          lotNumber.includes('039') ||   // Moderna
+          lotNumber.includes('MOD')      // Moderna
+        ) {
           covidCount++;
+        } else if (
+          lotNumber.includes('INFLUVAC') ||
+          lotNumber.includes('VAXIGRIP') ||
+          lotNumber.includes('FLUARIX') ||
+          lotNumber.includes('GRIPPE') ||
+          lotNumber.includes('FLU') ||
+          lotNumber.includes('MR') ||    // MR6603 semble être un lot grippe
+          lotNumber.includes('INFLUENZA')
+        ) {
+          grippeCount++;
         } else {
-          // Si ce n'est pas identifié comme COVID, on considère que c'est grippe
+          // Si non identifié, considérer comme grippe par défaut
+          // (les lots non standards sont souvent grippe)
           grippeCount++;
         }
       });
 
+      // Calculer les gains uniquement sur les vaccins COVID
       const totalEarnings = covidCount * COVID_PRICE;
 
       setStats({
