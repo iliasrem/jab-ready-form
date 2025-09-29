@@ -10,7 +10,7 @@ import { format, parseISO, compareAsc, isBefore, startOfToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatTimeForDisplay } from "@/lib/utils";
+import { formatTimeForDisplay, capitalizeName } from "@/lib/utils";
 
 export interface Appointment {
   id: string;
@@ -131,8 +131,8 @@ export function AppointmentsList() {
         const { error: patientError } = await supabase
           .from('patients')
           .update({
-            first_name: editedAppointment.firstName,
-            last_name: editedAppointment.lastName,
+            first_name: capitalizeName(editedAppointment.firstName),
+            last_name: capitalizeName(editedAppointment.lastName),
             email: editedAppointment.email,
             phone: editedAppointment.phone,
           })

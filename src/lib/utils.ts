@@ -22,3 +22,13 @@ export function formatDateForDb(date: Date): string {
 export function formatTimeForDisplay(timeString: string): string {
   return timeString.slice(0, 5); // Garde seulement HH:MM
 }
+
+// Fonction pour capitaliser la première lettre de chaque mot
+export function capitalizeName(name: string): string {
+  if (!name) return name;
+  return name
+    .trim()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}

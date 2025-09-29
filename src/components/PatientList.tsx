@@ -8,7 +8,7 @@ import { Edit, Save, X, Trash2, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDateForDb } from "@/lib/utils";
+import { formatDateForDb, capitalizeName } from "@/lib/utils";
 
 export interface Patient {
   id: string;
@@ -122,8 +122,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     try {
       // Split name into first_name and last_name
       const nameParts = editedPatient.name.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
+      const firstName = capitalizeName(nameParts[0] || '');
+      const lastName = capitalizeName(nameParts.slice(1).join(' ') || '');
 
       const { error } = await supabase
         .from('patients')
