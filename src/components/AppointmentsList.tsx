@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, compareAsc, isBefore, startOfToday } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTimeForDisplay } from "@/lib/utils";
 
@@ -36,6 +36,7 @@ export function AppointmentsList() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment> | null>(null);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -480,33 +481,45 @@ export function AppointmentsList() {
       {!loading && pastAppointments.length > 0 && (
         <Card className="bg-muted/30">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-lg">
-              <History className="h-4 w-4" />
-              <span>Historique des rendez-vous</span>
+            <CardTitle 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+            >
+              <div className="flex items-center space-x-2 text-lg">
+                <History className="h-4 w-4" />
+                <span>Historique des rendez-vous</span>
+              </div>
+              {isHistoryExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </CardTitle>
             <CardDescription className="text-sm">
               Rendez-vous passés. Total : {pastAppointments.length} rendez-vous
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="border rounded-lg bg-background/50">
-              <Table>
-                <TableHeader>
-                  <TableRow className="text-xs">
-                    <TableHead className="py-2">Patient</TableHead>
-                    <TableHead className="py-2">Contact</TableHead>
-                    <TableHead className="py-2">Date & Heure</TableHead>
-                    <TableHead className="py-2">Services</TableHead>
-                    <TableHead className="py-2">Notes</TableHead>
-                    <TableHead className="py-2">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pastAppointments.map((appointment) => renderAppointmentRow(appointment, true))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
+          {isHistoryExpanded && (
+            <CardContent>
+              <div className="border rounded-lg bg-background/50">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="text-xs">
+                      <TableHead className="py-2">Patient</TableHead>
+                      <TableHead className="py-2">Contact</TableHead>
+                      <TableHead className="py-2">Date & Heure</TableHead>
+                      <TableHead className="py-2">Services</TableHead>
+                      <TableHead className="py-2">Notes</TableHead>
+                      <TableHead className="py-2">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pastAppointments.map((appointment) => renderAppointmentRow(appointment, true))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          )}
         </Card>
       )}
     </div>
