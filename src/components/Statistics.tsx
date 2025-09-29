@@ -24,12 +24,13 @@ export const Statistics = () => {
     try {
       setLoading(true);
       
-      // Récupérer toutes les vaccinations avec les informations des patients
+      // Récupérer toutes les vaccinations avec les informations des patients et rendez-vous
       const { data: vaccinations, error } = await supabase
         .from('vaccinations')
         .select(`
           *,
           patients (
+            id,
             first_name,
             last_name,
             email
@@ -46,49 +47,45 @@ export const Statistics = () => {
         return;
       }
 
-      // Analyser les lots pour déterminer le type de vaccin
-      // Basé sur les numéros de lot réels de la base de données
+      // Pour chaque vaccination, récupérer le rendez-vous correspondant pour connaître le type de vaccin
       let covidCount = 0;
       let grippeCount = 0;
 
-      vaccinations.forEach((vaccination) => {
-        const lotNumber = vaccination.lot_number?.toUpperCase() || '';
-        
-        // Logique pour identifier le type de vaccin basé sur les lots réels
-        // Lots COVID typiques : commencent par des codes Pfizer/Moderna/etc.
-        // Lots grippe typiques : autres codes
-        if (
-          lotNumber.includes('PF') ||    // Pfizer
-          lotNumber.includes('FF') ||    // Pfizer 
-          lotNumber.includes('FD') ||    // Pfizer variants
-          lotNumber.includes('EW') ||    // Pfizer
-          lotNumber.includes('FA') ||    // Pfizer
-          lotNumber.includes('FB') ||    // Pfizer
-          lotNumber.includes('FC') ||    // Pfizer
-          lotNumber.includes('COVID') || 
-          lotNumber.includes('COMIRNATY') ||
-          lotNumber.includes('3K3') ||   // Moderna
-          lotNumber.includes('038') ||   // Moderna
-          lotNumber.includes('039') ||   // Moderna
-          lotNumber.includes('MOD')      // Moderna
-        ) {
-          covidCount++;
-        } else if (
-          lotNumber.includes('INFLUVAC') ||
-          lotNumber.includes('VAXIGRIP') ||
-          lotNumber.includes('FLUARIX') ||
-          lotNumber.includes('GRIPPE') ||
-          lotNumber.includes('FLU') ||
-          lotNumber.includes('MR') ||    // MR6603 semble être un lot grippe
-          lotNumber.includes('INFLUENZA')
-        ) {
-          grippeCount++;
+      for (const vaccination of vaccinations) {
+        // Récupérer le rendez-vous correspondant pour ce patient à cette date
+        const { data: appointments } = await supabase
+          .from('appointments')
+          .select('services')
+          .eq('patient_id', vaccination.patient_id)
+          .eq('appointment_date', vaccination.vaccination_date)
+          .limit(1);
+
+        if (appointments && appointments.length > 0) {
+          const services = appointments[0].services;
+          
+          // Vérifier le type de service dans le rendez-vous
+          if (services && Array.isArray(services)) {
+            if (services.includes('covid')) {
+              covidCount++;
+            } else if (services.includes('grippe')) {
+              grippeCount++;
+            }
+          }
         } else {
-          // Si non identifié, considérer comme grippe par défaut
-          // (les lots non standards sont souvent grippe)
-          grippeCount++;
+          // Si aucun rendez-vous trouvé, on peut regarder le lot_number comme fallback
+          const lotNumber = vaccination.lot_number?.toUpperCase() || '';
+          if (
+            lotNumber.includes('PF') ||
+            lotNumber.includes('FF') ||
+            lotNumber.includes('COVID') ||
+            lotNumber.includes('COMIRNATY')
+          ) {
+            covidCount++;
+          } else {
+            grippeCount++;
+          }
         }
-      });
+      }
 
       // Calculer les gains uniquement sur les vaccins COVID
       const totalEarnings = covidCount * COVID_PRICE;
