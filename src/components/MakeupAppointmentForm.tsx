@@ -44,6 +44,7 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [openNewPatient, setOpenNewPatient] = useState(false);
   const [newPatient, setNewPatient] = useState({
     firstName: "",
@@ -71,7 +72,8 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
       const { data, error } = await supabase
         .from('patients')
         .select('id, first_name, last_name, email, phone')
-        .order('last_name', { ascending: true });
+        .order('last_name', { ascending: true })
+        .order('first_name', { ascending: true });
 
       if (error) throw error;
       setPatients(data || []);
@@ -83,6 +85,18 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
       });
     }
   };
+
+  // Filtrer les patients selon la recherche
+  const filteredPatients = patients.filter(patient => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      patient.first_name.toLowerCase().includes(search) ||
+      patient.last_name.toLowerCase().includes(search) ||
+      patient.phone?.toLowerCase().includes(search) ||
+      patient.email?.toLowerCase().includes(search)
+    );
+  });
 
   const loadAvailableSlots = async (date: Date) => {
     try {
@@ -244,7 +258,15 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
                   <SelectValue placeholder="Sélectionner un patient" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients.map(patient => (
+                  <div className="px-2 py-1.5">
+                    <Input
+                      placeholder="Rechercher un patient..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  {filteredPatients.map(patient => (
                     <SelectItem key={patient.id} value={patient.id}>
                       {capitalizeName(patient.first_name)} {capitalizeName(patient.last_name)}
                       {patient.phone && ` - ${patient.phone}`}
