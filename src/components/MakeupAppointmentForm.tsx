@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { capitalizeName } from "@/lib/utils";
 import {
@@ -20,6 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Patient {
   id: string;
@@ -37,6 +44,14 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [openNewPatient, setOpenNewPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    birthDate: ""
+  });
   const { toast } = useToast();
 
   // Charger la liste des patients
@@ -160,6 +175,60 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
     }
   };
 
+  const handleCreatePatient = async () => {
+    if (!newPatient.firstName || !newPatient.lastName || !newPatient.phone) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Nom, prénom et téléphone sont obligatoires"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .insert({
+          first_name: capitalizeName(newPatient.firstName),
+          last_name: capitalizeName(newPatient.lastName),
+          email: newPatient.email || null,
+          phone: newPatient.phone,
+          birth_date: newPatient.birthDate || null,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Patient créé"
+      });
+
+      // Rafraîchir la liste et sélectionner le nouveau patient
+      await loadPatients();
+      setSelectedPatient(data.id);
+      setOpenNewPatient(false);
+      setNewPatient({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        birthDate: ""
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -169,19 +238,90 @@ export function MakeupAppointmentForm({ onSuccess }: { onSuccess?: () => void })
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="patient">Patient *</Label>
-            <Select value={selectedPatient} onValueChange={setSelectedPatient}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un patient" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map(patient => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {capitalizeName(patient.first_name)} {capitalizeName(patient.last_name)}
-                    {patient.phone && ` - ${patient.phone}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={selectedPatient} onValueChange={setSelectedPatient}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Sélectionner un patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map(patient => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {capitalizeName(patient.first_name)} {capitalizeName(patient.last_name)}
+                      {patient.phone && ` - ${patient.phone}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Dialog open={openNewPatient} onOpenChange={setOpenNewPatient}>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" size="icon">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nouveau patient</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-firstName">Prénom *</Label>
+                      <Input
+                        id="new-firstName"
+                        value={newPatient.firstName}
+                        onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
+                        placeholder="Prénom"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-lastName">Nom *</Label>
+                      <Input
+                        id="new-lastName"
+                        value={newPatient.lastName}
+                        onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
+                        placeholder="Nom"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-phone">Téléphone *</Label>
+                      <Input
+                        id="new-phone"
+                        value={newPatient.phone}
+                        onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                        placeholder="Téléphone"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-email">Email</Label>
+                      <Input
+                        id="new-email"
+                        type="email"
+                        value={newPatient.email}
+                        onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                        placeholder="Email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-birthDate">Date de naissance</Label>
+                      <Input
+                        id="new-birthDate"
+                        type="date"
+                        value={newPatient.birthDate}
+                        onChange={(e) => setNewPatient({ ...newPatient, birthDate: e.target.value })}
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      onClick={handleCreatePatient} 
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? "Création..." : "Créer le patient"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <div className="space-y-2">
