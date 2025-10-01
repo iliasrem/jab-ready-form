@@ -8,32 +8,38 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Générer les créneaux de 20 minutes entre 09h00 et 18h30
-const generateTimeSlots = () => {
+// Générer les créneaux selon la durée choisie entre 09h00 et 18h30
+const generateTimeSlots = (duration: number) => {
   const slots = [];
   let hour = 9;
   let minute = 0;
   
   while (hour < 18 || (hour === 18 && minute <= 30)) {
     const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    const endHour = minute === 40 ? hour + 1 : hour;
-    const endMinute = minute === 40 ? 0 : minute + 20;
+    
+    let endMinute = minute + duration;
+    let endHour = hour;
+    
+    if (endMinute >= 60) {
+      endHour++;
+      endMinute -= 60;
+    }
+    
     const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
     
     slots.push({ start: startTime, end: endTime });
     
-    minute += 20;
+    minute += duration;
     if (minute >= 60) {
-      minute = 0;
+      minute = minute % 60;
       hour++;
     }
   }
   
   return slots;
 };
-
-const TIME_SLOTS = generateTimeSlots();
 
 interface SlotAvailability {
   start: string;
@@ -44,6 +50,7 @@ interface SlotAvailability {
 
 export function MakeupAvailabilityManager() {
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [slotDuration, setSlotDuration] = useState<number>(20);
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -52,7 +59,7 @@ export function MakeupAvailabilityManager() {
     if (selectedDate) {
       loadSlotsForDate(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, slotDuration]);
 
   const loadSlotsForDate = async (date: Date) => {
     setLoading(true);
@@ -65,7 +72,8 @@ export function MakeupAvailabilityManager() {
 
       if (error) throw error;
 
-      const loadedSlots = TIME_SLOTS.map(slot => {
+      const timeSlots = generateTimeSlots(slotDuration);
+      const loadedSlots = timeSlots.map(slot => {
         const existingSlot = data?.find(
           d => d.start_time === slot.start + ':00' && d.end_time === slot.end + ':00'
         );
@@ -163,6 +171,27 @@ export function MakeupAvailabilityManager() {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuration des créneaux</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Durée des créneaux</Label>
+            <Select value={slotDuration.toString()} onValueChange={(value) => setSlotDuration(Number(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner une durée" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="20">20 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Sélectionner une date</CardTitle>
