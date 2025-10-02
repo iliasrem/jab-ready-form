@@ -36,7 +36,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
+              <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 gap-1">
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   RDV
