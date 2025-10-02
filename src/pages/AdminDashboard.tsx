@@ -105,35 +105,35 @@ const AdminDashboard = () => {
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('availability')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-blue-50 dark:bg-blue-950/30" onClick={() => setSelectedUtility('availability')}>
                     <CardHeader>
                       <CardTitle>Disponibilités</CardTitle>
                       <CardDescription>Manager les disponibilités avancées par date</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('inventory')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-green-50 dark:bg-green-950/30" onClick={() => setSelectedUtility('inventory')}>
                     <CardHeader>
                       <CardTitle>Inventaire</CardTitle>
                       <CardDescription>Gestion des stocks de vaccins</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('statistics')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-purple-50 dark:bg-purple-950/30" onClick={() => setSelectedUtility('statistics')}>
                     <CardHeader>
                       <CardTitle>Statistiques</CardTitle>
                       <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('existing-patient')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-orange-50 dark:bg-orange-950/30" onClick={() => setSelectedUtility('existing-patient')}>
                     <CardHeader>
                       <CardTitle>RDV pour patients Existants</CardTitle>
                       <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('patients')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-pink-50 dark:bg-pink-950/30" onClick={() => setSelectedUtility('patients')}>
                     <CardHeader>
                       <CardTitle>Patients</CardTitle>
                       <CardDescription>Liste de tous les patients enregistrés</CardDescription>
