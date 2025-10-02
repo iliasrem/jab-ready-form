@@ -8,9 +8,6 @@ import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { Statistics } from "@/components/Statistics";
-import { MakeupAvailabilityManager } from "@/components/MakeupAvailabilityManager";
-import { MakeupAppointmentForm } from "@/components/MakeupAppointmentForm";
-import { MakeupAppointmentsList } from "@/components/MakeupAppointmentsList";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,7 +18,6 @@ import {
   Settings, 
   Package, 
   Syringe, 
-  Palette,
   Wrench
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +32,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 gap-1">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
                 <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
                   <Syringe className="h-3 w-3" />
                   Vaccination
@@ -48,10 +44,6 @@ const AdminDashboard = () => {
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Liste de tous les RDV
-                </TabsTrigger>
-                <TabsTrigger value="makeup" className="text-xs flex items-center gap-1">
-                  <Palette className="h-3 w-3" />
-                  Cosmétique
                 </TabsTrigger>
                 <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
                   <Wrench className="h-3 w-3" />
@@ -78,30 +70,6 @@ const AdminDashboard = () => {
               <VaccinationManagement />
             </TabsContent>
             
-            <TabsContent value="makeup" className="mt-6">
-              <div className="space-y-6">
-                <Tabs defaultValue="appointments" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="appointments">Rendez-vous</TabsTrigger>
-                    <TabsTrigger value="new">Nouveau RDV</TabsTrigger>
-                    <TabsTrigger value="availability">Disponibilités</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="appointments" className="mt-4">
-                    <MakeupAppointmentsList />
-                  </TabsContent>
-                  
-                  <TabsContent value="new" className="mt-4">
-                    <MakeupAppointmentForm />
-                  </TabsContent>
-                  
-                  <TabsContent value="availability" className="mt-4">
-                    <MakeupAvailabilityManager />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </TabsContent>
-
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
