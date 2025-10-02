@@ -625,83 +625,24 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>Gestion des Disponibilités Avancée</CardTitle>
-              <CardDescription>
-                Configurez vos disponibilités sur plusieurs mois. Sélectionnez une date pour gérer ses créneaux horaires.
-              </CardDescription>
-            </div>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={saveAvailabilityToSupabase}
-              className="flex items-center space-x-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>Sauvegarder</span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Navigation du mois */}
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigateMonth("prev")}
-                  className="flex items-center space-x-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span>Mois précédent</span>
-                </Button>
-                
-                <div className="text-center">
-                  <h3 className="font-medium text-lg">
-                    {format(currentMonth, "MMMM yyyy", { locale: fr })}
-                  </h3>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigateMonth("next")}
-                  className="flex items-center space-x-1"
-                >
-                  <span>Mois suivant</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentMonth(new Date())}
-                >
-                  Mois actuel
-                </Button>
-                
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentMonth(new Date('2025-11-01'))}
-                >
-                  Novembre 2025 (jour bloqué)
-                </Button>
-              </div>
-            </div>
-
-            {/* Gestion par semaine */}
-            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
-                <CardDescription>
-                  Configurez rapidement les disponibilités pour une semaine entière
-                </CardDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
+                    <CardDescription>
+                      Configurez rapidement les disponibilités pour une semaine entière
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={saveAvailabilityToSupabase}
+                    className="flex items-center space-x-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>Sauvegarder</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {selectedWeek && (
@@ -926,9 +867,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                 )}
               </CardContent>
             </Card>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
   };
