@@ -28,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
+  const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,44 +103,110 @@ const AdminDashboard = () => {
             </TabsContent>
 
             <TabsContent value="utilities" className="mt-6">
-              <div className="grid grid-cols-1 gap-6">
-                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardHeader>
-                    <CardTitle>Disponibilités</CardTitle>
-                    <CardDescription>Manager les disponibilités avancées par date</CardDescription>
-                  </CardHeader>
-                </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+              {!selectedUtility ? (
+                <div className="grid grid-cols-1 gap-6">
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('availability')}>
                     <CardHeader>
-                      <CardTitle>Inventaire</CardTitle>
-                      <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                      <CardTitle>Disponibilités</CardTitle>
+                      <CardDescription>Manager les disponibilités avancées par date</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardHeader>
-                      <CardTitle>Statistiques</CardTitle>
-                      <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
-                    </CardHeader>
-                  </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('inventory')}>
+                      <CardHeader>
+                        <CardTitle>Inventaire</CardTitle>
+                        <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                      </CardHeader>
+                    </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardHeader>
-                      <CardTitle>RDV Existant</CardTitle>
-                      <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
-                    </CardHeader>
-                  </Card>
+                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('statistics')}>
+                      <CardHeader>
+                        <CardTitle>Statistiques</CardTitle>
+                        <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
+                      </CardHeader>
+                    </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardHeader>
-                      <CardTitle>Patients</CardTitle>
-                      <CardDescription>Liste de tous les patients enregistrés</CardDescription>
-                    </CardHeader>
-                  </Card>
+                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('existing-patient')}>
+                      <CardHeader>
+                        <CardTitle>RDV Existant</CardTitle>
+                        <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
+                      </CardHeader>
+                    </Card>
+
+                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('patients')}>
+                      <CardHeader>
+                        <CardTitle>Patients</CardTitle>
+                        <CardDescription>Liste de tous les patients enregistrés</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <Button variant="outline" onClick={() => setSelectedUtility(null)}>← Retour aux utilitaires</Button>
+                  
+                  {selectedUtility === 'availability' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Disponibilités</CardTitle>
+                        <CardDescription>Manager les disponibilités avancées par date</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedUtility === 'inventory' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Inventaire</CardTitle>
+                        <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <VaccineInventory />
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedUtility === 'statistics' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Statistiques</CardTitle>
+                        <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Statistics />
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedUtility === 'existing-patient' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>RDV Existant</CardTitle>
+                        <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ExistingPatientAppointment />
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedUtility === 'patients' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Patients</CardTitle>
+                        <CardDescription>Liste de tous les patients enregistrés</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <PatientList />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </TabsContent>
           </div>
         </div>
