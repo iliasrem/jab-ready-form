@@ -43,7 +43,7 @@ const AdminDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
-                  Calendrier
+                  RDV du jour
                 </TabsTrigger>
                 <TabsTrigger value="manager" className="text-xs flex items-center gap-1">
                   <Settings className="h-3 w-3" />
