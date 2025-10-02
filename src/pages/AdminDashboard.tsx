@@ -39,7 +39,7 @@ const AdminDashboard = () => {
               <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 gap-1">
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  RDV
+                  Liste de tous les RDV
                 </TabsTrigger>
                 <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
