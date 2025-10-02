@@ -104,65 +104,47 @@ const AdminDashboard = () => {
 
             <TabsContent value="utilities" className="mt-6">
               <div className="grid grid-cols-1 gap-6">
-                <Card>
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                   <CardHeader>
                     <CardTitle>Disponibilités</CardTitle>
                     <CardDescription>Manager les disponibilités avancées par date</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
-                  </CardContent>
                 </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                     <CardHeader>
                       <CardTitle>Inventaire</CardTitle>
                       <CardDescription>Gestion des stocks de vaccins</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <VaccineInventory />
-                    </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                     <CardHeader>
                       <CardTitle>Statistiques</CardTitle>
                       <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <Statistics />
-                    </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                     <CardHeader>
                       <CardTitle>Jours bloqués</CardTitle>
                       <CardDescription>Gérer les dates de fermeture et événements</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <BlockedDatesManager />
-                    </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                     <CardHeader>
                       <CardTitle>RDV Existant</CardTitle>
                       <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <ExistingPatientAppointment />
-                    </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                     <CardHeader>
                       <CardTitle>Patients</CardTitle>
                       <CardDescription>Liste de tous les patients enregistrés</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <PatientList />
-                    </CardContent>
                   </Card>
                 </div>
               </div>
