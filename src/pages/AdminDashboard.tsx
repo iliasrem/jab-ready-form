@@ -104,7 +104,7 @@ const AdminDashboard = () => {
 
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('availability')}>
                     <CardHeader>
                       <CardTitle>Disponibilités</CardTitle>
@@ -112,35 +112,33 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('inventory')}>
-                      <CardHeader>
-                        <CardTitle>Inventaire</CardTitle>
-                        <CardDescription>Gestion des stocks de vaccins</CardDescription>
-                      </CardHeader>
-                    </Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('inventory')}>
+                    <CardHeader>
+                      <CardTitle>Inventaire</CardTitle>
+                      <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                    </CardHeader>
+                  </Card>
 
-                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('statistics')}>
-                      <CardHeader>
-                        <CardTitle>Statistiques</CardTitle>
-                        <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
-                      </CardHeader>
-                    </Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('statistics')}>
+                    <CardHeader>
+                      <CardTitle>Statistiques</CardTitle>
+                      <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
+                    </CardHeader>
+                  </Card>
 
-                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('existing-patient')}>
-                      <CardHeader>
-                        <CardTitle>RDV Existant</CardTitle>
-                        <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
-                      </CardHeader>
-                    </Card>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('existing-patient')}>
+                    <CardHeader>
+                      <CardTitle>RDV Existant</CardTitle>
+                      <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
+                    </CardHeader>
+                  </Card>
 
-                    <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('patients')}>
-                      <CardHeader>
-                        <CardTitle>Patients</CardTitle>
-                        <CardDescription>Liste de tous les patients enregistrés</CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </div>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('patients')}>
+                    <CardHeader>
+                      <CardTitle>Patients</CardTitle>
+                      <CardDescription>Liste de tous les patients enregistrés</CardDescription>
+                    </CardHeader>
+                  </Card>
                 </div>
               ) : (
                 <div className="space-y-4">
