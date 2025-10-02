@@ -55,7 +55,7 @@ const AdminDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="makeup" className="text-xs flex items-center gap-1">
                   <Palette className="h-3 w-3" />
-                  Maquillage
+                  Cosmétique
                 </TabsTrigger>
                 <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
                   <Wrench className="h-3 w-3" />
