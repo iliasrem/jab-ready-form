@@ -145,15 +145,7 @@ const AdminDashboard = () => {
                   <Button variant="outline" onClick={() => setSelectedUtility(null)}>← Retour aux utilitaires</Button>
                   
                   {selectedUtility === 'availability' && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Disponibilités</CardTitle>
-                        <CardDescription>Manager les disponibilités avancées par date</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
-                      </CardContent>
-                    </Card>
+                    <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
                   )}
                   
                   {selectedUtility === 'inventory' && (
