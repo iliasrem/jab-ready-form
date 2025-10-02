@@ -32,11 +32,15 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Tabs defaultValue="calendar" className="w-full">
+      <Tabs defaultValue="vaccination" className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 gap-1">
+                <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
+                  <Syringe className="h-3 w-3" />
+                  Vaccination
+                </TabsTrigger>
                 <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
                   RDV du jour
@@ -44,10 +48,6 @@ const AdminDashboard = () => {
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Liste de tous les RDV
-                </TabsTrigger>
-                <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
-                  <Syringe className="h-3 w-3" />
-                  Vaccination
                 </TabsTrigger>
                 <TabsTrigger value="makeup" className="text-xs flex items-center gap-1">
                   <Palette className="h-3 w-3" />
