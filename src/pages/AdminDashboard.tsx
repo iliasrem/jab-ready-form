@@ -18,16 +18,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { 
   Calendar as CalendarIcon, 
-  Users, 
   Clock, 
-  UserPlus, 
   Settings, 
   Package, 
   Syringe, 
-  Ban,
-  BarChart3,
-  Palette
+  Palette,
+  Wrench
 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
@@ -38,18 +36,10 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-4 md:grid-cols-10 gap-1">
+              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   RDV
-                </TabsTrigger>
-                <TabsTrigger value="patients" className="text-xs flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  Patients
-                </TabsTrigger>
-                <TabsTrigger value="existing-booking" className="text-xs flex items-center gap-1">
-                  <UserPlus className="h-3 w-3" />
-                  RDV Existant
                 </TabsTrigger>
                 <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
@@ -67,17 +57,13 @@ const AdminDashboard = () => {
                   <Syringe className="h-3 w-3" />
                   Vaccination
                 </TabsTrigger>
-                <TabsTrigger value="blocked-dates" className="text-xs flex items-center gap-1">
-                  <Ban className="h-3 w-3" />
-                  Jours bloqués
-                </TabsTrigger>
-                <TabsTrigger value="statistics" className="text-xs flex items-center gap-1">
-                  <BarChart3 className="h-3 w-3" />
-                  Statistiques
-                </TabsTrigger>
                 <TabsTrigger value="makeup" className="text-xs flex items-center gap-1">
                   <Palette className="h-3 w-3" />
                   Maquillage
+                </TabsTrigger>
+                <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
+                  <Wrench className="h-3 w-3" />
+                  Utilitaires
                 </TabsTrigger>
               </TabsList>
               <div className="pb-4"></div>
@@ -90,15 +76,6 @@ const AdminDashboard = () => {
             
             <TabsContent value="appointments" className="mt-6">
               <AppointmentsList />
-            </TabsContent>
-            
-            
-            <TabsContent value="patients" className="mt-6">
-              <PatientList />
-            </TabsContent>
-
-            <TabsContent value="existing-booking" className="mt-6">
-              <ExistingPatientAppointment />
             </TabsContent>
             
             <TabsContent value="calendar" className="mt-6">
@@ -124,14 +101,6 @@ const AdminDashboard = () => {
               <VaccinationManagement />
             </TabsContent>
             
-            <TabsContent value="blocked-dates" className="mt-6">
-              <BlockedDatesManager />
-            </TabsContent>
-            
-            <TabsContent value="statistics" className="mt-6">
-              <Statistics />
-            </TabsContent>
-            
             <TabsContent value="makeup" className="mt-6">
               <div className="space-y-6">
                 <Tabs defaultValue="appointments" className="w-full">
@@ -153,6 +122,50 @@ const AdminDashboard = () => {
                     <MakeupAvailabilityManager />
                   </TabsContent>
                 </Tabs>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="utilities" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Statistiques</CardTitle>
+                    <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Statistics />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Jours bloqués</CardTitle>
+                    <CardDescription>Gérer les dates de fermeture et événements</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <BlockedDatesManager />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>RDV Existant</CardTitle>
+                    <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ExistingPatientAppointment />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Patients</CardTitle>
+                    <CardDescription>Liste de tous les patients enregistrés</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <PatientList />
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </div>
