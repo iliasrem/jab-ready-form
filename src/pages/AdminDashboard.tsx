@@ -128,7 +128,7 @@ const AdminDashboard = () => {
 
                   <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setSelectedUtility('existing-patient')}>
                     <CardHeader>
-                      <CardTitle>RDV Existant</CardTitle>
+                      <CardTitle>RDV pour patients Existants</CardTitle>
                       <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
                     </CardHeader>
                   </Card>
@@ -183,7 +183,7 @@ const AdminDashboard = () => {
                   {selectedUtility === 'existing-patient' && (
                     <Card>
                       <CardHeader>
-                        <CardTitle>RDV Existant</CardTitle>
+                        <CardTitle>RDV pour patients Existants</CardTitle>
                         <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
                       </CardHeader>
                       <CardContent>
