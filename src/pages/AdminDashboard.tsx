@@ -7,7 +7,6 @@ import { PatientList } from "@/components/PatientList";
 import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
-import { BlockedDatesManager } from "@/components/BlockedDatesManager";
 import { Statistics } from "@/components/Statistics";
 import { MakeupAvailabilityManager } from "@/components/MakeupAvailabilityManager";
 import { MakeupAppointmentForm } from "@/components/MakeupAppointmentForm";
@@ -123,13 +122,6 @@ const AdminDashboard = () => {
                     <CardHeader>
                       <CardTitle>Statistiques</CardTitle>
                       <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardHeader>
-                      <CardTitle>Jours bloqués</CardTitle>
-                      <CardDescription>Gérer les dates de fermeture et événements</CardDescription>
                     </CardHeader>
                   </Card>
 
