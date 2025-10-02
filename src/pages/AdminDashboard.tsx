@@ -36,7 +36,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 gap-1">
+              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Liste de tous les RDV
@@ -48,10 +48,6 @@ const AdminDashboard = () => {
                 <TabsTrigger value="manager" className="text-xs flex items-center gap-1">
                   <Settings className="h-3 w-3" />
                   Disponibilités
-                </TabsTrigger>
-                <TabsTrigger value="inventory" className="text-xs flex items-center gap-1">
-                  <Package className="h-3 w-3" />
-                  Inventaire
                 </TabsTrigger>
                 <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
                   <Syringe className="h-3 w-3" />
@@ -93,10 +89,6 @@ const AdminDashboard = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="inventory" className="mt-6">
-              <VaccineInventory />
-            </TabsContent>
-            
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
             </TabsContent>
@@ -127,6 +119,16 @@ const AdminDashboard = () => {
 
             <TabsContent value="utilities" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Inventaire</CardTitle>
+                    <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <VaccineInventory />
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Statistiques</CardTitle>
