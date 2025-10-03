@@ -139,6 +139,15 @@ export const VaccinationManagement = () => {
     applyDateFilter();
   }, [vaccinations, filterStartDate, filterEndDate]);
 
+  // Met à jour l'heure automatiquement chaque minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVaccinationTime(format(new Date(), "HH:mm"));
+    }, 60000); // Mise à jour toutes les 60 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchVaccinations = async () => {
     const { data, error } = await supabase
       .from("vaccinations")
