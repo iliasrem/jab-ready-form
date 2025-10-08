@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AppointmentConfirmationDialog } from "@/components/AppointmentConfirmationDialog";
 
 interface SpecificAvailability {
   date: string; // Format YYYY-MM-DD
@@ -89,6 +90,17 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [realAvailability, setRealAvailability] = useState<SpecificAvailability[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<{
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone: string;
+    date: Date;
+    time: string;
+    services: string[];
+    notes?: string;
+  } | null>(null);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -313,11 +325,18 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         return;
       }
 
-      // 3. Afficher le message de succès
-      toast({
-        title: "Rendez-vous créé",
-        description: `Merci ${data.firstName} ${data.lastName} ! Votre rendez-vous pour le ${format(data.date, "PPP", { locale: fr })} à ${data.time} a été créé. Services: ${data.services.join(", ")}`,
+      // 3. Préparer les données de confirmation et afficher le dialog
+      setConfirmationData({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: normalizedEmail || undefined,
+        phone: normalizedPhone || data.phone,
+        date: data.date,
+        time: data.time,
+        services: data.services,
+        notes: normalizedNotes || undefined,
       });
+      setShowConfirmationDialog(true);
 
       // 3.5. Recharger les créneaux disponibles pour mettre à jour l'interface
       await fetchBookedSlots();
@@ -876,6 +895,14 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           </form>
         </Form>
       </CardContent>
+
+      {confirmationData && (
+        <AppointmentConfirmationDialog
+          open={showConfirmationDialog}
+          onOpenChange={setShowConfirmationDialog}
+          appointmentData={confirmationData}
+        />
+      )}
     </Card>
   );
 }
