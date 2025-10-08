@@ -348,10 +348,10 @@ export function AppointmentConfirmationDialog({
 }: AppointmentConfirmationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-primary" />
+          <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             Confirmation de rendez-vous
           </DialogTitle>
           <DialogDescription>
@@ -362,23 +362,23 @@ export function AppointmentConfirmationDialog({
         <div className="space-y-6 py-4">
           {/* Patient Info */}
           <div>
-            <h3 className="font-semibold mb-3 text-lg">Informations du patient</h3>
-            <div className="space-y-2 bg-muted/50 p-4 rounded-lg">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Nom complet :</span>
-                <span className="font-medium">
+            <h3 className="font-semibold mb-3 text-base sm:text-lg">Informations du patient</h3>
+            <div className="space-y-2 bg-muted/50 p-3 sm:p-4 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                <span className="text-sm sm:text-base text-muted-foreground">Nom complet :</span>
+                <span className="font-medium text-sm sm:text-base">
                   {appointmentData.firstName} {appointmentData.lastName}
                 </span>
               </div>
               {appointmentData.email && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email :</span>
-                  <span className="font-medium">{appointmentData.email}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                  <span className="text-sm sm:text-base text-muted-foreground">Email :</span>
+                  <span className="font-medium text-sm sm:text-base break-all">{appointmentData.email}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Téléphone :</span>
-                <span className="font-medium">{appointmentData.phone}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                <span className="text-sm sm:text-base text-muted-foreground">Téléphone :</span>
+                <span className="font-medium text-sm sm:text-base">{appointmentData.phone}</span>
               </div>
             </div>
           </div>
@@ -387,32 +387,32 @@ export function AppointmentConfirmationDialog({
 
           {/* Appointment Details */}
           <div>
-            <h3 className="font-semibold mb-3 text-lg">Détails du rendez-vous</h3>
-            <div className="space-y-2 bg-muted/50 p-4 rounded-lg">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Date :</span>
-                <span className="font-medium">
+            <h3 className="font-semibold mb-3 text-base sm:text-lg">Détails du rendez-vous</h3>
+            <div className="space-y-2 bg-muted/50 p-3 sm:p-4 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                <span className="text-sm sm:text-base text-muted-foreground">Date :</span>
+                <span className="font-medium text-sm sm:text-base">
                   {format(appointmentData.date, "PPPP", { locale: fr })}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Heure :</span>
-                <span className="font-medium text-primary">{appointmentData.time}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                <span className="text-sm sm:text-base text-muted-foreground">Heure :</span>
+                <span className="font-medium text-sm sm:text-base text-primary">{appointmentData.time}</span>
               </div>
-              <div className="flex justify-between items-start">
-                <span className="text-muted-foreground">Services :</span>
-                <div className="text-right">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                <span className="text-sm sm:text-base text-muted-foreground">Services :</span>
+                <div className="sm:text-right">
                   {appointmentData.services.map((service, index) => (
-                    <div key={index} className="font-medium">
+                    <div key={index} className="font-medium text-sm sm:text-base">
                       {service}
                     </div>
                   ))}
                 </div>
               </div>
               {appointmentData.notes && (
-                <div className="flex justify-between items-start">
-                  <span className="text-muted-foreground">Notes :</span>
-                  <span className="font-medium text-right max-w-xs">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                  <span className="text-sm sm:text-base text-muted-foreground">Notes :</span>
+                  <span className="font-medium text-sm sm:text-base sm:text-right max-w-xs">
                     {appointmentData.notes}
                   </span>
                 </div>
@@ -424,11 +424,11 @@ export function AppointmentConfirmationDialog({
 
           {/* Location */}
           <div>
-            <h3 className="font-semibold mb-3 text-lg">Lieu</h3>
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="font-medium">Pharmacie Remili-Bastin</p>
-              <p className="text-muted-foreground">Rue Solvay 64</p>
-              <p className="text-muted-foreground">7160 Chapelle-lez-Herlaimont</p>
+            <h3 className="font-semibold mb-3 text-base sm:text-lg">Lieu</h3>
+            <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
+              <p className="font-medium text-sm sm:text-base">Pharmacie Remili-Bastin</p>
+              <p className="text-muted-foreground text-sm sm:text-base">Rue Solvay 64</p>
+              <p className="text-muted-foreground text-sm sm:text-base">7160 Chapelle-lez-Herlaimont</p>
             </div>
           </div>
 

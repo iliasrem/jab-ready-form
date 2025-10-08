@@ -679,7 +679,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           defaultValue={phonePrefix}
                           value={phonePrefix}
                         >
-                          <SelectTrigger className="w-40">
+                          <SelectTrigger className="w-[110px] sm:w-[130px] shrink-0">
                             <SelectValue placeholder="Indicatif" />
                           </SelectTrigger>
                           <SelectContent>

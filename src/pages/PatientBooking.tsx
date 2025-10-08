@@ -23,11 +23,11 @@ const PatientBooking = () => {
       </header>
 
       {/* Header */}
-      <div className="bg-brand text-brand-foreground py-8">
+      <div className="bg-brand text-brand-foreground py-6 sm:py-8">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
-            <p className="text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Pharmacie Remili-Bastin</h1>
+            <p className="text-base sm:text-lg md:text-xl opacity-90">Réservez votre rendez-vous en ligne</p>
           </div>
         </div>
       </div>
@@ -37,7 +37,7 @@ const PatientBooking = () => {
         <div className="container mx-auto max-w-3xl">
           {/* Instructions */}
           <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold mb-4">Réservation en ligne facile</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Réservation en ligne facile</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="text-center">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
