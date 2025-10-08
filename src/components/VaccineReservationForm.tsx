@@ -20,7 +20,6 @@ export const VaccineReservationForm = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     phone: '',
     vaccineId: ''
   })
@@ -57,7 +56,6 @@ export const VaccineReservationForm = () => {
         .insert({
           first_name: formData.firstName,
           last_name: formData.lastName,
-          email: formData.email,
           phone: formData.phone
         })
         .select()
@@ -84,7 +82,6 @@ export const VaccineReservationForm = () => {
       setFormData({
         firstName: '',
         lastName: '',
-        email: '',
         phone: '',
         vaccineId: ''
       })
@@ -134,24 +131,14 @@ export const VaccineReservationForm = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Téléphone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              />
-            </div>
+          <div>
+            <Label htmlFor="phone">Téléphone *</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              required
+            />
           </div>
 
           <div>

@@ -17,7 +17,6 @@ interface AppointmentConfirmationDialogProps {
   appointmentData: {
     firstName: string;
     lastName: string;
-    email?: string;
     phone: string;
     date: Date;
     time: string;
@@ -174,12 +173,6 @@ function printConfirmation(data: AppointmentConfirmationDialogProps["appointment
             <span class="info-label">Nom complet :</span>
             <span class="info-value">${data.firstName} ${data.lastName}</span>
           </div>
-          ${data.email ? `
-          <div class="info-row">
-            <span class="info-label">Email :</span>
-            <span class="info-value">${data.email}</span>
-          </div>
-          ` : ''}
           <div class="info-row">
             <span class="info-label">Téléphone :</span>
             <span class="info-value">${data.phone}</span>
@@ -370,12 +363,6 @@ export function AppointmentConfirmationDialog({
                   {appointmentData.firstName} {appointmentData.lastName}
                 </span>
               </div>
-              {appointmentData.email && (
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
-                  <span className="text-sm sm:text-base text-muted-foreground">Email :</span>
-                  <span className="font-medium text-sm sm:text-base break-all">{appointmentData.email}</span>
-                </div>
-              )}
               <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                 <span className="text-sm sm:text-base text-muted-foreground">Téléphone :</span>
                 <span className="font-medium text-sm sm:text-base">{appointmentData.phone}</span>

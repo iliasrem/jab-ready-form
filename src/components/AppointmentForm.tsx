@@ -54,20 +54,8 @@ const appointmentSchema = z.object({
   lastName: z.string().min(2, {
     message: "Le nom doit contenir au moins 2 caractères.",
   }),
-  email: z.string().email({
-    message: "Veuillez entrer une adresse e-mail valide.",
-  }).optional().or(z.literal("")),
   phone: z.string().min(1, {
     message: "Le numéro de téléphone est obligatoire.",
-  }),
-  birthDay: z.string({
-    required_error: "Veuillez sélectionner le jour de naissance.",
-  }),
-  birthMonth: z.string({
-    required_error: "Veuillez sélectionner le mois de naissance.",
-  }),
-  birthYear: z.string({
-    required_error: "Veuillez sélectionner l'année de naissance.",
   }),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
@@ -94,7 +82,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [confirmationData, setConfirmationData] = useState<{
     firstName: string;
     lastName: string;
-    email?: string;
     phone: string;
     date: Date;
     time: string;
@@ -107,11 +94,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
     defaultValues: {
       firstName: "",
       lastName: "",
-      email: "",
       phone: "",
-      birthDay: "",
-      birthMonth: "",
-      birthYear: "",
       services: [],
       notes: "",
     },
@@ -200,9 +183,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
     try {
       // 1. Créer le patient
       // Normaliser les champs optionnels pour satisfaire les politiques RLS
-      const emailTrim = (data.email ?? "").trim();
-      const normalizedEmail = emailTrim.length ? emailTrim : null;
-
       const phoneTrim = (data.phone ?? "").trim();
       const normalizedPhone = phoneTrim && phoneTrim !== phonePrefix.trim() ? phoneTrim : null;
 
@@ -211,42 +191,13 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       const newPatientId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-      // Créer la date de naissance à partir des champs séparés
-      const birthYear = parseInt(data.birthYear);
-      const birthMonth = parseInt(data.birthMonth) - 1;
-      const birthDay = parseInt(data.birthDay);
-      
-      // Vérifier que tous les champs de date sont valides
-      if (isNaN(birthYear) || isNaN(birthMonth) || isNaN(birthDay)) {
-        toast({
-          title: "Erreur",
-          description: "Date de naissance invalide. Veuillez vérifier les champs.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const birthDate = new Date(birthYear, birthMonth, birthDay);
-      
-      // Vérifier que la date créée est valide
-      if (isNaN(birthDate.getTime())) {
-        toast({
-          title: "Erreur",
-          description: "Date de naissance invalide. Veuillez vérifier les champs.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { error: patientError } = await supabase
         .from('patients')
         .insert({
           id: newPatientId,
           first_name: data.firstName,
           last_name: data.lastName,
-          email: normalizedEmail,
           phone: normalizedPhone,
-          birth_date: formatDateForDb(birthDate),
           notes: normalizedNotes,
         });
 
@@ -255,7 +206,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         console.log('Données patient envoyées:', {
           first_name: data.firstName,
           last_name: data.lastName,
-          email: normalizedEmail,
           phone: normalizedPhone,
           notes: normalizedNotes,
         });
@@ -329,7 +279,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       setConfirmationData({
         firstName: data.firstName,
         lastName: data.lastName,
-        email: normalizedEmail || undefined,
         phone: normalizedPhone || data.phone,
         date: data.date,
         time: data.time,
@@ -340,42 +289,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       // 3.5. Recharger les créneaux disponibles pour mettre à jour l'interface
       await fetchBookedSlots();
-
-      // 4. Envoyer l'email de confirmation si l'email est fourni
-      if (data.email && data.email.includes("@")) {
-        const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
-        const start = new Date(data.date);
-        start.setHours(hh || 0, mm || 0, 0, 0);
-        const end = new Date(start.getTime() + 15 * 60 * 1000);
-
-        const { error } = await supabase.functions.invoke("send-confirmation", {
-          body: {
-            to: data.email,
-            name: `${data.firstName} ${data.lastName}`.trim(),
-            startISO: start.toISOString(),
-            endISO: end.toISOString(),
-            summary: "Rendez-vous Pharmacie Remili-Bastin",
-            description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
-            location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
-            displayDate: format(data.date, "PPP", { locale: fr }),
-            displayTime: data.time,
-          },
-        });
-
-        if (error) {
-          console.error("send-confirmation error", error);
-          toast({
-            title: "Email non envoyé",
-            description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Email envoyé",
-            description: "Un email de confirmation avec fichier calendrier a été envoyé.",
-          });
-        }
-      }
     } catch (e) {
       console.error(e);
       toast({
@@ -555,109 +468,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               />
             </div>
 
-            <div>
-              <FormLabel className="text-sm font-medium">Date de naissance</FormLabel>
-              <div className="grid grid-cols-3 gap-2 mt-1.5">
-                <FormField
-                  control={form.control}
-                  name="birthDay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Jour" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
-                          {Array.from({ length: 31 }, (_, i) => (
-                            <SelectItem key={i + 1} value={(i + 1).toString()}>
-                              {i + 1}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="birthMonth"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Mois" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
-                          {[
-                            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-                            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-                          ].map((month, index) => (
-                            <SelectItem key={index + 1} value={(index + 1).toString()}>
-                              {month}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="birthYear"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Année" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-background border shadow-md z-50 max-h-60 overflow-y-auto">
-                          {Array.from({ length: new Date().getFullYear() - 1900 + 1 }, (_, i) => {
-                            const year = new Date().getFullYear() - i;
-                            return (
-                              <SelectItem key={year} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email <span className="text-muted-foreground">(optionnel)</span></FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="Entrez votre e-mail" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
+            <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -735,7 +546,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   </FormItem>
                 )}
               />
-            </div>
 
 
             <FormField
