@@ -240,6 +240,107 @@ function printConfirmation(data: AppointmentConfirmationDialogProps["appointment
   };
 }
 
+function printReceiptTicket(data: AppointmentConfirmationDialogProps["appointmentData"]) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Ticket de rendez-vous</title>
+        <style>
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          body {
+            font-family: 'Courier New', monospace;
+            padding: 10mm;
+            margin: 0;
+            width: 80mm;
+            font-size: 12pt;
+          }
+          .ticket {
+            text-align: center;
+          }
+          .header {
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 8mm;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 5mm;
+          }
+          .content {
+            margin: 5mm 0;
+            text-align: left;
+          }
+          .line {
+            margin: 3mm 0;
+            display: flex;
+            justify-content: space-between;
+          }
+          .label {
+            font-weight: bold;
+          }
+          .footer {
+            margin-top: 8mm;
+            padding-top: 5mm;
+            border-top: 2px dashed #000;
+            font-size: 10pt;
+          }
+          @media print {
+            body {
+              width: 80mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="ticket">
+          <div class="header">
+            PHARMACIE REMILI-BASTIN<br>
+            RENDEZ-VOUS
+          </div>
+          
+          <div class="content">
+            <div class="line">
+              <span class="label">Patient:</span>
+            </div>
+            <div class="line">
+              <span>${data.firstName} ${data.lastName}</span>
+            </div>
+            
+            <div class="line" style="margin-top: 5mm;">
+              <span class="label">Date:</span>
+            </div>
+            <div class="line">
+              <span>${format(data.date, "dd/MM/yyyy", { locale: fr })}</span>
+            </div>
+            
+            <div class="line" style="margin-top: 5mm;">
+              <span class="label">Heure:</span>
+            </div>
+            <div class="line">
+              <span>${data.time}</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            Merci de votre visite
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.onload = () => {
+    printWindow.print();
+  };
+}
+
 export function AppointmentConfirmationDialog({
   open,
   onOpenChange,
@@ -342,26 +443,38 @@ export function AppointmentConfirmationDialog({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button
-              onClick={() => printConfirmation(appointmentData)}
-              variant="outline"
-              className="flex-1"
-            >
-              <Printer className="mr-2 h-4 w-4" />
-              Imprimer
-            </Button>
-            <Button
-              onClick={() => downloadICalFile(appointmentData)}
-              variant="outline"
-              className="flex-1"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Télécharger iCal
-            </Button>
-            <Button onClick={() => onOpenChange(false)} className="flex-1">
-              Fermer
-            </Button>
+          <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={() => printConfirmation(appointmentData)}
+                variant="outline"
+                className="flex-1"
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimer complet
+              </Button>
+              <Button
+                onClick={() => printReceiptTicket(appointmentData)}
+                variant="outline"
+                className="flex-1"
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Ticket de caisse
+              </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={() => downloadICalFile(appointmentData)}
+                variant="outline"
+                className="flex-1"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Télécharger iCal
+              </Button>
+              <Button onClick={() => onOpenChange(false)} className="flex-1">
+                Fermer
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
