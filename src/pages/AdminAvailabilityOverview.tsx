@@ -265,7 +265,7 @@ export default function AdminAvailabilityOverview() {
               const date = new Date(dateKey + "T00:00:00");
               byDateMap.set(dateKey, {
                 date,
-                enabled: row.is_available, // Utiliser is_available depuis la DB
+                enabled: false, // Par défaut fermé, sera mis à jour si des créneaux sont disponibles
                 timeSlots: defaultTimeSlots.map((time) => ({
                   time,
                   available: false
@@ -277,11 +277,23 @@ export default function AdminAvailabilityOverview() {
             const startMinutes = timeStrToMinutes(row.start_time.substring(0, 5));
             const endMinutes = timeStrToMinutes(row.end_time.substring(0, 5));
 
-            // Marquer tous les créneaux dans cette plage selon is_available
+            // Gérer le cas où start_time = end_time (créneau ponctuel de 15 minutes)
+            const isSingleSlot = startMinutes === endMinutes;
+
+            // Marquer les créneaux selon is_available
             dayAvailability.timeSlots.forEach((slot) => {
               const slotMinutes = timeStrToMinutes(slot.time);
-              if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
-                slot.available = row.is_available; // Utiliser is_available de la DB
+              
+              if (isSingleSlot) {
+                // Créneau ponctuel: correspondance exacte
+                if (slotMinutes === startMinutes) {
+                  slot.available = row.is_available;
+                }
+              } else {
+                // Plage de créneaux: inclure tous les créneaux dans l'intervalle
+                if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
+                  slot.available = row.is_available;
+                }
               }
             });
 
