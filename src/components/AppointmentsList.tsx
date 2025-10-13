@@ -499,7 +499,7 @@ export function AppointmentsList() {
                             <TableHead>Contact</TableHead>
                             <TableHead>Heure</TableHead>
                             <TableHead>Services</TableHead>
-                            <TableHead>Notes</TableHead>
+                            <TableHead>Remarques</TableHead>
                             <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -733,7 +733,7 @@ export function AppointmentsList() {
                       <TableHead className="py-2">Contact</TableHead>
                       <TableHead className="py-2">Date & Heure</TableHead>
                       <TableHead className="py-2">Services</TableHead>
-                      <TableHead className="py-2">Notes</TableHead>
+                      <TableHead className="py-2">Remarques</TableHead>
                       <TableHead className="py-2">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
