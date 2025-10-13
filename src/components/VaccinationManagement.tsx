@@ -5,7 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -57,6 +60,7 @@ export const VaccinationManagement = () => {
     email: ""
   });
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
+  const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
   const { toast } = useToast();
 
   const formatExpiryDate = (dateStr: string) => {
@@ -344,18 +348,51 @@ export const VaccinationManagement = () => {
             <div className="space-y-2">
               <Label htmlFor="patient">Patient</Label>
               <div className="flex gap-2">
-                <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Sélectionner un patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.last_name} {patient.first_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={openPatientCombobox} onOpenChange={setOpenPatientCombobox}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openPatientCombobox}
+                      className="flex-1 justify-between"
+                    >
+                      {selectedPatientId
+                        ? patients.find((patient) => patient.id === selectedPatientId)
+                            ? `${patients.find((patient) => patient.id === selectedPatientId)?.last_name} ${patients.find((patient) => patient.id === selectedPatientId)?.first_name}`
+                            : "Sélectionner un patient"
+                        : "Sélectionner un patient"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Rechercher un patient..." />
+                      <CommandList>
+                        <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {patients.map((patient) => (
+                            <CommandItem
+                              key={patient.id}
+                              value={`${patient.last_name} ${patient.first_name}`}
+                              onSelect={() => {
+                                setSelectedPatientId(patient.id);
+                                setOpenPatientCombobox(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedPatientId === patient.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {patient.last_name} {patient.first_name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   variant="outline"
                   size="icon"
