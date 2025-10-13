@@ -18,6 +18,7 @@ interface Appointment {
   phone?: string;
   date: Date;
   services?: string[];
+  notes?: string;
 }
 
 
@@ -82,7 +83,8 @@ const CalendarPage = () => {
         patientName: `${apt.patients.first_name} ${apt.patients.last_name}`,
         phone: apt.patients.phone,
         date: new Date(apt.appointment_date),
-        services: apt.services || []
+        services: apt.services || [],
+        notes: apt.notes || undefined
       }));
 
       console.log("Rendez-vous formatés:", formattedAppointments);
@@ -228,11 +230,12 @@ const CalendarPage = () => {
     return (
       <div className="space-y-1">
         {/* En-tête du tableau */}
-        <div className="grid grid-cols-4 gap-2 p-2 bg-muted/50 rounded font-medium text-sm">
+        <div className="grid grid-cols-5 gap-2 p-2 bg-muted/50 rounded font-medium text-sm">
           <div>Heure</div>
           <div>Patient</div>
           <div className="text-center">COVID</div>
           <div className="text-center">Grippe</div>
+          <div>Remarques</div>
         </div>
         
         {/* Lignes des créneaux */}
@@ -242,7 +245,7 @@ const CalendarPage = () => {
           const grippeVaccines = appointment?.services?.filter(s => s === 'grippe').length || 0;
           
           return (
-            <div key={time} className={`grid grid-cols-4 gap-2 p-2 border rounded text-sm ${appointment ? 'bg-primary/10' : 'bg-background'}`}>
+            <div key={time} className={`grid grid-cols-5 gap-2 p-2 border rounded text-sm ${appointment ? 'bg-primary/10' : 'bg-background'}`}>
               <div className="font-medium">{time}</div>
               <div className="font-medium">
                 {appointment ? appointment.patientName : 'Disponible'}
@@ -259,6 +262,9 @@ const CalendarPage = () => {
                 {grippeVaccines > 0 && (
                   <X className="h-4 w-4 text-primary" />
                 )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {appointment?.notes || ''}
               </div>
             </div>
           );
