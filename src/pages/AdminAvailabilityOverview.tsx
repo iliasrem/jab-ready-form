@@ -244,6 +244,8 @@ export default function AdminAvailabilityOverview() {
 
         const minDate = format(dates[0], "yyyy-MM-dd");
         const maxDate = format(dates[dates.length - 1], "yyyy-MM-dd");
+        
+        console.log("📅 Chargement des disponibilités:", { minDate, maxDate, userId: user.id, totalDays: dates.length });
 
         // Charger TOUTES les disponibilités (is_available true ET false) pour afficher l'état actuel
         const { data, error } = await supabase
@@ -254,6 +256,8 @@ export default function AdminAvailabilityOverview() {
           .lte("specific_date", maxDate);
 
         if (error) throw error;
+        
+        console.log("✅ Données récupérées:", data?.length || 0, "entrées");
 
         if (data && data.length > 0) {
           // Regrouper par date et créer les objets SpecificDateAvailability
@@ -301,6 +305,12 @@ export default function AdminAvailabilityOverview() {
             if (row.is_available) {
               dayAvailability.enabled = true;
             }
+          });
+          
+          console.log("📊 Disponibilités créées:", {
+            totalDates: byDateMap.size,
+            dates: Array.from(byDateMap.keys()),
+            sampleData: Array.from(byDateMap.values()).slice(0, 2)
           });
 
           setAvailability(Array.from(byDateMap.values()));
