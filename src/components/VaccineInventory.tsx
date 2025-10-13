@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateForDb } from "@/lib/utils";
-import { Trash2, Plus, Package, Edit2, Check, X } from "lucide-react";
+import { Trash2, Plus, Package, Edit2, Check, X, Lock, LockOpen } from "lucide-react";
 import { format, parse } from "date-fns";
 
 interface VaccineInventoryItem {
@@ -17,10 +17,7 @@ interface VaccineInventoryItem {
   expiry_date: string;
   reception_date: string;
   vials_count: number;
-  vials_used: number;
-  doses_used: number;
-  doses_per_vial: number;
-  doses_lost: number;
+  is_open: boolean;
   created_at: string;
 }
 
@@ -34,19 +31,12 @@ export const VaccineInventory = () => {
     expiry_date: "",
     reception_date: "",
     vials_count: 10,
-    vials_used: 0,
-    doses_per_vial: 7,
-    doses_lost: 0,
-    doses_used: 0,
   });
   const [formData, setFormData] = useState({
     lot_number: "",
     expiry_date: "",
     reception_date: formatDateForDb(new Date()),
     vials_count: 10,
-    vials_used: 0,
-    doses_per_vial: 7,
-    doses_lost: 0,
   });
   const { toast } = useToast();
 
@@ -55,16 +45,11 @@ export const VaccineInventory = () => {
       const { data, error } = await supabase
         .from('vaccine_inventory')
         .select('*')
+        .eq('is_open', true)
         .order('reception_date', { ascending: false });
 
       if (error) throw error;
-      // Ensure doses_per_vial and doses_lost have default values for existing records
-      const dataWithDefaults = (data || []).map(item => ({
-        ...item,
-        doses_per_vial: item.doses_per_vial || 7,
-        doses_lost: item.doses_lost || 0
-      }));
-      setInventory(dataWithDefaults);
+      setInventory(data || []);
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'inventaire:', error);
       toast({
@@ -115,9 +100,6 @@ export const VaccineInventory = () => {
         expiry_date: "",
         reception_date: formatDateForDb(new Date()),
         vials_count: 10,
-        vials_used: 0,
-        doses_per_vial: 7,
-        doses_lost: 0,
       });
       setIsDialogOpen(false);
       fetchInventory();
@@ -164,10 +146,6 @@ export const VaccineInventory = () => {
       expiry_date: formatExpiryDate(item.expiry_date),
       reception_date: item.reception_date,
       vials_count: item.vials_count,
-      vials_used: item.vials_used,
-      doses_per_vial: item.doses_per_vial || 7,
-      doses_lost: item.doses_lost || 0,
-      doses_used: item.doses_used || 0,
     });
   };
 
@@ -177,11 +155,7 @@ export const VaccineInventory = () => {
       lot_number: "", 
       expiry_date: "",
       reception_date: "",
-      vials_count: 10, 
-      vials_used: 0, 
-      doses_per_vial: 7,
-      doses_lost: 0,
-      doses_used: 0
+      vials_count: 10,
     });
   };
 
@@ -194,10 +168,6 @@ export const VaccineInventory = () => {
           expiry_date: editFormData.expiry_date,
           reception_date: editFormData.reception_date,
           vials_count: editFormData.vials_count,
-          vials_used: editFormData.vials_used,
-          doses_per_vial: editFormData.doses_per_vial,
-          doses_lost: editFormData.doses_lost,
-          doses_used: editFormData.doses_used,
         })
         .eq('id', id);
 
@@ -219,37 +189,25 @@ export const VaccineInventory = () => {
     }
   };
 
-  const updateDosesUsed = async (id: string, newCount: number) => {
-    const item = inventory.find(i => i.id === id);
-    const maxDoses = item ? (item.vials_count * item.doses_per_vial) - item.doses_lost : 70; // Calcul dynamique basé sur le nombre de flacons, doses par flacon moins les doses perdues
-    
-    if (newCount < 0 || newCount > maxDoses) {
-      toast({
-        title: "Erreur",
-        description: `Le nombre de doses utilisées doit être entre 0 et ${maxDoses}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const toggleBoxStatus = async (id: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('vaccine_inventory')
-        .update({ doses_used: newCount })
+        .update({ is_open: !currentStatus })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Succès",
-        description: "Nombre de doses utilisées mis à jour"
+        description: currentStatus ? "Boîte fermée" : "Boîte ouverte"
       });
       fetchInventory();
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le nombre de doses",
+        description: "Impossible de changer le statut de la boîte",
         variant: "destructive"
       });
     }
@@ -325,38 +283,6 @@ export const VaccineInventory = () => {
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="vials_used">Flacons utilisés</Label>
-                    <Input
-                      id="vials_used"
-                      type="number"
-                      min="0"
-                      value={formData.vials_used}
-                      onChange={(e) => setFormData({...formData, vials_used: parseInt(e.target.value) || 0})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="doses_per_vial">Doses par flacon</Label>
-                    <Input
-                      id="doses_per_vial"
-                      type="number"
-                      min="1"
-                      value={formData.doses_per_vial}
-                      onChange={(e) => setFormData({...formData, doses_per_vial: parseInt(e.target.value) || 7})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="doses_lost">Doses perdues</Label>
-                    <Input
-                      id="doses_lost"
-                      type="number"
-                      min="0"
-                      value={formData.doses_lost}
-                      onChange={(e) => setFormData({...formData, doses_lost: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Annuler
@@ -380,11 +306,8 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
-                  <TableHead>Flacons</TableHead>
-                  <TableHead>Doses/flacon</TableHead>
-                  <TableHead>Doses perdues</TableHead>
-                  <TableHead>Doses restantes</TableHead>
-                  <TableHead>Doses utilisées</TableHead>
+                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -428,85 +351,31 @@ export const VaccineInventory = () => {
                     </TableCell>
                     <TableCell>
                       {editingRow === item.id ? (
-                        <div className="space-y-1">
-                          <div>
-                            <Label className="text-xs">Total</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              value={editFormData.vials_count}
-                              onChange={(e) => setEditFormData({...editFormData, vials_count: parseInt(e.target.value) || 1})}
-                              className="w-16 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Utilisés</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max={editFormData.vials_count}
-                              value={editFormData.vials_used}
-                              onChange={(e) => setEditFormData({...editFormData, vials_used: parseInt(e.target.value) || 0})}
-                              className="w-16 text-xs"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-sm">
-                          <div>{item.vials_used} / {item.vials_count} utilisés</div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.vials_count - item.vials_used} restants
-                          </div>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingRow === item.id ? (
                         <Input
                           type="number"
                           min="1"
-                          value={editFormData.doses_per_vial}
-                          onChange={(e) => setEditFormData({...editFormData, doses_per_vial: parseInt(e.target.value) || 7})}
-                          className="w-16"
-                        />
-                      ) : (
-                        item.doses_per_vial || 7
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingRow === item.id ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          value={editFormData.doses_lost}
-                          onChange={(e) => setEditFormData({...editFormData, doses_lost: parseInt(e.target.value) || 0})}
-                          className="w-16"
-                        />
-                      ) : (
-                        item.doses_lost || 0
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0) === 0 ? "text-red-600 font-semibold" : ""}>
-                        {(item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0)} / {item.vials_count * (item.doses_per_vial || 7)} doses
-                      </span>
-                      <div className="text-xs text-muted-foreground">
-                        ({Math.floor(((item.vials_count * (item.doses_per_vial || 7)) - item.doses_used - (item.doses_lost || 0)) / (item.doses_per_vial || 7))} flacons entiers restants)
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {editingRow === item.id ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          max={editFormData.vials_count * editFormData.doses_per_vial - editFormData.doses_lost}
-                          value={editFormData.doses_used}
-                          onChange={(e) => setEditFormData({...editFormData, doses_used: parseInt(e.target.value) || 0})}
+                          value={editFormData.vials_count}
+                          onChange={(e) => setEditFormData({...editFormData, vials_count: parseInt(e.target.value) || 1})}
                           className="w-20"
                         />
                       ) : (
-                        item.doses_used
+                        item.vials_count
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {item.is_open ? (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <LockOpen className="h-4 w-4" />
+                            Ouverte
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Lock className="h-4 w-4" />
+                            Fermée
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -535,6 +404,13 @@ export const VaccineInventory = () => {
                               onClick={() => startEditing(item)}
                             >
                               <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={item.is_open ? "secondary" : "default"}
+                              size="sm"
+                              onClick={() => toggleBoxStatus(item.id, item.is_open)}
+                            >
+                              {item.is_open ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
                             </Button>
                             <Button
                               variant="destructive"

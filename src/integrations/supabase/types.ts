@@ -355,6 +355,7 @@ export type Database = {
           doses_used: number
           expiry_date: string
           id: string
+          is_open: boolean
           lot_number: string
           reception_date: string
           updated_at: string
@@ -368,6 +369,7 @@ export type Database = {
           doses_used?: number
           expiry_date: string
           id?: string
+          is_open?: boolean
           lot_number: string
           reception_date?: string
           updated_at?: string
@@ -381,6 +383,7 @@ export type Database = {
           doses_used?: number
           expiry_date?: string
           id?: string
+          is_open?: boolean
           lot_number?: string
           reception_date?: string
           updated_at?: string
