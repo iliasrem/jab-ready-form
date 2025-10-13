@@ -55,67 +55,6 @@ export default function AdminAvailabilityOverview() {
     link.href = window.location.href;
   }, []);
 
-  // Charger les disponibilités depuis Supabase
-  useEffect(() => {
-    const loadAvailability = async () => {
-      try {
-        const { data: { user }, error: userErr } = await supabase.auth.getUser();
-        if (userErr || !user) return;
-
-        const { data, error } = await supabase
-          .from("specific_date_availability")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_available", true);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          // Regrouper par date et créer les objets SpecificDateAvailability
-          const byDateMap = new Map<string, SpecificDateAvailability>();
-
-          data.forEach((row) => {
-            const dateKey = row.specific_date;
-            if (!byDateMap.has(dateKey)) {
-              const date = new Date(dateKey + "T00:00:00");
-              byDateMap.set(dateKey, {
-                date,
-                enabled: true,
-                timeSlots: defaultTimeSlots.map((time) => ({
-                  time,
-                  available: false
-                }))
-              });
-            }
-
-            const dayAvailability = byDateMap.get(dateKey)!;
-            const startMinutes = timeStrToMinutes(row.start_time.substring(0, 5));
-            const endMinutes = timeStrToMinutes(row.end_time.substring(0, 5));
-
-            // Marquer tous les créneaux dans cette plage comme disponibles
-            dayAvailability.timeSlots.forEach((slot) => {
-              const slotMinutes = timeStrToMinutes(slot.time);
-              if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
-                slot.available = true;
-              }
-            });
-          });
-
-          setAvailability(Array.from(byDateMap.values()));
-        }
-      } catch (e: any) {
-        console.error("Erreur lors du chargement des disponibilités:", e);
-        toast({
-          variant: "destructive",
-          title: "Erreur de chargement",
-          description: e?.message ?? "Impossible de charger les disponibilités."
-        });
-      }
-    };
-
-    loadAvailability();
-  }, [toast]);
-
   // Index rapide par date (yyyy-MM-dd)
   const byDate = useMemo(() => {
     const map = new Map<string, SpecificDateAvailability>();
@@ -291,6 +230,78 @@ export default function AdminAvailabilityOverview() {
     return `${pad(h)}:${pad(m)}:00`;
   };
   const addMinutesStr = (t: string, delta: number) => minutesToTimeStr(timeStrToMinutes(t) + delta);
+
+  // Charger les disponibilités depuis Supabase pour la période visible
+  useEffect(() => {
+    const loadAvailability = async () => {
+      try {
+        const { data: { user }, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !user) return;
+
+        // Calculer les dates min et max de la période
+        const dates = period;
+        if (dates.length === 0) return;
+
+        const minDate = format(dates[0], "yyyy-MM-dd");
+        const maxDate = format(dates[dates.length - 1], "yyyy-MM-dd");
+
+        const { data, error } = await supabase
+          .from("specific_date_availability")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_available", true)
+          .gte("specific_date", minDate)
+          .lte("specific_date", maxDate);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Regrouper par date et créer les objets SpecificDateAvailability
+          const byDateMap = new Map<string, SpecificDateAvailability>();
+
+          data.forEach((row) => {
+            const dateKey = row.specific_date;
+            if (!byDateMap.has(dateKey)) {
+              const date = new Date(dateKey + "T00:00:00");
+              byDateMap.set(dateKey, {
+                date,
+                enabled: true,
+                timeSlots: defaultTimeSlots.map((time) => ({
+                  time,
+                  available: false
+                }))
+              });
+            }
+
+            const dayAvailability = byDateMap.get(dateKey)!;
+            const startMinutes = timeStrToMinutes(row.start_time.substring(0, 5));
+            const endMinutes = timeStrToMinutes(row.end_time.substring(0, 5));
+
+            // Marquer tous les créneaux dans cette plage comme disponibles
+            dayAvailability.timeSlots.forEach((slot) => {
+              const slotMinutes = timeStrToMinutes(slot.time);
+              if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
+                slot.available = true;
+              }
+            });
+          });
+
+          setAvailability(Array.from(byDateMap.values()));
+        } else {
+          setAvailability([]);
+        }
+      } catch (e: any) {
+        console.error("Erreur lors du chargement des disponibilités:", e);
+        toast({
+          variant: "destructive",
+          title: "Erreur de chargement",
+          description: e?.message ?? "Impossible de charger les disponibilités."
+        });
+      }
+    };
+
+    loadAvailability();
+  }, [period, toast]);
 
   const groupContiguous = (times: string[]) => {
     if (times.length === 0) return [] as Array<{ start: string; end: string }>;
