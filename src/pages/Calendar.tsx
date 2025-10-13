@@ -263,7 +263,7 @@ const CalendarPage = () => {
                   <X className="h-4 w-4 text-primary" />
                 )}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-red-600 font-medium">
                 {appointment?.notes || ''}
               </div>
             </div>
