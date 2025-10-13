@@ -23,6 +23,7 @@ interface VaccineInventoryItem {
 
 export const VaccineInventory = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
+  const [closedInventory, setClosedInventory] = useState<VaccineInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -42,14 +43,23 @@ export const VaccineInventory = () => {
 
   const fetchInventory = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: openData, error: openError } = await supabase
         .from('vaccine_inventory')
         .select('*')
         .eq('is_open', true)
         .order('reception_date', { ascending: false });
 
-      if (error) throw error;
-      setInventory(data || []);
+      if (openError) throw openError;
+      setInventory(openData || []);
+
+      const { data: closedData, error: closedError } = await supabase
+        .from('vaccine_inventory')
+        .select('*')
+        .eq('is_open', false)
+        .order('reception_date', { ascending: false });
+
+      if (closedError) throw closedError;
+      setClosedInventory(closedData || []);
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'inventaire:', error);
       toast({
@@ -86,7 +96,7 @@ export const VaccineInventory = () => {
     try {
       const { error } = await supabase
         .from('vaccine_inventory')
-        .insert([formData]);
+        .insert([{ ...formData, is_open: true }]);
 
       if (error) throw error;
 
@@ -228,7 +238,7 @@ export const VaccineInventory = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              <CardTitle>Inventaire des Flacons de Vaccins</CardTitle>
+              <CardTitle>Boîtes Ouvertes</CardTitle>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -297,7 +307,7 @@ export const VaccineInventory = () => {
         <CardContent>
           {inventory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune boîte dans l'inventaire
+              Aucune boîte ouverte dans l'inventaire
             </div>
           ) : (
             <Table>
@@ -421,6 +431,62 @@ export const VaccineInventory = () => {
                             </Button>
                           </>
                         )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            <CardTitle>Boîtes Fermées</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {closedInventory.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune boîte fermée
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numéro de lot</TableHead>
+                  <TableHead>Date d'expiration</TableHead>
+                  <TableHead>Date de réception</TableHead>
+                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {closedInventory.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.lot_number}</TableCell>
+                    <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
+                    <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>{item.vials_count}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => toggleBoxStatus(item.id, item.is_open)}
+                        >
+                          <LockOpen className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
