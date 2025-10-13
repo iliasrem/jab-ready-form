@@ -19,6 +19,7 @@ interface VaccineInventoryItem {
   vials_count: number;
   status: string;
   created_at: string;
+  doses_injected?: number;
 }
 
 export const VaccineInventory = () => {
@@ -44,6 +45,7 @@ export const VaccineInventory = () => {
 
   const fetchInventory = async () => {
     try {
+      // Récupérer les données d'inventaire
       const { data: openData, error: openError } = await supabase
         .from('vaccine_inventory')
         .select('*')
@@ -51,7 +53,6 @@ export const VaccineInventory = () => {
         .order('reception_date', { ascending: false });
 
       if (openError) throw openError;
-      setInventory(openData || []);
 
       const { data: emptyData, error: emptyError } = await supabase
         .from('vaccine_inventory')
@@ -60,7 +61,6 @@ export const VaccineInventory = () => {
         .order('reception_date', { ascending: false });
 
       if (emptyError) throw emptyError;
-      setEmptyInventory(emptyData || []);
 
       const { data: closedData, error: closedError } = await supabase
         .from('vaccine_inventory')
@@ -69,7 +69,30 @@ export const VaccineInventory = () => {
         .order('reception_date', { ascending: false });
 
       if (closedError) throw closedError;
-      setClosedInventory(closedData || []);
+
+      // Récupérer le nombre de doses injectées par lot
+      const { data: vaccinationsData, error: vaccinationsError } = await supabase
+        .from('vaccinations')
+        .select('lot_number');
+
+      if (vaccinationsError) throw vaccinationsError;
+
+      // Compter les doses par lot
+      const dosesCount: Record<string, number> = {};
+      vaccinationsData?.forEach(v => {
+        dosesCount[v.lot_number] = (dosesCount[v.lot_number] || 0) + 1;
+      });
+
+      // Ajouter le comptage aux données
+      const addDosesCount = (items: any[]) => 
+        items.map(item => ({
+          ...item,
+          doses_injected: dosesCount[item.lot_number] || 0
+        }));
+
+      setInventory(addDosesCount(openData || []));
+      setEmptyInventory(addDosesCount(emptyData || []));
+      setClosedInventory(addDosesCount(closedData || []));
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'inventaire:', error);
       toast({
@@ -332,7 +355,7 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
-                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Doses injectées</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -376,17 +399,7 @@ export const VaccineInventory = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {editingRow === item.id ? (
-                        <Input
-                          type="number"
-                          min="1"
-                          value={editFormData.vials_count}
-                          onChange={(e) => setEditFormData({...editFormData, vials_count: parseInt(e.target.value) || 1})}
-                          className="w-20"
-                        />
-                      ) : (
-                        item.vials_count
-                      )}
+                      {item.doses_injected || 0}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -478,14 +491,14 @@ export const VaccineInventory = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            <CardTitle>Boîtes Vides</CardTitle>
+            <Lock className="h-5 w-5" />
+            <CardTitle>Boîtes Fermées</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          {emptyInventory.length === 0 ? (
+          {closedInventory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune boîte vide
+              Aucune boîte fermée
             </div>
           ) : (
             <Table>
@@ -494,24 +507,24 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
-                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Doses injectées</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {emptyInventory.map((item) => (
+                {closedInventory.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>{item.vials_count}</TableCell>
+                    <TableCell>{item.doses_injected || 0}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
-                          variant="outline"
+                          variant="default"
                           size="sm"
                           onClick={() => changeBoxStatus(item.id, 'open')}
-                          title="Rouvrir"
+                          title="Ouvrir"
                         >
                           <LockOpen className="h-4 w-4" />
                         </Button>
@@ -536,14 +549,14 @@ export const VaccineInventory = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            <CardTitle>Boîtes Fermées</CardTitle>
+            <Package className="h-5 w-5" />
+            <CardTitle>Boîtes Vides</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          {closedInventory.length === 0 ? (
+          {emptyInventory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune boîte fermée
+              Aucune boîte vide
             </div>
           ) : (
             <Table>
@@ -552,24 +565,24 @@ export const VaccineInventory = () => {
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
-                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Doses injectées</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {closedInventory.map((item) => (
+                {emptyInventory.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>{item.vials_count}</TableCell>
+                    <TableCell>{item.doses_injected || 0}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
-                          variant="default"
+                          variant="outline"
                           size="sm"
                           onClick={() => changeBoxStatus(item.id, 'open')}
-                          title="Ouvrir"
+                          title="Rouvrir"
                         >
                           <LockOpen className="h-4 w-4" />
                         </Button>
