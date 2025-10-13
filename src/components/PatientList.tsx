@@ -12,7 +12,8 @@ import { formatDateForDb } from "@/lib/utils";
 
 export interface Patient {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   birthDate: Date | null;
@@ -21,49 +22,8 @@ export interface Patient {
   status: "Active" | "Inactive";
 }
 
-// Mock patient data
-const mockPatients: Patient[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+1234567890",
-    birthDate: new Date("1985-03-15"),
-    nextAppointment: new Date("2024-02-15"),
-    notes: "Regular checkup patient",
-    status: "Active"
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@email.com",
-    phone: "+1234567891",
-    birthDate: new Date("1990-07-22"),
-    nextAppointment: null,
-    notes: "Consultation completed",
-    status: "Active"
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    email: "mike.johnson@email.com",
-    phone: "+1234567892",
-    birthDate: new Date("1978-11-08"),
-    nextAppointment: new Date("2024-02-10"),
-    notes: "New patient",
-    status: "Active"
-  },
-  {
-    id: "4",
-    name: "Sarah Wilson",
-    email: "sarah.wilson@email.com",
-    phone: "+1234567893",
-    birthDate: new Date("1982-09-14"),
-    nextAppointment: null,
-    notes: "Treatment series completed",
-    status: "Inactive"
-  }
-];
+// Mock patient data (not used anymore but kept for reference)
+const mockPatients: Patient[] = [];
 
 export function PatientList() {
   const { toast } = useToast();
@@ -113,7 +73,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         
         return {
           id: p.id,
-          name: `${capitalizedFirstName} ${capitalizedLastName}`.trim(),
+          firstName: capitalizedFirstName,
+          lastName: capitalizedLastName,
           email: p.email ?? "",
           phone: p.phone ?? "",
           birthDate: p.birth_date ? new Date(p.birth_date) : null,
@@ -143,16 +104,11 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     if (!editedPatient) return;
 
     try {
-      // Split name into first_name and last_name
-      const nameParts = editedPatient.name.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
       const { error } = await supabase
         .from('patients')
         .update({
-          first_name: firstName,
-          last_name: lastName,
+          first_name: editedPatient.firstName,
+          last_name: editedPatient.lastName,
           email: editedPatient.email,
           phone: editedPatient.phone,
           birth_date: editedPatient.birthDate ? formatDateForDb(editedPatient.birthDate) : null,
@@ -179,7 +135,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
       toast({
         title: "Patient mis à jour",
-        description: `Les informations de ${editedPatient.name} ont été mises à jour avec succès.`,
+        description: `Les informations de ${editedPatient.firstName} ${editedPatient.lastName} ont été mises à jour avec succès.`,
       });
 
       setEditingId(null);
@@ -198,7 +154,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     const patient = patients.find(p => p.id === patientId);
     if (!patient) return;
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${patient.name} ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${patient.firstName} ${patient.lastName} ?`)) {
       return;
     }
 
@@ -222,7 +178,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
       
       toast({
         title: "Patient supprimé",
-        description: `${patient.name} a été supprimé de la liste.`,
+        description: `${patient.firstName} ${patient.lastName} a été supprimé de la liste.`,
       });
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -241,7 +197,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportToExcel = () => {
     const exportData = patients.map(patient => ({
-      Nom: patient.name,
+      Prénom: patient.firstName,
+      Nom: patient.lastName,
       Email: patient.email,
       Téléphone: patient.phone,
       "Date de naissance": patient.birthDate ? format(patient.birthDate, "dd/MM/yyyy") : "",
@@ -276,7 +233,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
         const importedPatients: Patient[] = jsonData.map((row: any, index: number) => ({
           id: `imported-${Date.now()}-${index}`,
-          name: row.Nom || row.Name || "",
+          firstName: row.Prénom || row.FirstName || "",
+          lastName: row.Nom || row.LastName || "",
           email: row.Email || "",
           phone: row.Téléphone || row.Phone || "",
           birthDate: row["Date de naissance"] || row.BirthDate ? new Date(row["Date de naissance"] || row.BirthDate) : null,
@@ -351,6 +309,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b">
+                <th className="text-left p-3 font-medium">Prénom</th>
                 <th className="text-left p-3 font-medium">Nom</th>
                 <th className="text-left p-3 font-medium">Email</th>
                 <th className="text-left p-3 font-medium">Téléphone</th>
@@ -364,19 +323,36 @@ const fileInputRef = useRef<HTMLInputElement>(null);
             <tbody>
               {patients
                 .slice()
-                .sort((a, b) => a.name.localeCompare(b.name))
+                .sort((a, b) => {
+                  const lastNameCompare = a.lastName.localeCompare(b.lastName);
+                  if (lastNameCompare !== 0) return lastNameCompare;
+                  return a.firstName.localeCompare(b.firstName);
+                })
                 .map((patient) => (
                 <tr key={patient.id} className="border-b hover:bg-muted/50">
-                  {/* Name */}
+                  {/* First Name */}
                   <td className="p-3">
                     {editingId === patient.id ? (
                       <Input
-                        value={editedPatient?.name || ""}
-                        onChange={(e) => updateEditedField("name", e.target.value)}
+                        value={editedPatient?.firstName || ""}
+                        onChange={(e) => updateEditedField("firstName", e.target.value)}
                         className="w-full"
                       />
                     ) : (
-                      <span className="font-medium">{patient.name}</span>
+                      <span className="font-medium">{patient.firstName}</span>
+                    )}
+                  </td>
+
+                  {/* Last Name */}
+                  <td className="p-3">
+                    {editingId === patient.id ? (
+                      <Input
+                        value={editedPatient?.lastName || ""}
+                        onChange={(e) => updateEditedField("lastName", e.target.value)}
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="font-medium">{patient.lastName}</span>
                     )}
                   </td>
 
