@@ -317,8 +317,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="w-full border-collapse min-w-[1000px]">
             <thead>
               <tr className="border-b">
                 <th className="text-left p-3 font-medium">Nom</th>
