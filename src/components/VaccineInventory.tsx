@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateForDb } from "@/lib/utils";
-import { Trash2, Plus, Package, Edit2, Check, X, Lock, LockOpen } from "lucide-react";
+import { Trash2, Plus, Package, Edit2, Check, X, Lock, LockOpen, PackageX } from "lucide-react";
 import { format, parse } from "date-fns";
 
 interface VaccineInventoryItem {
@@ -461,7 +461,7 @@ export const VaccineInventory = () => {
                               onClick={() => changeBoxStatus(item.id, 'empty')}
                               title="Marquer comme vide"
                             >
-                              <Package className="h-4 w-4" />
+                              <PackageX className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
