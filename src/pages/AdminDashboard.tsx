@@ -8,6 +8,7 @@ import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { Statistics } from "@/components/Statistics";
+import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,6 +108,13 @@ const AdminDashboard = () => {
                       <CardDescription>Liste de tous les patients enregistrés</CardDescription>
                     </CardHeader>
                   </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-cyan-50 dark:bg-cyan-950/30" onClick={() => setSelectedUtility('google-calendar')}>
+                    <CardHeader>
+                      <CardTitle>Google Calendar</CardTitle>
+                      <CardDescription>Synchroniser avec votre agenda Google</CardDescription>
+                    </CardHeader>
+                  </Card>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -154,6 +162,10 @@ const AdminDashboard = () => {
                   
                   {selectedUtility === 'patients' && (
                     <PatientList />
+                  )}
+                  
+                  {selectedUtility === 'google-calendar' && (
+                    <GoogleCalendarConnect />
                   )}
                 </div>
               )}
