@@ -352,6 +352,7 @@ export const VaccineInventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>N°</TableHead>
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
@@ -361,9 +362,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory.map((item) => (
+                {inventory.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium">{index + 1}</TableCell>
                       {editingRow === item.id ? (
                         <Input
                           value={editFormData.lot_number}
@@ -373,7 +374,6 @@ export const VaccineInventory = () => {
                       ) : (
                         item.lot_number
                       )}
-                    </TableCell>
                     <TableCell>
                       {editingRow === item.id ? (
                         <Input
@@ -504,6 +504,7 @@ export const VaccineInventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>N°</TableHead>
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
@@ -512,8 +513,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {closedInventory.map((item) => (
+                {closedInventory.map((item, index) => (
                   <TableRow key={item.id}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
@@ -562,6 +564,7 @@ export const VaccineInventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>N°</TableHead>
                   <TableHead>Numéro de lot</TableHead>
                   <TableHead>Date d'expiration</TableHead>
                   <TableHead>Date de réception</TableHead>
@@ -570,8 +573,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {emptyInventory.map((item) => (
+                {emptyInventory.map((item, index) => (
                   <TableRow key={item.id}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
