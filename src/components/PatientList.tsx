@@ -77,7 +77,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
       const { data, error } = await supabase
         .from('patients')
         .select('id, first_name, last_name, email, phone, birth_date, status, notes')
-        .order('created_at', { ascending: false });
+        .order('last_name', { ascending: true })
+        .order('first_name', { ascending: true });
 
       if (error) {
         console.error('Erreur lors du chargement des patients:', error);
