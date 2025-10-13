@@ -340,7 +340,10 @@ const fileInputRef = useRef<HTMLInputElement>(null);
               </tr>
             </thead>
             <tbody>
-              {patients.map((patient) => (
+              {patients
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((patient) => (
                 <tr key={patient.id} className="border-b hover:bg-muted/50">
                   {/* Name */}
                   <td className="p-3">
