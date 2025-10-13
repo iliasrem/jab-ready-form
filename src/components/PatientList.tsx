@@ -28,9 +28,21 @@ const mockPatients: Patient[] = [];
 export function PatientList() {
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [sortedPatients, setSortedPatients] = useState<Patient[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedPatient, setEditedPatient] = useState<Patient | null>(null);
 const fileInputRef = useRef<HTMLInputElement>(null);
+
+  
+  // Trier les patients chaque fois que la liste change
+  useEffect(() => {
+    const sorted = [...patients].sort((a, b) => {
+      const lastNameCompare = a.lastName.localeCompare(b.lastName);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.firstName.localeCompare(b.firstName);
+    });
+    setSortedPatients(sorted);
+  }, [patients]);
 
   useEffect(() => {
     const loadPatients = async () => {
@@ -321,14 +333,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
               </tr>
             </thead>
             <tbody>
-              {patients
-                .slice()
-                .sort((a, b) => {
-                  const lastNameCompare = a.lastName.localeCompare(b.lastName);
-                  if (lastNameCompare !== 0) return lastNameCompare;
-                  return a.firstName.localeCompare(b.firstName);
-                })
-                .map((patient) => (
+              {sortedPatients.map((patient) => (
                 <tr key={patient.id} className="border-b hover:bg-muted/50">
                   {/* First Name */}
                   <td className="p-3">
@@ -496,7 +501,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           </table>
         </div>
 
-        {patients.length === 0 && (
+        {sortedPatients.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             No patients found. Patient records will appear here as appointments are booked.
           </div>
