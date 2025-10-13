@@ -37,6 +37,7 @@ export const VaccineInventory = () => {
     vials_used: 0,
     doses_per_vial: 7,
     doses_lost: 0,
+    doses_used: 0,
   });
   const [formData, setFormData] = useState({
     lot_number: "",
@@ -166,6 +167,7 @@ export const VaccineInventory = () => {
       vials_used: item.vials_used,
       doses_per_vial: item.doses_per_vial || 7,
       doses_lost: item.doses_lost || 0,
+      doses_used: item.doses_used || 0,
     });
   };
 
@@ -178,7 +180,8 @@ export const VaccineInventory = () => {
       vials_count: 10, 
       vials_used: 0, 
       doses_per_vial: 7,
-      doses_lost: 0 
+      doses_lost: 0,
+      doses_used: 0
     });
   };
 
@@ -194,6 +197,7 @@ export const VaccineInventory = () => {
           vials_used: editFormData.vials_used,
           doses_per_vial: editFormData.doses_per_vial,
           doses_lost: editFormData.doses_lost,
+          doses_used: editFormData.doses_used,
         })
         .eq('id', id);
 
@@ -491,14 +495,18 @@ export const VaccineInventory = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        min="0"
-                        max={item.vials_count * (item.doses_per_vial || 7) - (item.doses_lost || 0)}
-                        value={item.doses_used}
-                        onChange={(e) => updateDosesUsed(item.id, parseInt(e.target.value) || 0)}
-                        className="w-20"
-                      />
+                      {editingRow === item.id ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          max={editFormData.vials_count * editFormData.doses_per_vial - editFormData.doses_lost}
+                          value={editFormData.doses_used}
+                          onChange={(e) => setEditFormData({...editFormData, doses_used: parseInt(e.target.value) || 0})}
+                          className="w-20"
+                        />
+                      ) : (
+                        item.doses_used
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
