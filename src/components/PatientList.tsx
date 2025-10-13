@@ -209,8 +209,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportToExcel = () => {
     const exportData = patients.map(patient => ({
-      Prénom: patient.firstName,
       Nom: patient.lastName,
+      Prénom: patient.firstName,
       Email: patient.email,
       Téléphone: patient.phone,
       "Date de naissance": patient.birthDate ? format(patient.birthDate, "dd/MM/yyyy") : "",
@@ -321,8 +321,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b">
-                <th className="text-left p-3 font-medium">Prénom</th>
                 <th className="text-left p-3 font-medium">Nom</th>
+                <th className="text-left p-3 font-medium">Prénom</th>
                 <th className="text-left p-3 font-medium">Email</th>
                 <th className="text-left p-3 font-medium">Téléphone</th>
                 <th className="text-left p-3 font-medium">Date de naissance</th>
@@ -335,19 +335,6 @@ const fileInputRef = useRef<HTMLInputElement>(null);
             <tbody>
               {sortedPatients.map((patient) => (
                 <tr key={patient.id} className="border-b hover:bg-muted/50">
-                  {/* First Name */}
-                  <td className="p-3">
-                    {editingId === patient.id ? (
-                      <Input
-                        value={editedPatient?.firstName || ""}
-                        onChange={(e) => updateEditedField("firstName", e.target.value)}
-                        className="w-full"
-                      />
-                    ) : (
-                      <span className="font-medium">{patient.firstName}</span>
-                    )}
-                  </td>
-
                   {/* Last Name */}
                   <td className="p-3">
                     {editingId === patient.id ? (
@@ -358,6 +345,19 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                       />
                     ) : (
                       <span className="font-medium">{patient.lastName}</span>
+                    )}
+                  </td>
+
+                  {/* First Name */}
+                  <td className="p-3">
+                    {editingId === patient.id ? (
+                      <Input
+                        value={editedPatient?.firstName || ""}
+                        onChange={(e) => updateEditedField("firstName", e.target.value)}
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="font-medium">{patient.firstName}</span>
                     )}
                   </td>
 
