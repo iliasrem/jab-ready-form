@@ -365,7 +365,8 @@ export const VaccineInventory = () => {
               <TableBody>
                 {inventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.order_number}</TableCell>
+                    <TableCell className="font-medium">{item.order_number || '-'}</TableCell>
+                    <TableCell className="font-medium">
                       {editingRow === item.id ? (
                         <Input
                           value={editFormData.lot_number}
@@ -375,6 +376,7 @@ export const VaccineInventory = () => {
                       ) : (
                         item.lot_number
                       )}
+                    </TableCell>
                     <TableCell>
                       {editingRow === item.id ? (
                         <Input
@@ -516,7 +518,7 @@ export const VaccineInventory = () => {
               <TableBody>
                 {closedInventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.order_number}</TableCell>
+                    <TableCell className="font-medium">{item.order_number || '-'}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
@@ -576,7 +578,7 @@ export const VaccineInventory = () => {
               <TableBody>
                 {emptyInventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.order_number}</TableCell>
+                    <TableCell className="font-medium">{item.order_number || '-'}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
