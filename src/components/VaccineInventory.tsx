@@ -54,7 +54,7 @@ export const VaccineInventory = () => {
       const { data, error } = await supabase
         .from('vaccine_inventory')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('reception_date', { ascending: false });
 
       if (error) throw error;
       // Ensure doses_per_vial and doses_lost have default values for existing records
