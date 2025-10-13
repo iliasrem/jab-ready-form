@@ -32,6 +32,7 @@ export const VaccineInventory = () => {
   const [editFormData, setEditFormData] = useState({
     lot_number: "",
     expiry_date: "",
+    reception_date: "",
     vials_count: 10,
     vials_used: 0,
     doses_per_vial: 7,
@@ -160,6 +161,7 @@ export const VaccineInventory = () => {
     setEditFormData({
       lot_number: item.lot_number,
       expiry_date: formatExpiryDate(item.expiry_date),
+      reception_date: item.reception_date,
       vials_count: item.vials_count,
       vials_used: item.vials_used,
       doses_per_vial: item.doses_per_vial || 7,
@@ -171,7 +173,8 @@ export const VaccineInventory = () => {
     setEditingRow(null);
     setEditFormData({ 
       lot_number: "", 
-      expiry_date: "", 
+      expiry_date: "",
+      reception_date: "",
       vials_count: 10, 
       vials_used: 0, 
       doses_per_vial: 7,
@@ -186,6 +189,7 @@ export const VaccineInventory = () => {
         .update({
           lot_number: editFormData.lot_number,
           expiry_date: editFormData.expiry_date,
+          reception_date: editFormData.reception_date,
           vials_count: editFormData.vials_count,
           vials_used: editFormData.vials_used,
           doses_per_vial: editFormData.doses_per_vial,
@@ -406,7 +410,18 @@ export const VaccineInventory = () => {
                         formatExpiryDate(item.expiry_date)
                       )}
                     </TableCell>
-                    <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>
+                      {editingRow === item.id ? (
+                        <Input
+                          type="date"
+                          value={editFormData.reception_date}
+                          onChange={(e) => setEditFormData({...editFormData, reception_date: e.target.value})}
+                          className="w-36"
+                        />
+                      ) : (
+                        new Date(item.reception_date).toLocaleDateString('fr-FR')
+                      )}
+                    </TableCell>
                     <TableCell>
                       {editingRow === item.id ? (
                         <div className="space-y-1">
