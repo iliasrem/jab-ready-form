@@ -153,15 +153,7 @@ const AdminDashboard = () => {
                   )}
                   
                   {selectedUtility === 'patients' && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Patients</CardTitle>
-                        <CardDescription>Liste de tous les patients enregistrés</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <PatientList />
-                      </CardContent>
-                    </Card>
+                    <PatientList />
                   )}
                 </div>
               )}
