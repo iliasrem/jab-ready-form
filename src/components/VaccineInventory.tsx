@@ -20,6 +20,7 @@ interface VaccineInventoryItem {
   status: string;
   created_at: string;
   doses_injected?: number;
+  order_number?: number;
 }
 
 export const VaccineInventory = () => {
@@ -362,9 +363,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory.map((item, index) => (
+                {inventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{item.order_number}</TableCell>
                       {editingRow === item.id ? (
                         <Input
                           value={editFormData.lot_number}
@@ -513,9 +514,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {closedInventory.map((item, index) => (
+                {closedInventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{item.order_number}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
@@ -573,9 +574,9 @@ export const VaccineInventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {emptyInventory.map((item, index) => (
+                {emptyInventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{item.order_number}</TableCell>
                     <TableCell className="font-medium">{item.lot_number}</TableCell>
                     <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>

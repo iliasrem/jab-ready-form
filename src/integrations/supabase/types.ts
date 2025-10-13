@@ -356,6 +356,7 @@ export type Database = {
           expiry_date: string
           id: string
           lot_number: string
+          order_number: number | null
           reception_date: string
           status: string
           updated_at: string
@@ -370,6 +371,7 @@ export type Database = {
           expiry_date: string
           id?: string
           lot_number: string
+          order_number?: number | null
           reception_date?: string
           status?: string
           updated_at?: string
@@ -384,6 +386,7 @@ export type Database = {
           expiry_date?: string
           id?: string
           lot_number?: string
+          order_number?: number | null
           reception_date?: string
           status?: string
           updated_at?: string
