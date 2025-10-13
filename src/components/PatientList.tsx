@@ -90,6 +90,21 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         return;
       }
 
+      // Récupérer les prochains rendez-vous
+      const { data: appointmentsData } = await supabase
+        .from('appointments')
+        .select('patient_id, appointment_date')
+        .gte('appointment_date', new Date().toISOString().split('T')[0])
+        .order('appointment_date', { ascending: true });
+
+      // Créer un map des prochains rendez-vous par patient
+      const nextAppointments = new Map<string, Date>();
+      appointmentsData?.forEach(apt => {
+        if (!nextAppointments.has(apt.patient_id)) {
+          nextAppointments.set(apt.patient_id, new Date(apt.appointment_date));
+        }
+      });
+
       const mapped: Patient[] = (data ?? []).map((p: any) => {
         const firstName = p.first_name ?? "";
         const lastName = p.last_name ?? "";
@@ -102,7 +117,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           email: p.email ?? "",
           phone: p.phone ?? "",
           birthDate: p.birth_date ? new Date(p.birth_date) : null,
-          nextAppointment: null,
+          nextAppointment: nextAppointments.get(p.id) || null,
           notes: p.notes ?? "",
           status: (p.status === 'inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
         };
