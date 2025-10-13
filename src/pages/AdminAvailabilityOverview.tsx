@@ -24,7 +24,7 @@ const defaultTimeSlots = [
 export default function AdminAvailabilityOverview() {
   type ViewMode = "day" | "week" | "month" | "quarter";
 
-  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [viewMode, setViewMode] = useState<ViewMode>("quarter");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
   const [availability, setAvailability] = useState<SpecificDateAvailability[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -78,9 +78,9 @@ export default function AdminAvailabilityOverview() {
       start = startOfMonth(start);
       end = endOfMonth(start);
     } else {
-      // 3 mois: du début du mois courant jusqu'à la fin dans 2 mois
+      // 2 mois: du début du mois courant jusqu'à la fin dans 1 mois
       start = startOfMonth(start);
-      end = endOfMonth(addMonths(start, 2));
+      end = endOfMonth(addMonths(start, 1));
     }
 
     return eachDayOfInterval({ start, end });
@@ -421,7 +421,7 @@ export default function AdminAvailabilityOverview() {
             <Button variant={viewMode === "day" ? "default" : "outline"} size="sm" onClick={() => setViewMode("day")}>Jour</Button>
             <Button variant={viewMode === "week" ? "default" : "outline"} size="sm" onClick={() => setViewMode("week")}>Semaine</Button>
             <Button variant={viewMode === "month" ? "default" : "outline"} size="sm" onClick={() => setViewMode("month")}>Mois</Button>
-            <Button variant={viewMode === "quarter" ? "default" : "outline"} size="sm" onClick={() => setViewMode("quarter")}>3 mois</Button>
+            <Button variant={viewMode === "quarter" ? "default" : "outline"} size="sm" onClick={() => setViewMode("quarter")}>2 mois</Button>
           </div>
           <div className="inline-flex gap-2">
             <Button variant="outline" size="sm" onClick={goPrev}>Précédent</Button>
