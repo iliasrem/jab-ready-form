@@ -90,16 +90,23 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         return;
       }
 
-      const mapped: Patient[] = (data ?? []).map((p: any) => ({
-        id: p.id,
-        name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(),
-        email: p.email ?? "",
-        phone: p.phone ?? "",
-        birthDate: p.birth_date ? new Date(p.birth_date) : null,
-        nextAppointment: null,
-        notes: p.notes ?? "",
-        status: (p.status === 'inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
-      }));
+      const mapped: Patient[] = (data ?? []).map((p: any) => {
+        const firstName = p.first_name ?? "";
+        const lastName = p.last_name ?? "";
+        const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        const capitalizedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+        
+        return {
+          id: p.id,
+          name: `${capitalizedFirstName} ${capitalizedLastName}`.trim(),
+          email: p.email ?? "",
+          phone: p.phone ?? "",
+          birthDate: p.birth_date ? new Date(p.birth_date) : null,
+          nextAppointment: null,
+          notes: p.notes ?? "",
+          status: (p.status === 'inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+        };
+      });
 
       setPatients(mapped);
     };
