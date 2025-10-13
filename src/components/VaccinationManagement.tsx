@@ -27,7 +27,7 @@ interface VaccineInventoryItem {
   id: string;
   lot_number: string;
   expiry_date: string;
-  is_open: boolean;
+  status: string;
 }
 
 interface Vaccination {
@@ -192,8 +192,8 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, is_open")
-      .eq("is_open", true)
+      .select("id, lot_number, expiry_date, status")
+      .eq("status", "open")
       .order("expiry_date");
 
     if (error) {

@@ -17,12 +17,13 @@ interface VaccineInventoryItem {
   expiry_date: string;
   reception_date: string;
   vials_count: number;
-  is_open: boolean;
+  status: string;
   created_at: string;
 }
 
 export const VaccineInventory = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
+  const [emptyInventory, setEmptyInventory] = useState<VaccineInventoryItem[]>([]);
   const [closedInventory, setClosedInventory] = useState<VaccineInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -46,16 +47,25 @@ export const VaccineInventory = () => {
       const { data: openData, error: openError } = await supabase
         .from('vaccine_inventory')
         .select('*')
-        .eq('is_open', true)
+        .eq('status', 'open')
         .order('reception_date', { ascending: false });
 
       if (openError) throw openError;
       setInventory(openData || []);
 
+      const { data: emptyData, error: emptyError } = await supabase
+        .from('vaccine_inventory')
+        .select('*')
+        .eq('status', 'empty')
+        .order('reception_date', { ascending: false });
+
+      if (emptyError) throw emptyError;
+      setEmptyInventory(emptyData || []);
+
       const { data: closedData, error: closedError } = await supabase
         .from('vaccine_inventory')
         .select('*')
-        .eq('is_open', false)
+        .eq('status', 'closed')
         .order('reception_date', { ascending: false });
 
       if (closedError) throw closedError;
@@ -96,7 +106,7 @@ export const VaccineInventory = () => {
     try {
       const { error } = await supabase
         .from('vaccine_inventory')
-        .insert([{ ...formData, is_open: true }]);
+        .insert([{ ...formData, status: 'open' }]);
 
       if (error) throw error;
 
@@ -199,18 +209,24 @@ export const VaccineInventory = () => {
     }
   };
 
-  const toggleBoxStatus = async (id: string, currentStatus: boolean) => {
+  const changeBoxStatus = async (id: string, newStatus: 'open' | 'empty' | 'closed') => {
     try {
       const { error } = await supabase
         .from('vaccine_inventory')
-        .update({ is_open: !currentStatus })
+        .update({ status: newStatus })
         .eq('id', id);
 
       if (error) throw error;
 
+      const statusLabels = {
+        open: "Boîte ouverte",
+        empty: "Boîte marquée comme vide",
+        closed: "Boîte fermée"
+      };
+
       toast({
         title: "Succès",
-        description: currentStatus ? "Boîte fermée" : "Boîte ouverte"
+        description: statusLabels[newStatus]
       });
       fetchInventory();
     } catch (error) {
@@ -374,12 +390,19 @@ export const VaccineInventory = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {item.is_open ? (
+                        {item.status === 'open' && (
                           <span className="flex items-center gap-1 text-green-600">
                             <LockOpen className="h-4 w-4" />
                             Ouverte
                           </span>
-                        ) : (
+                        )}
+                        {item.status === 'empty' && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <Package className="h-4 w-4" />
+                            Vide
+                          </span>
+                        )}
+                        {item.status === 'closed' && (
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Lock className="h-4 w-4" />
                             Fermée
@@ -412,20 +435,31 @@ export const VaccineInventory = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => startEditing(item)}
+                              title="Modifier"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
                             <Button
-                              variant={item.is_open ? "secondary" : "default"}
+                              variant="secondary"
                               size="sm"
-                              onClick={() => toggleBoxStatus(item.id, item.is_open)}
+                              onClick={() => changeBoxStatus(item.id, 'empty')}
+                              title="Marquer comme vide"
                             >
-                              {item.is_open ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+                              <Package className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => changeBoxStatus(item.id, 'closed')}
+                              title="Fermer"
+                            >
+                              <Lock className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(item.id)}
+                              title="Supprimer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -445,6 +479,64 @@ export const VaccineInventory = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5" />
+            <CardTitle>Boîtes Vides</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {emptyInventory.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune boîte vide
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numéro de lot</TableHead>
+                  <TableHead>Date d'expiration</TableHead>
+                  <TableHead>Date de réception</TableHead>
+                  <TableHead>Nombre de flacons</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {emptyInventory.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.lot_number}</TableCell>
+                    <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
+                    <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>{item.vials_count}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => changeBoxStatus(item.id, 'open')}
+                          title="Rouvrir"
+                        >
+                          <LockOpen className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
             <CardTitle>Boîtes Fermées</CardTitle>
           </div>
         </CardHeader>
@@ -476,7 +568,8 @@ export const VaccineInventory = () => {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => toggleBoxStatus(item.id, item.is_open)}
+                          onClick={() => changeBoxStatus(item.id, 'open')}
+                          title="Ouvrir"
                         >
                           <LockOpen className="h-4 w-4" />
                         </Button>
@@ -484,6 +577,7 @@ export const VaccineInventory = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(item.id)}
+                          title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
