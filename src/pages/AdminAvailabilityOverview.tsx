@@ -245,11 +245,11 @@ export default function AdminAvailabilityOverview() {
         const minDate = format(dates[0], "yyyy-MM-dd");
         const maxDate = format(dates[dates.length - 1], "yyyy-MM-dd");
 
+        // Charger TOUTES les disponibilités (is_available true ET false) pour afficher l'état actuel
         const { data, error } = await supabase
           .from("specific_date_availability")
           .select("*")
           .eq("user_id", user.id)
-          .eq("is_available", true)
           .gte("specific_date", minDate)
           .lte("specific_date", maxDate);
 
@@ -265,7 +265,7 @@ export default function AdminAvailabilityOverview() {
               const date = new Date(dateKey + "T00:00:00");
               byDateMap.set(dateKey, {
                 date,
-                enabled: true,
+                enabled: row.is_available, // Utiliser is_available depuis la DB
                 timeSlots: defaultTimeSlots.map((time) => ({
                   time,
                   available: false
@@ -277,17 +277,23 @@ export default function AdminAvailabilityOverview() {
             const startMinutes = timeStrToMinutes(row.start_time.substring(0, 5));
             const endMinutes = timeStrToMinutes(row.end_time.substring(0, 5));
 
-            // Marquer tous les créneaux dans cette plage comme disponibles
+            // Marquer tous les créneaux dans cette plage selon is_available
             dayAvailability.timeSlots.forEach((slot) => {
               const slotMinutes = timeStrToMinutes(slot.time);
               if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
-                slot.available = true;
+                slot.available = row.is_available; // Utiliser is_available de la DB
               }
             });
+
+            // Mettre à jour enabled si au moins un créneau est disponible
+            if (row.is_available) {
+              dayAvailability.enabled = true;
+            }
           });
 
           setAvailability(Array.from(byDateMap.values()));
         } else {
+          // Aucune donnée en base pour cette période
           setAvailability([]);
         }
       } catch (e: any) {
