@@ -28,6 +28,7 @@ interface VaccineInventoryItem {
   lot_number: string;
   expiry_date: string;
   status: string;
+  order_number?: number;
 }
 
 interface Vaccination {
@@ -192,9 +193,9 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status")
+      .select("id, lot_number, expiry_date, status, order_number")
       .eq("status", "open")
-      .order("expiry_date");
+      .order("order_number", { ascending: true });
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger l'inventaire" });
@@ -392,7 +393,7 @@ export const VaccinationManagement = () => {
                 <SelectContent>
                   {inventory.map((item) => (
                     <SelectItem key={item.id} value={item.lot_number}>
-                      Lot: {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)}
+                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)}
                     </SelectItem>
                   ))}
                 </SelectContent>
