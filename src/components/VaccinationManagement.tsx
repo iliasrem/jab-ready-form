@@ -176,56 +176,19 @@ export const VaccinationManagement = () => {
   };
 
   const fetchPatients = async () => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    
-    // Get patients with appointments today
-    const { data: patientsWithAppointments, error: appointmentsError } = await supabase
-      .from("appointments")
-      .select(`
-        patient_id,
-        patients!inner (
-          id,
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .eq("appointment_date", today)
-      .eq("patients.status", "active");
+    // Get all active patients from the database
+    const { data: allPatients, error: patientsError } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, email")
+      .eq("status", "active")
+      .order("last_name", { ascending: true });
 
-    if (appointmentsError) {
-      toast({ title: "Erreur", description: "Impossible de charger les patients avec rendez-vous" });
+    if (patientsError) {
+      toast({ title: "Erreur", description: "Impossible de charger les patients" });
       return;
     }
 
-    // Get patients already vaccinated today
-    const { data: vaccinatedToday, error: vaccinationError } = await supabase
-      .from("vaccinations")
-      .select("patient_id")
-      .eq("vaccination_date", today);
-
-    if (vaccinationError) {
-      toast({ title: "Erreur", description: "Impossible de vérifier les vaccinations du jour" });
-      return;
-    }
-
-    // Filter out already vaccinated patients and remove duplicates
-    const vaccinatedPatientIds = new Set(vaccinatedToday?.map(v => v.patient_id) || []);
-    const uniquePatients = new Map();
-    
-    patientsWithAppointments?.forEach(appointment => {
-      const patient = appointment.patients;
-      if (patient && !vaccinatedPatientIds.has(patient.id)) {
-        uniquePatients.set(patient.id, patient);
-      }
-    });
-
-    // Convert to array and sort alphabetically
-    const filteredPatients = Array.from(uniquePatients.values()).sort((a, b) => 
-      a.last_name.localeCompare(b.last_name)
-    );
-
-    setPatients(filteredPatients);
+    setPatients(allPatients || []);
   };
 
   const fetchInventory = async () => {
