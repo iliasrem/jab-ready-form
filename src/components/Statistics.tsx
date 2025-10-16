@@ -293,24 +293,6 @@ export const Statistics = () => {
           </CardContent>
         </Card>
 
-        {/* Vaccins Grippe */}
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vaccins Grippe</CardTitle>
-            <Syringe className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.grippeCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Total administrés
-            </p>
-            <Badge variant="secondary" className="mt-2">
-              <Activity className="h-3 w-3 mr-1" />
-              En temps réel
-            </Badge>
-          </CardContent>
-        </Card>
-
         {/* Gains COVID */}
         <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -395,18 +377,14 @@ export const Statistics = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-            <div>
-              <div className="text-xl font-bold">{stats.covidCount + stats.grippeCount}</div>
-              <div className="text-sm text-muted-foreground">Total vaccins</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-xl font-bold text-blue-600">{stats.covidCount}</div>
-              <div className="text-sm text-muted-foreground">COVID</div>
+              <div className="text-sm text-muted-foreground">Vaccins COVID</div>
             </div>
             <div>
-              <div className="text-xl font-bold text-green-600">{stats.grippeCount}</div>
-              <div className="text-sm text-muted-foreground">Grippe</div>
+              <div className="text-xl font-bold text-purple-600">{fluEarnings.vaccine_count}</div>
+              <div className="text-sm text-muted-foreground">Vaccins Grippe</div>
             </div>
             <div>
               <div className="text-xl font-bold text-yellow-600">{stats.totalEarnings.toFixed(2)}€</div>
