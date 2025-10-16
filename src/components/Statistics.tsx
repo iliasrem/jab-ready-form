@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Syringe, TrendingUp, Euro, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Syringe, TrendingUp, Euro, Activity, Edit2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface VaccinationStats {
   covidCount: number;
   grippeCount: number;
   totalEarnings: number;
+}
+
+interface FluEarnings {
+  id?: string;
+  vaccine_count: number;
+  price_per_vaccine: number;
+  total: number;
 }
 
 export const Statistics = () => {
@@ -16,9 +26,116 @@ export const Statistics = () => {
     grippeCount: 0,
     totalEarnings: 0
   });
+  const [fluEarnings, setFluEarnings] = useState<FluEarnings>({
+    vaccine_count: 0,
+    price_per_vaccine: 15.50,
+    total: 0
+  });
+  const [isEditingFlu, setIsEditingFlu] = useState(false);
+  const [tempFluCount, setTempFluCount] = useState("0");
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const COVID_PRICE = 18.72;
+
+  const fetchFluEarnings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('flu_vaccination_earnings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erreur lors de la récupération des gains grippe:', error);
+        return;
+      }
+
+      if (data) {
+        const pricePerVaccine = typeof data.price_per_vaccine === 'string' 
+          ? parseFloat(data.price_per_vaccine) 
+          : Number(data.price_per_vaccine);
+        const total = data.vaccine_count * pricePerVaccine;
+        setFluEarnings({
+          id: data.id,
+          vaccine_count: data.vaccine_count,
+          price_per_vaccine: pricePerVaccine,
+          total
+        });
+        setTempFluCount(data.vaccine_count.toString());
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des gains grippe:', error);
+    }
+  };
+
+  const saveFluEarnings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour sauvegarder",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const count = parseInt(tempFluCount) || 0;
+      const total = count * fluEarnings.price_per_vaccine;
+
+      if (fluEarnings.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('flu_vaccination_earnings')
+          .update({
+            vaccine_count: count,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', fluEarnings.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { data, error } = await supabase
+          .from('flu_vaccination_earnings')
+          .insert({
+            user_id: user.id,
+            vaccine_count: count,
+            price_per_vaccine: fluEarnings.price_per_vaccine
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setFluEarnings(prev => ({ ...prev, id: data.id }));
+        }
+      }
+
+      setFluEarnings(prev => ({
+        ...prev,
+        vaccine_count: count,
+        total
+      }));
+      setIsEditingFlu(false);
+
+      toast({
+        title: "Succès",
+        description: "Les gains grippe ont été sauvegardés"
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les données",
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchStatistics = async () => {
     try {
@@ -105,6 +222,7 @@ export const Statistics = () => {
 
   useEffect(() => {
     fetchStatistics();
+    fetchFluEarnings();
     
     // Mettre à jour les statistiques en temps réel
     const channel = supabase
@@ -115,6 +233,13 @@ export const Statistics = () => {
         table: 'vaccinations'
       }, () => {
         fetchStatistics();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'flu_vaccination_earnings'
+      }, () => {
+        fetchFluEarnings();
       })
       .subscribe();
 
@@ -186,7 +311,7 @@ export const Statistics = () => {
           </CardContent>
         </Card>
 
-        {/* Gains */}
+        {/* Gains COVID */}
         <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Gains COVID</CardTitle>
@@ -205,6 +330,60 @@ export const Statistics = () => {
             </Badge>
           </CardContent>
         </Card>
+
+        {/* Gains Grippe - Modifiable */}
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Gains Vaccins Grippe</CardTitle>
+            <Euro className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              {isEditingFlu ? (
+                <>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={tempFluCount}
+                    onChange={(e) => setTempFluCount(e.target.value)}
+                    className="w-24 h-8"
+                  />
+                  <span className="text-sm">vaccins</span>
+                  <Button
+                    size="sm"
+                    onClick={saveFluEarnings}
+                    className="ml-auto"
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Sauver
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {fluEarnings.total.toFixed(2)}€
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsEditingFlu(true)}
+                    className="ml-auto"
+                  >
+                    <Edit2 className="h-3 w-3 mr-1" />
+                    Modifier
+                  </Button>
+                </>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {fluEarnings.vaccine_count} vaccin(s) × {fluEarnings.price_per_vaccine.toFixed(2)}€
+            </p>
+            <Badge variant="secondary" className="mt-2">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              Modifiable
+            </Badge>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Résumé global */}
@@ -216,7 +395,7 @@ export const Statistics = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             <div>
               <div className="text-xl font-bold">{stats.covidCount + stats.grippeCount}</div>
               <div className="text-sm text-muted-foreground">Total vaccins</div>
@@ -231,7 +410,19 @@ export const Statistics = () => {
             </div>
             <div>
               <div className="text-xl font-bold text-yellow-600">{stats.totalEarnings.toFixed(2)}€</div>
-              <div className="text-sm text-muted-foreground">Revenus</div>
+              <div className="text-sm text-muted-foreground">Gains COVID</div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-purple-600">{fluEarnings.total.toFixed(2)}€</div>
+              <div className="text-sm text-muted-foreground">Gains Grippe</div>
+            </div>
+          </div>
+          <div className="pt-4 border-t">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">
+                {(stats.totalEarnings + fluEarnings.total).toFixed(2)}€
+              </div>
+              <div className="text-sm text-muted-foreground">Revenus Total</div>
             </div>
           </div>
         </CardContent>

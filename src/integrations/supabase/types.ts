@@ -124,6 +124,33 @@ export type Database = {
         }
         Relationships: []
       }
+      flu_vaccination_earnings: {
+        Row: {
+          created_at: string
+          id: string
+          price_per_vaccine: number
+          updated_at: string
+          user_id: string
+          vaccine_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_per_vaccine?: number
+          updated_at?: string
+          user_id: string
+          vaccine_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_per_vaccine?: number
+          updated_at?: string
+          user_id?: string
+          vaccine_count?: number
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
