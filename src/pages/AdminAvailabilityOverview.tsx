@@ -20,6 +20,11 @@ const defaultTimeSlots = [
   "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00"
 ];
 
+const saturdayTimeSlots = [
+  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
+  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15"
+];
+
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition
 export default function AdminAvailabilityOverview() {
   type ViewMode = "day" | "week" | "month" | "quarter";
@@ -141,9 +146,12 @@ export default function AdminAvailabilityOverview() {
 
   // helpers pour créer / mettre à jour
   const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {
+    const isSaturday = date.getDay() === 6;
+    const slots = isSaturday ? saturdayTimeSlots : defaultTimeSlots;
+    
     return {
       date,
-      timeSlots: defaultTimeSlots.map((time) => ({
+      timeSlots: slots.map((time) => ({
         time,
         available: false // Tous les créneaux fermés par défaut
       }))
