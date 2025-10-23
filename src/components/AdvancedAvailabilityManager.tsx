@@ -789,7 +789,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                 
                                 {/* Affichage de tous les créneaux de 15 minutes verticalement */}
                                 <div className="space-y-1">
-                                  {dayAvailability.timeSlots.map((slot, slotIndex) => {
+                                  {dayAvailability.timeSlots
+                                    .filter(slot => {
+                                      // Pour les samedis, afficher uniquement jusqu'à 11h45
+                                      if (day.getDay() === 6) {
+                                        return saturdayTimeSlots.includes(slot.time);
+                                      }
+                                      return true;
+                                    })
+                                    .map((slot, slotIndex) => {
                                     let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
                                     let buttonClass = "text-xs h-6 w-full";
                                     let isDisabled = false;
@@ -813,7 +821,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                           variant={buttonVariant}
                                           size="sm"
                                           className={buttonClass}
-                                          onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
+                                          onClick={() => !isDisabled && toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time))}
                                           disabled={isDisabled}
                                           title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
                                         >
