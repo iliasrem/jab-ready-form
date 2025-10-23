@@ -133,21 +133,19 @@ export default function AdminAvailabilityOverview() {
   const countOpenSlots = (date: Date) => {
     const key = format(date, "yyyy-MM-dd");
     const av = byDate.get(key);
-    if (!av || !av.enabled) return { label: "Fermé", tone: "secondary" as const };
+    if (!av) return { label: "Fermé", tone: "secondary" as const };
     const open = av.timeSlots.filter((t) => t.available).length;
-    return { label: `${open} créneau(x)`, tone: open === 0 ? ("destructive" as const) : ("default" as const) };
+    if (open === 0) return { label: "Fermé", tone: "secondary" as const };
+    return { label: `${open} créneau(x)`, tone: "default" as const };
   };
 
   // helpers pour créer / mettre à jour
   const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     return {
       date,
-      enabled: !isWeekend,
       timeSlots: defaultTimeSlots.map((time) => ({
         time,
-        available: !isWeekend && !["12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45"].includes(time)
+        available: false // Tous les créneaux fermés par défaut
       }))
     };
   };
@@ -170,7 +168,6 @@ export default function AdminAvailabilityOverview() {
     const current = getAvailabilityForDate(date);
     const updated: SpecificDateAvailability = {
       ...current,
-      enabled: true,
       timeSlots: current.timeSlots.map((s) => ({ ...s, available: true }))
     };
     updateDateAvailability(updated);
@@ -180,7 +177,6 @@ export default function AdminAvailabilityOverview() {
     const current = getAvailabilityForDate(date);
     const updated: SpecificDateAvailability = {
       ...current,
-      enabled: false,
       timeSlots: current.timeSlots.map((s) => ({ ...s, available: false }))
     };
     updateDateAvailability(updated);
@@ -193,7 +189,6 @@ export default function AdminAvailabilityOverview() {
         const current = getAvailabilityForDate(d);
         return {
           ...current,
-          enabled: false,
           timeSlots: current.timeSlots.map((s) => ({ ...s, available: false })),
         };
       });
@@ -269,7 +264,6 @@ export default function AdminAvailabilityOverview() {
               const date = new Date(dateKey + "T00:00:00");
               byDateMap.set(dateKey, {
                 date,
-                enabled: false, // Par défaut fermé, sera mis à jour si des créneaux sont disponibles
                 timeSlots: defaultTimeSlots.map((time) => ({
                   time,
                   available: false
@@ -301,10 +295,7 @@ export default function AdminAvailabilityOverview() {
               }
             });
 
-            // Mettre à jour enabled si au moins un créneau est disponible
-            if (row.is_available) {
-              dayAvailability.enabled = true;
-            }
+            // Les créneaux disponibles sont maintenant marqués
           });
           
           console.log("📊 Disponibilités créées:", {
@@ -423,7 +414,7 @@ export default function AdminAvailabilityOverview() {
       period.forEach((d) => {
         const av = getAvailabilityForDate(d);
         const openTimes = av.timeSlots.filter((t) => t.available).map((t) => t.time);
-        if (av.enabled && openTimes.length > 0) {
+        if (openTimes.length > 0) {
           const ranges = groupContiguous(openTimes);
           ranges.forEach((r) => {
             rows.push({

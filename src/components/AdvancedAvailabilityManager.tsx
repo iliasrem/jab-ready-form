@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface SpecificDateAvailability {
   date: Date;
-  enabled: boolean;
   blocked?: boolean;
   blockActivity?: string;
   timeSlots: { time: string; available: boolean; reserved?: boolean; }[];
@@ -50,12 +49,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   // Générer les disponibilités par défaut pour un jour
   const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Dimanche = 0, Samedi = 6
-    
     return {
       date,
-      enabled: false, // Désactivé par défaut - l'utilisateur ouvrira les plages manuellement
       timeSlots: defaultTimeSlots.map(time => ({
         time,
         available: false // Tous les créneaux fermés par défaut
@@ -77,23 +72,10 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     onAvailabilityChange(newAvailability);
   };
 
-  // Basculer l'activation d'un jour - ouvre/ferme tous les créneaux
-  const toggleDay = (date: Date) => {
+  // Vérifier si un jour a des créneaux disponibles
+  const hasAvailableSlots = (date: Date): boolean => {
     const current = getAvailabilityForDate(date);
-    const newEnabled = !current.enabled;
-    
-    // Si on active le jour, ouvrir tous les créneaux, sinon les fermer tous
-    const updatedTimeSlots = current.timeSlots.map(slot => ({
-      ...slot,
-      available: newEnabled && !slot.reserved // Respecter les réservations existantes
-    }));
-    
-    const updated = { 
-      ...current, 
-      enabled: newEnabled,
-      timeSlots: updatedTimeSlots
-    };
-    updateDateAvailability(updated);
+    return current.timeSlots.some(slot => slot.available);
   };
 
   // Basculer un créneau horaire
@@ -129,8 +111,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     
     const newAvailabilities = allDaysInMonth.map(date => ({
       ...template,
-      date: new Date(date),
-      enabled: template.enabled && date.getDay() !== 0 && date.getDay() !== 6 // Garde les weekends fermés
+      date: new Date(date)
     }));
     
     const updatedAvailability = [
@@ -167,8 +148,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     
     const newAvailabilities = allDaysInRange.map(date => ({
       ...template,
-      date: new Date(date),
-      enabled: template.enabled && date.getDay() !== 0 && date.getDay() !== 6 // Garde les weekends fermés
+      date: new Date(date)
     }));
     
     const updatedAvailability = [
@@ -212,14 +192,17 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     });
   };
 
-  // Fermer complètement une semaine
+  // Fermer complètement une semaine - fermer tous les créneaux
   const closeWeek = (week: Date) => {
     const weekDays = getWeekDays(week);
     
     const newAvailabilities = weekDays.map(date => ({
       ...getAvailabilityForDate(date),
       date: new Date(date),
-      enabled: false
+      timeSlots: getAvailabilityForDate(date).timeSlots.map(slot => ({
+        ...slot,
+        available: false
+      }))
     }));
     
     const updatedAvailability = [
@@ -508,7 +491,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         
         return {
           date,
-          enabled: hasAvailableSlots && !isBlocked, // Le jour est ouvert seulement s'il a des créneaux disponibles ET n'est pas bloqué
           blocked: isBlocked,
           blockActivity: blockActivity,
           timeSlots: isBlocked ? allSlots.map(slot => ({ ...slot, available: false })) : allSlots // Si bloqué, tous les créneaux sont fermés
@@ -533,7 +515,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           
           return {
             date,
-            enabled: false, // Par défaut, les jours sont fermés
             blocked: isBlocked,
             blockActivity: blockActivity,
             timeSlots: defaultTimeSlots.map(time => ({
@@ -610,9 +591,9 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   // Obtenir le statut d'un jour pour l'affichage du calendrier
   const getDayStatus = (date: Date) => {
     const availability = getAvailabilityForDate(date);
-    if (!availability.enabled) return "closed";
-    
     const availableSlots = availability.timeSlots.filter(slot => slot.available).length;
+    if (availableSlots === 0) return "closed";
+    
     const totalSlots = availability.timeSlots.length;
     
     if (availableSlots === 0) return "no-slots";
@@ -664,7 +645,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                             Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {getWeekDays(selectedWeek).filter(day => getAvailabilityForDate(day).enabled).length} jours ouverts sur 7
+                            {getWeekDays(selectedWeek).filter(day => hasAvailableSlots(day)).length} jours ouverts sur 7
                           </p>
                         </div>
 
@@ -769,17 +750,20 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                               {format(day, "d", { locale: fr })}
                             </div>
                             
-                            {/* Checkbox pour activer/désactiver le jour */}
+                            {/* Badge de statut du jour */}
                             <div className="flex items-center justify-center mb-2">
                               {dayAvailability.blocked ? (
                                 <Badge variant="destructive" className="text-xs">
                                   Bloqué
                                 </Badge>
+                              ) : availableSlots > 0 ? (
+                                <Badge variant="default" className="text-xs">
+                                  {availableSlots} créneaux
+                                </Badge>
                               ) : (
-                                <Checkbox
-                                  checked={dayAvailability.enabled}
-                                  onCheckedChange={() => toggleDay(day)}
-                                />
+                                <Badge variant="secondary" className="text-xs">
+                                  Fermé
+                                </Badge>
                               )}
                             </div>
                             
@@ -789,7 +773,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                               </div>
                             )}
                             
-                            {dayAvailability.enabled && !dayAvailability.blocked && (
+                            {availableSlots >= 0 && !dayAvailability.blocked && (
                               <div className="space-y-1">
                                 <div className="text-xs text-muted-foreground mb-1">
                                   {availableSlots}/{dayAvailability.timeSlots.length}
@@ -854,11 +838,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                               </div>
                             )}
                             
-                            {!dayAvailability.enabled && !dayAvailability.blocked && (
-                              <div className="text-xs text-muted-foreground">
-                                Fermé
-                              </div>
-                            )}
                           </div>
                         );
                       })}
