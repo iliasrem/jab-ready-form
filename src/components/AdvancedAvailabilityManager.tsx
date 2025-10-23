@@ -840,26 +840,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     );
                                   })}
                                 </div>
-                                
-                                {/* Boutons pour sélectionner/désélectionner tous les créneaux du jour */}
-                                <div className="flex gap-1 mt-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs h-6 flex-1"
-                                    onClick={() => toggleAllTimeSlotsForDay(day, true)}
-                                  >
-                                    Tout
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs h-6 flex-1"
-                                    onClick={() => toggleAllTimeSlotsForDay(day, false)}
-                                  >
-                                    Rien
-                                  </Button>
-                                </div>
                               </div>
                             )}
                             
