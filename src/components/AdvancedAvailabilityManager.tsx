@@ -22,8 +22,8 @@ export interface SpecificDateAvailability {
 
 const defaultTimeSlots = [
   "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
-  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15", "12:30", "12:45",
-  "13:00", "13:15", "13:30", "13:45", "14:00", "14:15", "14:30", "14:45",
+  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15",
+  "14:00", "14:15", "14:30", "14:45",
   "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00"
 ];
 
@@ -800,18 +800,27 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     }
                                     
                                     return (
-                                      <Button
-                                        key={slot.time}
-                                        variant={buttonVariant}
-                                        size="sm"
-                                        className={buttonClass}
-                                        onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
-                                        disabled={isDisabled}
-                                        title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
-                                      >
-                                        {slot.time}
-                                        {slot.reserved && <span className="ml-1 text-xs">📅</span>}
-                                      </Button>
+                                      <div key={slot.time}>
+                                        <Button
+                                          variant={buttonVariant}
+                                          size="sm"
+                                          className={buttonClass}
+                                          onClick={() => !isDisabled && toggleTimeSlot(day, slotIndex)}
+                                          disabled={isDisabled}
+                                          title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
+                                        >
+                                          {slot.time}
+                                          {slot.reserved && <span className="ml-1 text-xs">📅</span>}
+                                        </Button>
+                                        {/* Ligne de séparation après 12:15 pour indiquer la pause déjeuner */}
+                                        {slot.time === "12:15" && (
+                                          <div className="flex items-center gap-2 py-2">
+                                            <div className="flex-1 border-t border-muted-foreground/30"></div>
+                                            <span className="text-xs text-muted-foreground px-2">Pause déjeuner</span>
+                                            <div className="flex-1 border-t border-muted-foreground/30"></div>
+                                          </div>
+                                        )}
+                                      </div>
                                     );
                                   })}
                                 </div>
