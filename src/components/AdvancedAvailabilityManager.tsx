@@ -611,6 +611,36 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   const selectedDayAvailability = selectedDate ? getAvailabilityForDate(selectedDate) : null;
 
+  // Calculer le taux de remplissage pour la semaine sélectionnée
+  const calculateWeekFillRate = () => {
+    if (!selectedWeek) return 0;
+    
+    const weekDays = getWeekDays(selectedWeek).filter(day => day.getDay() !== 0); // Exclure les dimanches
+    let totalAvailableSlots = 0;
+    let totalReservedSlots = 0;
+    
+    weekDays.forEach(day => {
+      const dayAvailability = getAvailabilityForDate(day);
+      const isSaturday = day.getDay() === 6;
+      const visibleSlots = isSaturday 
+        ? dayAvailability.timeSlots.filter(slot => saturdayTimeSlots.includes(slot.time))
+        : dayAvailability.timeSlots;
+      
+      visibleSlots.forEach(slot => {
+        if (slot.available) {
+          totalAvailableSlots++;
+          if (slot.reserved) {
+            totalReservedSlots++;
+          }
+        }
+      });
+    });
+    
+    return totalAvailableSlots > 0 ? Math.round((totalReservedSlots / totalAvailableSlots) * 100) : 0;
+  };
+
+  const weekFillRate = selectedWeek ? calculateWeekFillRate() : 0;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -622,15 +652,23 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                       Configurez rapidement les disponibilités pour une semaine entière
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={saveAvailabilityToSupabase}
-                    className="flex items-center space-x-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    <span>Sauvegarder</span>
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+                      <div className="text-sm font-medium">Taux de remplissage:</div>
+                      <Badge variant={weekFillRate >= 80 ? "destructive" : weekFillRate >= 50 ? "default" : "secondary"}>
+                        {weekFillRate}%
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={saveAvailabilityToSupabase}
+                      className="flex items-center space-x-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Sauvegarder</span>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
