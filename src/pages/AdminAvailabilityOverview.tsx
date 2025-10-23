@@ -231,7 +231,7 @@ export default function AdminAvailabilityOverview() {
   };
   const addMinutesStr = (t: string, delta: number) => minutesToTimeStr(timeStrToMinutes(t) + delta);
 
-  // Charger les disponibilités depuis Supabase pour la période visible
+  // Charger les disponibilités depuis Supabase pour la période visible avec mise à jour en temps réel
   useEffect(() => {
     const loadAvailability = async () => {
       try {
@@ -329,6 +329,51 @@ export default function AdminAvailabilityOverview() {
     };
 
     loadAvailability();
+
+    // Abonnement en temps réel pour les mises à jour
+    const channel = supabase
+      .channel('admin-availability-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'specific_date_availability'
+        },
+        () => {
+          console.log("🔄 Changement détecté dans specific_date_availability, rechargement...");
+          loadAvailability();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        () => {
+          console.log("🔄 Changement détecté dans appointments, rechargement...");
+          loadAvailability();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'blocked_dates'
+        },
+        () => {
+          console.log("🔄 Changement détecté dans blocked_dates, rechargement...");
+          loadAvailability();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [period, toast]);
 
   const groupContiguous = (times: string[]) => {
