@@ -22,7 +22,7 @@ const defaultTimeSlots = [
 
 const saturdayTimeSlots = [
   "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
-  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15"
+  "11:00", "11:15", "11:30", "11:45"
 ];
 
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition

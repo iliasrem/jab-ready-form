@@ -29,7 +29,7 @@ const defaultTimeSlots = [
 
 const saturdayTimeSlots = [
   "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
-  "11:00", "11:15", "11:30", "11:45", "12:00", "12:15"
+  "11:00", "11:15", "11:30", "11:45"
 ];
 
 interface AdvancedAvailabilityManagerProps {
@@ -115,7 +115,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     const template = getAvailabilityForDate(selectedDate);
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
-    const allDaysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const allDaysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(day => day.getDay() !== 0); // Exclure les dimanches
     
     const newAvailabilities = allDaysInMonth.map(date => ({
       ...template,
@@ -152,7 +152,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       return;
     }
     
-    const allDaysInRange = eachDayOfInterval({ start: selectedDate, end: endDateObj });
+    const allDaysInRange = eachDayOfInterval({ start: selectedDate, end: endDateObj }).filter(day => day.getDay() !== 0); // Exclure les dimanches
     
     const newAvailabilities = allDaysInRange.map(date => ({
       ...template,
@@ -182,7 +182,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   // Appliquer des disponibilités par défaut à une semaine
   const applyDefaultToWeek = (week: Date) => {
-    const weekDays = getWeekDays(week);
+    const weekDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
     
     const newAvailabilities = weekDays.map(date => getDefaultDayAvailability(date));
     
@@ -202,7 +202,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   // Fermer complètement une semaine - fermer tous les créneaux
   const closeWeek = (week: Date) => {
-    const weekDays = getWeekDays(week);
+    const weekDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
     
     const newAvailabilities = weekDays.map(date => ({
       ...getAvailabilityForDate(date),
@@ -653,7 +653,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                             Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {getWeekDays(selectedWeek).filter(day => hasAvailableSlots(day)).length} jours ouverts sur 7
+                            {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0 && hasAvailableSlots(day)).length} jours ouverts sur 6
                           </p>
                         </div>
 
@@ -703,8 +703,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                             );
                             weeks.forEach(week => {
                               if (!isSameWeek(week, selectedWeek)) {
-                                const weekDays = getWeekDays(selectedWeek);
-                                const templateDays = getWeekDays(week);
+                                const weekDays = getWeekDays(selectedWeek).filter(day => day.getDay() !== 0); // Exclure les dimanches
+                                const templateDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
                                 
                                 const newAvailabilities = templateDays.map((date, index) => {
                                   const templateDay = weekDays[index];
@@ -736,8 +736,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-2">
-                      {getWeekDays(selectedWeek).map((day) => {
+                    <div className="grid grid-cols-6 gap-2">
+                      {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0).map((day) => {
                         const dayAvailability = getAvailabilityForDate(day);
                         const isSelected = selectedDate && isSameDay(day, selectedDate);
                         const availableSlots = dayAvailability.timeSlots.filter(slot => slot.available).length;
