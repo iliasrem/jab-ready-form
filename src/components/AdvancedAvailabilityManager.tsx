@@ -330,6 +330,10 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       }
 
       console.log('=== SAUVEGARDE TERMINÉE ===');
+      
+      // Recharger les données depuis Supabase pour rafraîchir l'affichage
+      await loadAvailabilityFromSupabase();
+      
       toast({
         title: "Sauvegarde réussie",
         description: `${supabaseAvailabilities.length} créneaux sauvegardés avec succès.`,
@@ -565,7 +569,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     loadAvailabilityFromSupabase();
   }, [currentMonth]);
 
-  // Recharger les données à chaque fois que le composant est monté
+  // Recharger les données à chaque fois que le composant est monté ou que la semaine change
   useEffect(() => {
     loadAvailabilityFromSupabase();
     
@@ -589,7 +593,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedWeek]);
 
   // Naviguer entre les mois
   const navigateMonth = (direction: "prev" | "next") => {
