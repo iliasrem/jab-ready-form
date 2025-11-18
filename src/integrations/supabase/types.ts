@@ -561,14 +561,8 @@ export type Database = {
       }
     }
     Functions: {
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      is_valid_email: {
-        Args: { email_address: string }
-        Returns: boolean
-      }
+      get_current_user_role: { Args: never; Returns: string }
+      is_valid_email: { Args: { email_address: string }; Returns: boolean }
     }
     Enums: {
       appointment_status: "pending" | "confirmed" | "completed" | "cancelled"

@@ -234,6 +234,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ? addDays(selectedWeek, 7) 
       : addDays(selectedWeek, -7);
     setSelectedWeek(newWeek);
+    // Mettre à jour currentMonth pour que le calendrier suive
+    setCurrentMonth(newWeek);
   };
 
   const saveAvailabilityToSupabase = async () => {
@@ -371,10 +373,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Charger une plage beaucoup plus large pour voir tous les créneaux
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 12)), 'yyyy-MM-dd');
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 12)), 'yyyy-MM-dd');
+      // Utiliser selectedWeek si disponible, sinon currentMonth
+      const referenceDate = selectedWeek || currentMonth;
       
+      // Charger une plage beaucoup plus large pour voir tous les créneaux
+      const rangeStart = format(startOfMonth(subMonths(referenceDate, 12)), 'yyyy-MM-dd');
+      const rangeEnd = format(endOfMonth(addMonths(referenceDate, 12)), 'yyyy-MM-dd');
+      
+      console.log('Date de référence:', format(referenceDate, 'yyyy-MM-dd'));
       console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
 
       // Charger les jours bloqués
