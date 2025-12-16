@@ -213,11 +213,13 @@ export const VaccineReservationForm = ({ onReservationCreated }: VaccineReservat
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un patient" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="min-w-[400px]">
                   {filteredPatients.map((patient) => (
                     <SelectItem key={patient.id} value={patient.id}>
-                      {patient.last_name.toUpperCase()} {patient.first_name}
-                      {patient.phone && ` - ${patient.phone}`}
+                      <div className="flex w-full justify-between gap-8">
+                        <span className="font-medium">{patient.last_name.toUpperCase()} {patient.first_name}</span>
+                        <span className="text-muted-foreground">{patient.phone || "-"}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
