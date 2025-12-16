@@ -8,6 +8,7 @@ import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { Statistics } from "@/components/Statistics";
+import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +19,8 @@ import {
   Settings, 
   Package, 
   Syringe, 
-  Wrench
+  Wrench,
+  ClipboardList
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -32,7 +34,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
                 <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
                   <Syringe className="h-3 w-3" />
                   Vaccination
@@ -43,7 +45,11 @@ const AdminDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Liste de tous les RDV
+                  Tous les RDV
+                </TabsTrigger>
+                <TabsTrigger value="reservations" className="text-xs flex items-center gap-1">
+                  <ClipboardList className="h-3 w-3" />
+                  Réservations
                 </TabsTrigger>
                 <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
                   <Wrench className="h-3 w-3" />
@@ -68,6 +74,10 @@ const AdminDashboard = () => {
             
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
+            </TabsContent>
+
+            <TabsContent value="reservations" className="mt-6">
+              <VaccineReservationsTab />
             </TabsContent>
             
             <TabsContent value="utilities" className="mt-6">

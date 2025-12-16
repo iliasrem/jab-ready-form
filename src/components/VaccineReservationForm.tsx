@@ -1,167 +1,258 @@
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import { Syringe } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Plus, Search, UserPlus } from "lucide-react";
+
+interface Patient {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+}
 
 interface Vaccine {
-  id: string
-  name: string
-  description: string
+  id: string;
+  name: string;
+  description: string | null;
 }
 
-export const VaccineReservationForm = () => {
-  const [vaccines, setVaccines] = useState<Vaccine[]>([])
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    vaccineId: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+interface VaccineReservationFormProps {
+  onReservationCreated?: () => void;
+}
+
+export const VaccineReservationForm = ({ onReservationCreated }: VaccineReservationFormProps) => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [vaccines, setVaccines] = useState<Vaccine[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [selectedVaccineId, setSelectedVaccineId] = useState<string>("");
+  const [isCreatingNewPatient, setIsCreatingNewPatient] = useState(false);
+  const [newPatientFirstName, setNewPatientFirstName] = useState("");
+  const [newPatientLastName, setNewPatientLastName] = useState("");
+  const [newPatientPhone, setNewPatientPhone] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchVaccines()
-  }, [])
+    fetchPatients();
+    fetchVaccines();
+  }, []);
+
+  const fetchPatients = async () => {
+    const { data, error } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, phone")
+      .order("last_name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching patients:", error);
+      return;
+    }
+    setPatients(data || []);
+  };
 
   const fetchVaccines = async () => {
+    const { data, error } = await supabase
+      .from("vaccines")
+      .select("id, name, description")
+      .eq("is_available", true)
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching vaccines:", error);
+      return;
+    }
+    setVaccines(data || []);
+  };
+
+  const filteredPatients = patients.filter(patient => {
+    const fullName = `${patient.last_name} ${patient.first_name}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
+
+  const handleCreateNewPatient = async () => {
+    if (!newPatientFirstName.trim() || !newPatientLastName.trim() || !newPatientPhone.trim()) {
+      toast.error("Veuillez remplir tous les champs du nouveau patient");
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('vaccines')
-        .select('*')
-        .eq('is_available', true)
-        .order('name')
-
-      if (error) throw error
-      setVaccines(data || [])
-    } catch (error) {
-      console.error('Error fetching vaccines:', error)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      // Create patient first
-      const { data: patientData, error: patientError } = await supabase
-        .from('patients')
+        .from("patients")
         .insert({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone
+          first_name: newPatientFirstName.trim(),
+          last_name: newPatientLastName.trim(),
+          phone: newPatientPhone.trim(),
         })
         .select()
-        .single()
+        .single();
 
-      if (patientError) throw patientError
+      if (error) throw error;
 
-      // Create vaccine reservation
-      const { error: reservationError } = await supabase
-        .from('vaccine_reservations')
-        .insert({
-          patient_id: patientData.id,
-          vaccine_id: formData.vaccineId
-        })
-
-      if (reservationError) throw reservationError
-
-      toast({
-        title: "Réservation créée",
-        description: "La réservation de vaccin a été créée avec succès.",
-      })
-
-      // Reset form
-      setFormData({
-        firstName: '',
-        lastName: '',
-        phone: '',
-        vaccineId: ''
-      })
+      toast.success("Patient créé avec succès");
+      setSelectedPatientId(data.id);
+      setIsCreatingNewPatient(false);
+      setNewPatientFirstName("");
+      setNewPatientLastName("");
+      setNewPatientPhone("");
+      fetchPatients();
     } catch (error) {
-      console.error('Error creating reservation:', error)
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de la réservation.",
-        variant: "destructive",
-      })
+      console.error("Error creating patient:", error);
+      toast.error("Erreur lors de la création du patient");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedPatientId || !selectedVaccineId) {
+      toast.error("Veuillez sélectionner un patient et un vaccin");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vaccine_reservations")
+        .insert({
+          patient_id: selectedPatientId,
+          vaccine_id: selectedVaccineId,
+          reservation_date: new Date().toISOString().split("T")[0],
+        });
+
+      if (error) throw error;
+
+      toast.success("Réservation enregistrée avec succès");
+      setSelectedPatientId("");
+      setSelectedVaccineId("");
+      setSearchTerm("");
+      onReservationCreated?.();
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      toast.error("Erreur lors de l'enregistrement de la réservation");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Syringe className="h-5 w-5" />
-          Réservation de Vaccin
+          <Plus className="h-5 w-5" />
+          Nouvelle Réservation de Vaccin
         </CardTitle>
-        <CardDescription>
-          Remplissez ce formulaire pour réserver un vaccin
-        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">Prénom *</Label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                required
-              />
+      <CardContent className="space-y-6">
+        {/* Patient Selection */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-semibold">Patient</Label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCreatingNewPatient(!isCreatingNewPatient)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              {isCreatingNewPatient ? "Annuler" : "Nouveau patient"}
+            </Button>
+          </div>
+
+          {isCreatingNewPatient ? (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Nom</Label>
+                  <Input
+                    id="lastName"
+                    value={newPatientLastName}
+                    onChange={(e) => setNewPatientLastName(e.target.value)}
+                    placeholder="Nom de famille"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">Prénom</Label>
+                  <Input
+                    id="firstName"
+                    value={newPatientFirstName}
+                    onChange={(e) => setNewPatientFirstName(e.target.value)}
+                    placeholder="Prénom"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="phone"
+                    value={newPatientPhone}
+                    onChange={(e) => setNewPatientPhone(e.target.value)}
+                    placeholder="Numéro de téléphone"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleCreateNewPatient} disabled={isLoading}>
+                Créer le patient
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="lastName">Nom *</Label>
-              <Input
-                id="lastName"
-                value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                required
-              />
+          ) : (
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher un patient..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredPatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.last_name.toUpperCase()} {patient.first_name}
+                      {patient.phone && ` - ${patient.phone}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
+          )}
+        </div>
 
-          <div>
-            <Label htmlFor="phone">Téléphone *</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              required
-            />
-          </div>
+        {/* Vaccine Selection */}
+        <div className="space-y-2">
+          <Label className="text-base font-semibold">Vaccin</Label>
+          <Select value={selectedVaccineId} onValueChange={setSelectedVaccineId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un vaccin" />
+            </SelectTrigger>
+            <SelectContent>
+              {vaccines.map((vaccine) => (
+                <SelectItem key={vaccine.id} value={vaccine.id}>
+                  {vaccine.name}
+                  {vaccine.description && ` - ${vaccine.description}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div>
-            <Label htmlFor="vaccine">Vaccin *</Label>
-            <Select value={formData.vaccineId} onValueChange={(value) => setFormData(prev => ({ ...prev, vaccineId: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez un vaccin" />
-              </SelectTrigger>
-              <SelectContent>
-                {vaccines.map((vaccine) => (
-                  <SelectItem key={vaccine.id} value={vaccine.id}>
-                    {vaccine.name} - {vaccine.description}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button type="submit" disabled={isLoading || !formData.firstName || !formData.lastName || !formData.vaccineId}>
-            {isLoading ? "Création..." : "Créer la réservation"}
-          </Button>
-        </form>
+        {/* Submit Button */}
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading || !selectedPatientId || !selectedVaccineId}
+          className="w-full"
+        >
+          Enregistrer la réservation
+        </Button>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
