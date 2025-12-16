@@ -173,15 +173,13 @@ export const VaccineReservationsList = () => {
                         </div>
 
                         {reservation.patients.phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <a 
-                              href={`tel:${reservation.patients.phone}`}
-                              className="hover:underline text-lg font-bold text-primary"
-                            >
-                              {reservation.patients.phone}
-                            </a>
-                          </div>
+                          <a 
+                            href={`tel:${reservation.patients.phone}`}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
+                          >
+                            <Phone className="h-4 w-4" />
+                            {reservation.patients.phone}
+                          </a>
                         )}
 
                         {reservation.patients.email && (
