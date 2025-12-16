@@ -9,6 +9,7 @@ import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { Statistics } from "@/components/Statistics";
 import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
+import { VaccineList } from "@/components/VaccineList";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -117,6 +118,13 @@ const AdminDashboard = () => {
                       <CardDescription>Liste de tous les patients enregistrés</CardDescription>
                     </CardHeader>
                   </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-teal-50 dark:bg-teal-950/30" onClick={() => setSelectedUtility('vaccines')}>
+                    <CardHeader>
+                      <CardTitle>Base Vaccins</CardTitle>
+                      <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
+                    </CardHeader>
+                  </Card>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -164,6 +172,10 @@ const AdminDashboard = () => {
                   
                   {selectedUtility === 'patients' && (
                     <PatientList />
+                  )}
+                  
+                  {selectedUtility === 'vaccines' && (
+                    <VaccineList />
                   )}
                 </div>
               )}
