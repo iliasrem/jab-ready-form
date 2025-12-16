@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Phone, Calendar, User, Syringe } from "lucide-react";
+import { Phone, Calendar, User, Syringe, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -173,13 +173,23 @@ export const VaccineReservationsList = () => {
                         </div>
 
                         {reservation.patients.phone && (
-                          <a 
-                            href={`tel:${reservation.patients.phone}`}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
-                          >
-                            <Phone className="h-4 w-4" />
-                            {reservation.patients.phone}
-                          </a>
+                          <div className="flex items-center gap-2">
+                            <a 
+                              href={`tel:${reservation.patients.phone}`}
+                              className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
+                            >
+                              <Phone className="h-4 w-4" />
+                              {reservation.patients.phone}
+                            </a>
+                            <a
+                              href={`https://wa.me/${reservation.patients.phone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/10 hover:bg-green-500/20 text-green-600 font-medium transition-colors"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
+                          </div>
                         )}
 
                         {reservation.patients.email && (
