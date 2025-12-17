@@ -50,7 +50,7 @@ const AdminDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="reservations" className="text-xs flex items-center gap-1">
                   <ClipboardList className="h-3 w-3" />
-                  Réservations
+                  Réservation de vaccins manquants
                 </TabsTrigger>
                 <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
                   <Wrench className="h-3 w-3" />
