@@ -82,6 +82,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [loading, setLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const turnstileRef = useRef<any>(null);
   const [confirmationData, setConfirmationData] = useState<{
     firstName: string;
     lastName: string;
