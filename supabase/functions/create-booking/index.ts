@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, appointment_id: appt.id, patient_id: patient.id }),
+      JSON.stringify({ success: true, appointment_id: appt.id, patient_id: patientId }),
       { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
     );
   } catch (e) {
