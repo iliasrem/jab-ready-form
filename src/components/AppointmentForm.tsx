@@ -668,8 +668,19 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Réserver le rendez-vous
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: "light" }}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={submitting || !turnstileToken}>
+              {submitting ? "Envoi en cours..." : "Réserver le rendez-vous"}
             </Button>
           </form>
         </Form>
