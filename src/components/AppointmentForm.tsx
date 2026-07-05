@@ -37,6 +37,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AppointmentConfirmationDialog } from "@/components/AppointmentConfirmationDialog";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useRef } from "react";
+import { TURNSTILE_SITE_KEY } from "@/config/turnstile";
 
 interface SpecificAvailability {
   date: string; // Format YYYY-MM-DD
