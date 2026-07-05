@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can create vaccine reservations" ON public.vaccine_reservations;
