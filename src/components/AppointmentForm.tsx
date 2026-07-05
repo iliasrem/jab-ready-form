@@ -37,6 +37,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AppointmentConfirmationDialog } from "@/components/AppointmentConfirmationDialog";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useRef } from "react";
+import { TURNSTILE_SITE_KEY } from "@/config/turnstile";
 
 interface SpecificAvailability {
   date: string; // Format YYYY-MM-DD
@@ -79,6 +82,9 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [loading, setLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const turnstileRef = useRef<any>(null);
   const [confirmationData, setConfirmationData] = useState<{
     firstName: string;
     lastName: string;
@@ -180,102 +186,61 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   }, []);
 
   async function onSubmit(data: AppointmentFormValues) {
-    try {
-      // 1. Créer le patient
-      // Normaliser les champs optionnels pour satisfaire les politiques RLS
-      const phoneTrim = (data.phone ?? "").trim();
-      const normalizedPhone = phoneTrim && phoneTrim !== phonePrefix.trim() ? phoneTrim : null;
+    if (submitting) return;
+    if (!turnstileToken) {
+      toast({
+        title: "Vérification requise",
+        description: "Veuillez patienter le temps de la vérification anti-spam.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!data.date || isNaN(data.date.getTime())) {
+      toast({
+        title: "Erreur",
+        description: "Date de rendez-vous invalide.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setSubmitting(true);
+    try {
+      const phoneTrim = (data.phone ?? "").trim();
+      const normalizedPhone = phoneTrim && phoneTrim !== phonePrefix.trim() ? phoneTrim : "";
       const notesTrim = (data.notes ?? "").trim();
       const normalizedNotes = notesTrim.length ? notesTrim : null;
 
-      const newPatientId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-      const { error: patientError } = await supabase
-        .from('patients')
-        .insert({
-          id: newPatientId,
-          first_name: data.firstName,
-          last_name: data.lastName,
+      const { data: result, error } = await supabase.functions.invoke("create-booking", {
+        body: {
+          turnstileToken,
+          firstName: data.firstName,
+          lastName: data.lastName,
           phone: normalizedPhone,
+          appointmentDate: formatDateForDb(data.date),
+          appointmentTime: data.time,
+          services: data.services,
           notes: normalizedNotes,
-        });
+        },
+      });
 
-      if (patientError) {
-        console.error('Erreur lors de la création du patient:', patientError);
-        console.log('Données patient envoyées:', {
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone: normalizedPhone,
-          notes: normalizedNotes,
-        });
+      if (error || (result && (result as any).error)) {
+        const msg =
+          (result as any)?.error ||
+          error?.message ||
+          "Impossible de créer le rendez-vous.";
+        console.error("create-booking failed:", error, result);
         toast({
           title: "Erreur",
-          description: `Impossible de créer le patient: ${patientError.message}`,
+          description: typeof msg === "string" ? msg : "Erreur lors de la réservation.",
           variant: "destructive",
         });
+        // Rafraîchir le token pour un nouvel essai
+        turnstileRef.current?.reset?.();
+        setTurnstileToken(null);
         return;
       }
 
-      // 2. Créer le rendez-vous
-      // Vérifier que la date de rendez-vous est valide
-      if (!data.date || isNaN(data.date.getTime())) {
-        toast({
-          title: "Erreur",
-          description: "Date de rendez-vous invalide. Veuillez sélectionner une date valide.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Vérifier si le créneau est déjà pris
-      const { data: existingAppointments, error: checkError } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('appointment_date', formatDateForDb(data.date))
-        .eq('appointment_time', data.time)
-        .eq('status', 'pending');
-
-      if (checkError) {
-        console.error('Erreur lors de la vérification du créneau:', checkError);
-        toast({
-          title: "Erreur",
-          description: "Impossible de vérifier la disponibilité du créneau. Veuillez réessayer.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (existingAppointments && existingAppointments.length > 0) {
-        toast({
-          title: "Créneau déjà pris",
-          description: `Le créneau du ${format(data.date, "PPP", { locale: fr })} à ${data.time} est déjà réservé. Veuillez choisir un autre horaire.`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const { error: appointmentError } = await supabase
-        .from('appointments')
-        .insert({
-          patient_id: newPatientId,
-          appointment_date: formatDateForDb(data.date),
-          appointment_time: data.time,
-          services: data.services as any, // Force type conversion
-          notes: data.notes || null,
-        });
-
-      if (appointmentError) {
-        console.error('Erreur lors de la création du rendez-vous:', appointmentError);
-        toast({
-          title: "Erreur",
-          description: "Impossible de créer le rendez-vous. Veuillez réessayer.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // 3. Préparer les données de confirmation et afficher le dialog
       setConfirmationData({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -287,17 +252,21 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       });
       setShowConfirmationDialog(true);
 
-      // 3.5. Recharger les créneaux disponibles pour mettre à jour l'interface
       await fetchBookedSlots();
+      form.reset();
+      turnstileRef.current?.reset?.();
+      setTurnstileToken(null);
     } catch (e) {
       console.error(e);
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'email de confirmation.",
+        description: "Une erreur inattendue est survenue.",
         variant: "destructive",
       });
+      turnstileRef.current?.reset?.();
+      setTurnstileToken(null);
     } finally {
-      form.reset();
+      setSubmitting(false);
     }
   }
 
@@ -699,8 +668,19 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Réserver le rendez-vous
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: "light" }}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={submitting || !turnstileToken}>
+              {submitting ? "Envoi en cours..." : "Réserver le rendez-vous"}
             </Button>
           </form>
         </Form>
