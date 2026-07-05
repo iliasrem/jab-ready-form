@@ -128,32 +128,69 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Créer patient
-    const { data: patient, error: patientErr } = await supabase
-      .from("patients")
-      .insert({
-        first_name: d.firstName,
-        last_name: d.lastName,
-        email: d.email ?? null,
-        phone: d.phone,
-        notes: d.notes ?? null,
-      })
-      .select("id")
-      .single();
+    // Recherche patient existant (téléphone normalisé ou email)
+    const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
+    const phoneNorm = normalizePhone(d.phone);
+    const emailNorm = d.email ? d.email.trim().toLowerCase() : null;
 
-    if (patientErr || !patient) {
-      console.error("patient err", patientErr);
-      return new Response(JSON.stringify({ error: "Impossible de créer le patient" }), {
-        status: 500,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
+    const { data: candidates, error: searchErr } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, email, phone");
+    if (searchErr) console.error("search err", searchErr);
+
+    const match = (candidates ?? []).find((p) => {
+      if (emailNorm && p.email && p.email.trim().toLowerCase() === emailNorm) return true;
+      if (p.phone && normalizePhone(p.phone) === phoneNorm) return true;
+      return false;
+    });
+
+    let patientId: string;
+    if (match) {
+      patientId = match.id;
+      const updates: Record<string, unknown> = {};
+      if (match.first_name !== d.firstName) updates.first_name = d.firstName;
+      if (match.last_name !== d.lastName) updates.last_name = d.lastName;
+      if (emailNorm && (match.email ?? "").trim().toLowerCase() !== emailNorm) {
+        updates.email = emailNorm;
+      }
+      if (normalizePhone(match.phone ?? "") !== phoneNorm) {
+        updates.phone = d.phone;
+      }
+      if (Object.keys(updates).length > 0) {
+        const { error: updErr } = await supabase
+          .from("patients")
+          .update(updates)
+          .eq("id", patientId);
+        if (updErr) console.error("patient update err", updErr);
+      }
+    } else {
+      const { data: patient, error: patientErr } = await supabase
+        .from("patients")
+        .insert({
+          first_name: d.firstName,
+          last_name: d.lastName,
+          email: emailNorm,
+          phone: d.phone,
+          notes: d.notes ?? null,
+        })
+        .select("id")
+        .single();
+
+      if (patientErr || !patient) {
+        console.error("patient err", patientErr);
+        return new Response(JSON.stringify({ error: "Impossible de créer le patient" }), {
+          status: 500,
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+      patientId = patient.id;
     }
 
     // Créer rdv
     const { data: appt, error: apptErr } = await supabase
       .from("appointments")
       .insert({
-        patient_id: patient.id,
+        patient_id: patientId,
         appointment_date: d.appointmentDate,
         appointment_time: d.appointmentTime,
         services: d.services as unknown as string,
