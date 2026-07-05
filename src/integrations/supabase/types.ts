@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           appointment_date: string
           appointment_time: string
+          confirmation_sent_at: string | null
           created_at: string
           google_event_id: string | null
           id: string
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           appointment_date: string
           appointment_time: string
+          confirmation_sent_at?: string | null
           created_at?: string
           google_event_id?: string | null
           id?: string
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           appointment_date?: string
           appointment_time?: string
+          confirmation_sent_at?: string | null
           created_at?: string
           google_event_id?: string | null
           id?: string

@@ -234,7 +234,7 @@ export function ExistingPatientAppointment() {
         return;
       }
       
-      const { error } = await supabase
+      const { data: insertedAppt, error } = await supabase
         .from('appointments')
         .insert({
           patient_id: data.patientId,
@@ -242,7 +242,9 @@ export function ExistingPatientAppointment() {
           appointment_time: data.time,
           services: data.services as any,
           notes: data.notes || null,
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Erreur lors de la création du rendez-vous:', error);
@@ -264,28 +266,13 @@ export function ExistingPatientAppointment() {
       await fetchBookedSlots();
 
       // Envoyer l'email de confirmation si l'email du patient est disponible
-      if (selectedPatient?.email) {
-        const [hh, mm] = (data.time || "00:00").split(":").map((n) => parseInt(n, 10));
-        const start = new Date(data.date);
-        start.setHours(hh || 0, mm || 0, 0, 0);
-        const end = new Date(start.getTime() + 15 * 60 * 1000);
-
-        const { error } = await supabase.functions.invoke("send-confirmation", {
-          body: {
-            to: selectedPatient.email,
-            name: `${selectedPatient.first_name} ${selectedPatient.last_name}`.trim(),
-            startISO: start.toISOString(),
-            endISO: end.toISOString(),
-            summary: "Rendez-vous Pharmacie Remili-Bastin",
-            description: `Services: ${data.services.join(", ")}${data.notes ? `\nNotes: ${data.notes}` : ""}`,
-            location: "Pharmacie Remili-Bastin, Rue Solvay 64, 7160 Chapelle-lez-Herlaimont",
-            displayDate: format(data.date, "PPP", { locale: fr }),
-            displayTime: data.time,
-          },
+      if (selectedPatient?.email && insertedAppt?.id) {
+        const { error: sendErr } = await supabase.functions.invoke("send-confirmation", {
+          body: { appointment_id: insertedAppt.id },
         });
 
-        if (error) {
-          console.error("send-confirmation error", error);
+        if (sendErr) {
+          console.error("send-confirmation error", sendErr);
           toast({
             title: "Email non envoyé",
             description: "Une erreur est survenue lors de l'envoi de l'email de confirmation.",
