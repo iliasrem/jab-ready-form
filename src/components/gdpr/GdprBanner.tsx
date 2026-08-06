@@ -153,7 +153,7 @@ export const GdprBanner = () => {
               </div>
               
               <p className="text-sm text-muted-foreground mt-3">
-                Pour exercer ces droits, contactez-nous à : <strong>rgpd@example.com</strong>
+                Pour exercer ces droits, contactez la Pharmacie Remili à : <strong>info@remili.be</strong>
               </p>
             </div>
 
