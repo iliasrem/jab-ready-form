@@ -128,14 +128,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Recherche patient existant (téléphone normalisé ou email)
+    // Recherche patient existant (téléphone normalisé ou email) filtrée en base
     const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
     const phoneNorm = normalizePhone(d.phone);
     const emailNorm = d.email ? d.email.trim().toLowerCase() : null;
 
+    const filters = [`phone.eq.${phoneNorm}`];
+    if (emailNorm) filters.push(`email.eq.${emailNorm}`);
+
     const { data: candidates, error: searchErr } = await supabase
       .from("patients")
-      .select("id, first_name, last_name, email, phone");
+      .select("id, first_name, last_name, email, phone")
+      .or(filters.join(","))
+      .limit(10);
     if (searchErr) console.error("search err", searchErr);
 
     const match = (candidates ?? []).find((p) => {
