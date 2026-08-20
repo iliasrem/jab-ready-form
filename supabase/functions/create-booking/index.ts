@@ -18,7 +18,6 @@ function buildCors(req: Request) {
 }
 
 const BookingSchema = z.object({
-  turnstileToken: z.string().min(10).max(4096),
   firstName: z
     .string()
     .trim()
@@ -51,20 +50,6 @@ const BookingSchema = z.object({
   notes: z.string().trim().max(500).optional().nullable(),
 });
 
-async function verifyTurnstile(token: string, ip: string | null) {
-  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (!secret) throw new Error("TURNSTILE_SECRET_KEY missing");
-  const body = new FormData();
-  body.append("secret", secret);
-  body.append("response", token);
-  if (ip) body.append("remoteip", ip);
-  const res = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    { method: "POST", body },
-  );
-  const data = (await res.json()) as { success: boolean; "error-codes"?: string[] };
-  return data.success === true;
-}
 
 Deno.serve(async (req) => {
   const cors = buildCors(req);
@@ -87,19 +72,6 @@ Deno.serve(async (req) => {
       );
     }
     const d = parsed.data;
-
-    const ip =
-      req.headers.get("cf-connecting-ip") ??
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      null;
-
-    const ok = await verifyTurnstile(d.turnstileToken, ip);
-    if (!ok) {
-      return new Response(JSON.stringify({ error: "Vérification anti-spam échouée" }), {
-        status: 403,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
