@@ -73,19 +73,6 @@ Deno.serve(async (req) => {
     }
     const d = parsed.data;
 
-    const ip =
-      req.headers.get("cf-connecting-ip") ??
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      null;
-
-    const ok = await verifyTurnstile(d.turnstileToken, ip);
-    if (!ok) {
-      return new Response(JSON.stringify({ error: "Vérification anti-spam échouée" }), {
-        status: 403,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
