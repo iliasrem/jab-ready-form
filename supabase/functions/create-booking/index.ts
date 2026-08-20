@@ -18,7 +18,6 @@ function buildCors(req: Request) {
 }
 
 const BookingSchema = z.object({
-  turnstileToken: z.string().min(10).max(4096),
   firstName: z
     .string()
     .trim()
