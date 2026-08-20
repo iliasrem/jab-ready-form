@@ -187,14 +187,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   async function onSubmit(data: AppointmentFormValues) {
     if (submitting) return;
-    if (!turnstileToken) {
-      toast({
-        title: "Vérification requise",
-        description: "Veuillez patienter le temps de la vérification anti-spam.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (!data.date || isNaN(data.date.getTime())) {
       toast({
         title: "Erreur",
@@ -213,7 +205,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       const { data: result, error } = await supabase.functions.invoke("create-booking", {
         body: {
-          turnstileToken,
           firstName: data.firstName,
           lastName: data.lastName,
           phone: normalizedPhone,
@@ -235,9 +226,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           description: typeof msg === "string" ? msg : "Erreur lors de la réservation.",
           variant: "destructive",
         });
-        // Rafraîchir le token pour un nouvel essai
-        turnstileRef.current?.reset?.();
-        setTurnstileToken(null);
         return;
       }
 
@@ -254,8 +242,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
       await fetchBookedSlots();
       form.reset();
-      turnstileRef.current?.reset?.();
-      setTurnstileToken(null);
     } catch (e) {
       console.error(e);
       toast({
@@ -263,12 +249,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         description: "Une erreur inattendue est survenue.",
         variant: "destructive",
       });
-      turnstileRef.current?.reset?.();
-      setTurnstileToken(null);
     } finally {
       setSubmitting(false);
     }
   }
+
 
   // Fonction pour récupérer les créneaux déjà réservés
   const fetchBookedSlots = async () => {
@@ -668,18 +653,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
               )}
             />
 
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => setTurnstileToken(null)}
-                onExpire={() => setTurnstileToken(null)}
-                options={{ theme: "light" }}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={submitting || !turnstileToken}>
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Envoi en cours..." : "Réserver le rendez-vous"}
             </Button>
           </form>
