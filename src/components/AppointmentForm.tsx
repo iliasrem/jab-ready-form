@@ -37,9 +37,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AppointmentConfirmationDialog } from "@/components/AppointmentConfirmationDialog";
-import { Turnstile } from "@marsidev/react-turnstile";
-import { useRef } from "react";
-import { TURNSTILE_SITE_KEY } from "@/config/turnstile";
 
 interface SpecificAvailability {
   date: string; // Format YYYY-MM-DD
@@ -82,9 +79,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [loading, setLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const turnstileRef = useRef<any>(null);
   const [confirmationData, setConfirmationData] = useState<{
     firstName: string;
     lastName: string;
