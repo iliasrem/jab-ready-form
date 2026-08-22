@@ -26,10 +26,10 @@ const router = createHashRouter([
   {
     element: <RootLayout />,
     children: [
-      {/* Route publique pour les patients - page d'accueil */},
+      // Route publique pour les patients - page d'accueil
       { path: "/", element: <PatientBooking /> },
 
-      {/* Routes protégées pour l'administration */},
+      // Routes protégées pour l'administration
       { path: "/admin", element: (
         <ProtectedRoute>
           <AdminDashboard />
@@ -46,7 +46,7 @@ const router = createHashRouter([
         </ProtectedRoute>
       ) },
 
-      {/* Catch-all */},
+      // Catch-all
       { path: "*", element: <NotFound /> },
     ],
   },
