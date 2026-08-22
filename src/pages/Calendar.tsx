@@ -504,53 +504,55 @@ const CalendarPage = () => {
         )}
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+          <CardHeader className="space-y-3">
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <div className="flex items-center justify-center space-x-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigateDate("prev")}
+                  className="h-7 px-2"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3 w-3" />
                 </Button>
                 <CardTitle className="text-xl">{getViewTitle()}</CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigateDate("next")}
+                  className="h-7 px-2"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as "day" | "week" | "month" | "4weeks")}>
-                  <TabsList>
-                    <TabsTrigger value="day" className="flex items-center gap-1">
-                      <Sun className="h-3 w-3" />
-                      Jour
-                    </TabsTrigger>
-                    <TabsTrigger value="week" className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      Semaine
-                    </TabsTrigger>
-                    <TabsTrigger value="4weeks" className="flex items-center gap-1">
-                      <Grid3x3 className="h-3 w-3" />
-                      4 Semaines
-                    </TabsTrigger>
-                    <TabsTrigger value="month" className="flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3" />
-                      Mois
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                {currentView === "day" && (
-                  <Button variant="outline" size="sm" onClick={printDayAppointments} className="flex items-center gap-2">
-                    <Printer className="h-4 w-4" />
-                    Imprimer la journée
-                  </Button>
-                )}
-              </div>
+            </div>
+            <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
+              <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as "day" | "week" | "month" | "4weeks")}>
+                <TabsList className="h-7">
+                  <TabsTrigger value="day" className="flex items-center gap-1 text-xs px-2 py-1">
+                    <Sun className="h-3 w-3" />
+                    Jour
+                  </TabsTrigger>
+                  <TabsTrigger value="week" className="flex items-center gap-1 text-xs px-2 py-1">
+                    <CalendarDays className="h-3 w-3" />
+                    Semaine
+                  </TabsTrigger>
+                  <TabsTrigger value="4weeks" className="flex items-center gap-1 text-xs px-2 py-1">
+                    <Grid3x3 className="h-3 w-3" />
+                    4 Semaines
+                  </TabsTrigger>
+                  <TabsTrigger value="month" className="flex items-center gap-1 text-xs px-2 py-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    Mois
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {currentView === "day" && (
+                <Button variant="outline" size="sm" onClick={printDayAppointments} className="flex items-center gap-1 h-7 px-2 text-xs">
+                  <Printer className="h-3 w-3" />
+                  Imprimer la journée
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
