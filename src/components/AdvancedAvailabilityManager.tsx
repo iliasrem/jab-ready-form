@@ -887,7 +887,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-6 gap-2">
+                    <div className="grid grid-cols-6 gap-2 select-none">
                       {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0).map((day) => {
                         const dayAvailability = getAvailabilityForDate(day);
                         const isSelected = selectedDate && isSameDay(day, selectedDate);
