@@ -4,6 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const ALLOWED_ORIGINS = new Set([
   "https://rdv.lovable.app",
   "https://id-preview--24a7b43c-f319-4774-b66d-a7256415de33.lovable.app",
+  "https://24a7b43c-f319-4774-b66d-a7256415de33.lovableproject.com",
 ]);
 
 function buildCors(req: Request) {
