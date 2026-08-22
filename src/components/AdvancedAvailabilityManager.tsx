@@ -729,6 +729,32 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   const weekFillRate = selectedWeek ? calculateWeekFillRate() : 0;
 
+  // Liste aplatie et ordonnée des créneaux visibles de la semaine (pour la sélection par drag)
+  const weekDaysList = selectedWeek ? getWeekDays(selectedWeek).filter(day => day.getDay() !== 0) : [];
+  const flatSlots: FlatSlot[] = weekDaysList.flatMap(day => {
+    const dayAvailability = getAvailabilityForDate(day);
+    return dayAvailability.timeSlots
+      .map((slot, timeIndex) => ({ slot, timeIndex }))
+      .filter(({ slot }) => day.getDay() !== 6 || saturdayTimeSlots.includes(slot.time))
+      .map(({ slot, timeIndex }) => ({
+        key: `${format(day, 'yyyy-MM-dd')}_${slot.time}`,
+        day,
+        timeIndex,
+        reserved: !!slot.reserved,
+        available: slot.available,
+      }));
+  });
+  flatSlotsRef.current = flatSlots;
+  const flatIndexByKey = new Map(flatSlots.map((s, i) => [s.key, i]));
+
+  // Créneaux actuellement survolés par la sélection en cours
+  const dragSelectedKeys = new Set<string>();
+  if (dragSelection) {
+    const a = Math.min(dragSelection.startIdx, dragSelection.currentIdx);
+    const b = Math.max(dragSelection.startIdx, dragSelection.currentIdx);
+    flatSlots.slice(a, b + 1).forEach(s => { if (!s.reserved) dragSelectedKeys.add(s.key); });
+  }
+
   return (
     <div className="space-y-6">
       <Card>
