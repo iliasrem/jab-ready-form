@@ -282,7 +282,7 @@ export const VaccineInventory = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              <CardTitle>Boîtes Ouvertes</CardTitle>
+              <CardTitle>Boîtes Ouvertes en stock</CardTitle>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -499,7 +499,7 @@ export const VaccineInventory = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            <CardTitle>Boîtes Fermées</CardTitle>
+            <CardTitle>Boîtes Fermées en stock</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -559,7 +559,7 @@ export const VaccineInventory = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            <CardTitle>Boîtes Vides</CardTitle>
+            <CardTitle>Boîtes Vides (hors stock)</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
