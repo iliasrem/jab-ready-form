@@ -67,6 +67,57 @@ export type Database = {
           },
         ]
       }
+      appointments_archive: {
+        Row: {
+          appointment_date: string | null
+          appointment_time: string | null
+          archived_at: string
+          confirmation_sent_at: string | null
+          created_at: string | null
+          google_event_id: string | null
+          id: string
+          notes: string | null
+          patient_id: string | null
+          season_label: string
+          services: string[] | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+          archived_at?: string
+          confirmation_sent_at?: string | null
+          created_at?: string | null
+          google_event_id?: string | null
+          id: string
+          notes?: string | null
+          patient_id?: string | null
+          season_label: string
+          services?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+          archived_at?: string
+          confirmation_sent_at?: string | null
+          created_at?: string | null
+          google_event_id?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          season_label?: string
+          services?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       availability: {
         Row: {
           created_at: string
@@ -154,6 +205,39 @@ export type Database = {
         }
         Relationships: []
       }
+      flu_vaccination_earnings_archive: {
+        Row: {
+          archived_at: string
+          created_at: string | null
+          id: string
+          price_per_vaccine: number | null
+          season_label: string
+          updated_at: string | null
+          user_id: string | null
+          vaccine_count: number | null
+        }
+        Insert: {
+          archived_at?: string
+          created_at?: string | null
+          id: string
+          price_per_vaccine?: number | null
+          season_label: string
+          updated_at?: string | null
+          user_id?: string | null
+          vaccine_count?: number | null
+        }
+        Update: {
+          archived_at?: string
+          created_at?: string | null
+          id?: string
+          price_per_vaccine?: number | null
+          season_label?: string
+          updated_at?: string | null
+          user_id?: string | null
+          vaccine_count?: number | null
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
@@ -227,6 +311,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      makeup_appointments_archive: {
+        Row: {
+          appointment_date: string | null
+          appointment_time: string | null
+          archived_at: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          patient_id: string | null
+          season_label: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+          archived_at?: string
+          created_at?: string | null
+          id: string
+          notes?: string | null
+          patient_id?: string | null
+          season_label: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+          archived_at?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          season_label?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       makeup_availability: {
         Row: {
@@ -336,6 +459,33 @@ export type Database = {
         }
         Relationships: []
       }
+      season_archives: {
+        Row: {
+          archived_at: string
+          counts: Json
+          end_date: string
+          id: string
+          season_label: string
+          start_date: string
+        }
+        Insert: {
+          archived_at?: string
+          counts?: Json
+          end_date: string
+          id?: string
+          season_label: string
+          start_date: string
+        }
+        Update: {
+          archived_at?: string
+          counts?: Json
+          end_date?: string
+          id?: string
+          season_label?: string
+          start_date?: string
+        }
+        Relationships: []
+      }
       specific_date_availability: {
         Row: {
           created_at: string
@@ -413,6 +563,48 @@ export type Database = {
           },
         ]
       }
+      vaccinations_archive: {
+        Row: {
+          archived_at: string
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          lot_number: string | null
+          notes: string | null
+          patient_id: string | null
+          season_label: string
+          updated_at: string | null
+          vaccination_date: string | null
+          vaccination_time: string | null
+        }
+        Insert: {
+          archived_at?: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id: string
+          lot_number?: string | null
+          notes?: string | null
+          patient_id?: string | null
+          season_label: string
+          updated_at?: string | null
+          vaccination_date?: string | null
+          vaccination_time?: string | null
+        }
+        Update: {
+          archived_at?: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          lot_number?: string | null
+          notes?: string | null
+          patient_id?: string | null
+          season_label?: string
+          updated_at?: string | null
+          vaccination_date?: string | null
+          vaccination_time?: string | null
+        }
+        Relationships: []
+      }
       vaccine_inventory: {
         Row: {
           created_at: string
@@ -458,6 +650,60 @@ export type Database = {
           updated_at?: string
           vials_count?: number
           vials_used?: number
+        }
+        Relationships: []
+      }
+      vaccine_inventory_archive: {
+        Row: {
+          archived_at: string
+          created_at: string | null
+          doses_lost: number | null
+          doses_per_vial: number | null
+          doses_used: number | null
+          expiry_date: string | null
+          id: string
+          lot_number: string | null
+          order_number: number | null
+          reception_date: string | null
+          season_label: string
+          status: string | null
+          updated_at: string | null
+          vials_count: number | null
+          vials_used: number | null
+        }
+        Insert: {
+          archived_at?: string
+          created_at?: string | null
+          doses_lost?: number | null
+          doses_per_vial?: number | null
+          doses_used?: number | null
+          expiry_date?: string | null
+          id: string
+          lot_number?: string | null
+          order_number?: number | null
+          reception_date?: string | null
+          season_label: string
+          status?: string | null
+          updated_at?: string | null
+          vials_count?: number | null
+          vials_used?: number | null
+        }
+        Update: {
+          archived_at?: string
+          created_at?: string | null
+          doses_lost?: number | null
+          doses_per_vial?: number | null
+          doses_used?: number | null
+          expiry_date?: string | null
+          id?: string
+          lot_number?: string | null
+          order_number?: number | null
+          reception_date?: string | null
+          season_label?: string
+          status?: string | null
+          updated_at?: string | null
+          vials_count?: number | null
+          vials_used?: number | null
         }
         Relationships: []
       }
@@ -508,6 +754,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vaccine_reservations_archive: {
+        Row: {
+          archived_at: string
+          created_at: string | null
+          id: string
+          is_called: boolean | null
+          notes: string | null
+          patient_id: string | null
+          reservation_date: string | null
+          season_label: string
+          updated_at: string | null
+          vaccine_id: string | null
+        }
+        Insert: {
+          archived_at?: string
+          created_at?: string | null
+          id: string
+          is_called?: boolean | null
+          notes?: string | null
+          patient_id?: string | null
+          reservation_date?: string | null
+          season_label: string
+          updated_at?: string | null
+          vaccine_id?: string | null
+        }
+        Update: {
+          archived_at?: string
+          created_at?: string | null
+          id?: string
+          is_called?: boolean | null
+          notes?: string | null
+          patient_id?: string | null
+          reservation_date?: string | null
+          season_label?: string
+          updated_at?: string | null
+          vaccine_id?: string | null
+        }
+        Relationships: []
       }
       vaccines: {
         Row: {
