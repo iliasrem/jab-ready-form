@@ -685,13 +685,13 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                 {selectedWeek && (
                   <div className="space-y-4">
                     <div className="space-y-3">
-                      <div className="p-3 bg-muted/30 rounded-lg text-center">
+                      <div className="p-3 bg-primary/10 rounded-lg text-center">
                         <p className="font-medium text-sm">
                           Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })} {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0 && hasAvailableSlots(day)).length} jours ouverts sur 6
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg">
                         <Button
                           variant="outline"
                           size="sm"
