@@ -12,6 +12,7 @@ import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
 import { VaccineList } from "@/components/VaccineList";
 import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
+import { AgeGroupStats } from "@/components/AgeGroupStats";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -171,6 +172,13 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-cyan-50 dark:bg-cyan-950/30" onClick={() => setSelectedUtility('age-groups')}>
+                    <CardHeader>
+                      <CardTitle>IA</CardTitle>
+                      <CardDescription>Répartition des patients par âge et estimation des vaccins</CardDescription>
+                    </CardHeader>
+                  </Card>
+
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-green-50 dark:bg-green-950/30" onClick={() => setSelectedUtility('inventory')}>
                     <CardHeader>
                       <CardTitle>Inventaire</CardTitle>
@@ -275,6 +283,10 @@ const AdminDashboard = () => {
 
                   {selectedUtility === 'archives' && (
                     <ArchiveSeasonTool />
+                  )}
+
+                  {selectedUtility === 'age-groups' && (
+                    <AgeGroupStats />
                   )}
                 </div>
               )}
