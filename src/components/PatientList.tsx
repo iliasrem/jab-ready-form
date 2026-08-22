@@ -27,7 +27,7 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Merge } from "lucide-react";
+import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Merge, Phone, PhoneOff } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
