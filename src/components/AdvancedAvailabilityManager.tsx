@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,10 +103,88 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...slot,
       available: enable
     }));
-    
+
     const updated = { ...current, timeSlots: updatedTimeSlots };
     updateDateAvailability(updated);
   };
+
+  // ===== Sélection multiple par glisser-déposer (drag) =====
+  interface FlatSlot { key: string; day: Date; timeIndex: number; reserved: boolean; available: boolean; }
+  interface DragState { startIdx: number; currentIdx: number; target: boolean; }
+
+  const flatSlotsRef = useRef<FlatSlot[]>([]);
+  const dragRef = useRef<DragState | null>(null);
+  const [dragSelection, setDragSelection] = useState<DragState | null>(null);
+
+  const setDrag = (d: DragState | null) => {
+    dragRef.current = d;
+    setDragSelection(d);
+  };
+
+  // Appliquer l'ouverture/fermeture à tous les créneaux de la plage sélectionnée
+  const applyDragSelection = (d: DragState) => {
+    const slots = flatSlotsRef.current;
+    const a = Math.min(d.startIdx, d.currentIdx);
+    const b = Math.max(d.startIdx, d.currentIdx);
+    const range = slots.slice(a, b + 1).filter(s => !s.reserved);
+    if (range.length === 0) return;
+
+    const indicesByDay = new Map<string, { day: Date; indices: Set<number> }>();
+    range.forEach(s => {
+      const dayKey = format(s.day, 'yyyy-MM-dd');
+      if (!indicesByDay.has(dayKey)) indicesByDay.set(dayKey, { day: s.day, indices: new Set() });
+      indicesByDay.get(dayKey)!.indices.add(s.timeIndex);
+    });
+
+    let newAvailability = [...specificAvailability];
+    indicesByDay.forEach(({ day, indices }) => {
+      const current = newAvailability.find(av => isSameDay(av.date, day)) || getDefaultDayAvailability(day);
+      const updated: SpecificDateAvailability = {
+        ...current,
+        timeSlots: current.timeSlots.map((slot, i) => indices.has(i) ? { ...slot, available: d.target } : slot)
+      };
+      newAvailability = newAvailability.filter(av => !isSameDay(av.date, day));
+      newAvailability.push(updated);
+    });
+
+    setSpecificAvailability(newAvailability);
+    onAvailabilityChange(newAvailability);
+
+    if (range.length > 1) {
+      toast({
+        title: `${range.length} créneaux ${d.target ? "ouverts" : "fermés"}`,
+        description: "Sélection multiple appliquée.",
+      });
+    }
+  };
+
+  // Suivi du pointeur pendant le drag (fonctionne souris + tactile)
+  useEffect(() => {
+    if (!dragSelection) return;
+
+    const onMove = (e: PointerEvent) => {
+      const el = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest('[data-slot-index]');
+      if (el) {
+        const idx = Number(el.getAttribute('data-slot-index'));
+        const cur = dragRef.current;
+        if (cur && cur.currentIdx !== idx) setDrag({ ...cur, currentIdx: idx });
+      }
+    };
+    const onUp = () => {
+      if (dragRef.current) applyDragSelection(dragRef.current);
+      setDrag(null);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragSelection !== null]);
 
   // Appliquer un modèle à tout le mois
   const applyTemplateToMonth = () => {
