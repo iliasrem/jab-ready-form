@@ -10,6 +10,7 @@ import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointm
 import { Statistics } from "@/components/Statistics";
 import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
 import { VaccineList } from "@/components/VaccineList";
+import { SeasonArchives } from "@/components/SeasonArchives";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
