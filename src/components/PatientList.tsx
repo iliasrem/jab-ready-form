@@ -31,7 +31,7 @@ import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Mer
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDateForDb } from "@/lib/utils";
+import { formatDateForDb, cleanPhone } from "@/lib/utils";
 
 export interface Patient {
   id: string;
@@ -189,13 +189,14 @@ export function PatientList() {
     setSaving(true);
 
     try {
+      const cleanedPhone = cleanPhone(editingPatient.phone);
       const { error } = await supabase
         .from('patients')
         .update({
           first_name: editingPatient.firstName,
           last_name: editingPatient.lastName,
           email: editingPatient.email,
-          phone: editingPatient.phone,
+          phone: cleanedPhone,
           birth_date: editingPatient.birthDate ? formatDateForDb(editingPatient.birthDate) : null,
           status: editingPatient.status.toLowerCase() as 'active' | 'inactive',
           notes: editingPatient.notes

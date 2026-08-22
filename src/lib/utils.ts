@@ -32,3 +32,12 @@ export function capitalizeName(name: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
+
+// Normalise un numéro de téléphone : supprime les espaces/tirets/parenthèses/points
+// et considère un simple "0" comme absent.
+export function cleanPhone(phone: string | null | undefined): string | null {
+  if (phone == null) return null;
+  const trimmed = phone.trim();
+  if (!trimmed || trimmed === '0') return null;
+  return trimmed.replace(/[\s\-\.\(\)]/g, '');
+}
