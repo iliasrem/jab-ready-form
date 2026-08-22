@@ -45,6 +45,11 @@ const BookingSchema = z.object({
     .min(8)
     .max(20)
     .regex(/^[+]?[0-9\s\-\(\)\.]+$/, "Téléphone invalide"),
+  birthDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date de naissance invalide")
+    .optional()
+    .nullable(),
   appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
   appointmentTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Heure invalide"),
   services: z.array(z.string().min(1).max(50)).min(1).max(2),

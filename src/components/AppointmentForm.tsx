@@ -57,6 +57,7 @@ const appointmentSchema = z.object({
   phone: z.string().min(1, {
     message: "Le numéro de téléphone est obligatoire.",
   }),
+  birthDate: z.date().optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
