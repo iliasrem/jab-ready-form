@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { capitalizeName } from "@/lib/utils";
+import { capitalizeName, cleanPhone } from "@/lib/utils";
 import { FileSpreadsheet, Loader2, Upload } from "lucide-react";
 
 interface ParsedFile {
