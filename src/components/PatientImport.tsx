@@ -231,7 +231,7 @@ export const PatientImport = () => {
         const k = rowKey(r.lastName, r.firstName);
         const existing = keeperByKey.get(k);
         if (existing) {
-          const patch: Record<string, string> = {};
+          const patch: { birth_date?: string; phone?: string; email?: string } = {};
           if (!existing.birth_date && r.birthDate) patch.birth_date = r.birthDate;
           if (!existing.phone && r.phone) patch.phone = r.phone;
           if (!existing.email && r.email) patch.email = r.email;
