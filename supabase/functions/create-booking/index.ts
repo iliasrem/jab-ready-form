@@ -210,7 +210,6 @@ Deno.serve(async (req) => {
     }
 
     // Recherche patient existant (téléphone normalisé ou email) filtrée en base
-    const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
     const phoneNorm = normalizePhone(d.phone);
     const emailNorm = d.email ? d.email.trim().toLowerCase() : null;
 
