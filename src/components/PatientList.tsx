@@ -274,6 +274,57 @@ export function PatientList() {
     setEditingPatient({ ...editingPatient, [field]: value });
   };
 
+  const mergeDuplicates = async () => {
+    if (!confirm(
+      "Fusionner les patients en double ayant exactement le même nom, prénom et date de naissance ?\n\n" +
+      "Les rendez-vous, vaccinations et réservations seront rattachés au dossier le plus ancien. " +
+      "Les patients sans date de naissance ne sont pas fusionnés (risque d'homonymes).\n\n" +
+      "Cette action est irréversible."
+    )) {
+      return;
+    }
+
+    setMerging(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('merge_duplicate_patients');
+
+      if (error) {
+        console.error('Erreur lors de la fusion:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de fusionner les doublons.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = data as { duplicate_groups: number; patients_deleted: number } | null;
+      if (result && result.patients_deleted > 0) {
+        toast({
+          title: "Fusion terminée",
+          description: `${result.patients_deleted} fiche(s) en double supprimée(s) dans ${result.duplicate_groups} groupe(s) de doublons.`,
+        });
+      } else {
+        toast({
+          title: "Aucun doublon",
+          description: "Aucun patient en double (même nom, prénom et date de naissance) n'a été trouvé.",
+        });
+      }
+
+      setPage(0);
+      loadPatients();
+    } catch (error) {
+      console.error('Erreur lors de la fusion:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la fusion.",
+        variant: "destructive",
+      });
+    } finally {
+      setMerging(false);
+    }
+  };
+
   const exportToExcel = async () => {
     // Récupération de tous les patients par lots de 1000 (limite Supabase)
     const allPatients: any[] = [];
@@ -390,18 +441,33 @@ export function PatientList() {
           <div>
             <CardTitle>Gestion des Patients</CardTitle>
             <CardDescription>
-              {totalCount} patient{totalCount > 1 ? 's' : ''} au total. Cliquez sur l'icône d'édition pour modifier les informations.
+              Cliquez sur l'icône d'édition pour modifier les informations d'un patient.
             </CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToExcel}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Exporter
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              {totalCount} patient{totalCount > 1 ? 's' : ''}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={mergeDuplicates}
+              disabled={merging}
+              className="flex items-center gap-2"
+            >
+              {merging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Merge className="h-4 w-4" />}
+              Fusionner les doublons
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcel}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exporter
+            </Button>
+          </div>
         </div>
 
         {/* Barre de recherche + sélecteur de taille de page */}
