@@ -130,7 +130,7 @@ const AdminDashboard = () => {
 
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-indigo-50 dark:bg-indigo-950/30" onClick={() => setSelectedUtility('historique')}>
                     <CardHeader>
-                      <CardTitle>Historique</CardTitle>
+                      <CardTitle>Archives</CardTitle>
                       <CardDescription>Consulter l'historique des saisons archivées</CardDescription>
                     </CardHeader>
                   </Card>
