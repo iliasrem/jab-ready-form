@@ -93,13 +93,6 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-teal-50 dark:bg-teal-950/30" onClick={() => setSelectedUtility('vaccines')}>
-                    <CardHeader>
-                      <CardTitle>Base Vaccins</CardTitle>
-                      <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
-                    </CardHeader>
-                  </Card>
-
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-blue-50 dark:bg-blue-950/30" onClick={() => setSelectedUtility('availability')}>
                     <CardHeader>
                       <CardTitle>Disponibilités</CardTitle>
@@ -118,6 +111,13 @@ const AdminDashboard = () => {
                     <CardHeader>
                       <CardTitle>Module d'archivage manuel</CardTitle>
                       <CardDescription>Archiver une saison terminée</CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-teal-50 dark:bg-teal-950/30" onClick={() => setSelectedUtility('vaccines')}>
+                    <CardHeader>
+                      <CardTitle>Noms des vaccins grippe disponibles</CardTitle>
+                      <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
                     </CardHeader>
                   </Card>
 
