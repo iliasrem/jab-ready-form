@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useBlocker } from "react-router-dom";
 
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
@@ -16,12 +16,22 @@ import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Settings, 
-  Package, 
-  Syringe, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Settings,
+  Package,
+  Syringe,
   Wrench,
   ClipboardList
 } from "lucide-react";
@@ -30,10 +40,71 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("vaccination");
+
+  // ===== Suivi des modifications non sauvegardées (disponibilités) =====
+  const [availabilityDirty, setAvailabilityDirty] = useState(false);
+  const availabilityDirtyRef = useRef(false);
+  const saveAvailabilityRef = useRef<(() => Promise<boolean>) | null>(null);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [savingBeforeLeave, setSavingBeforeLeave] = useState(false);
+
+  const handleDirtyChange = (dirty: boolean) => {
+    availabilityDirtyRef.current = dirty;
+    setAvailabilityDirty(dirty);
+  };
+
+  // Bloque la navigation vers une autre route tant qu'il reste des modifications non sauvegardées
+  const blocker = useBlocker(availabilityDirty);
+
+  // Intercepte un changement de vue (onglet, retour aux utilitaires) si non sauvegardé
+  const guardAction = (action: () => void) => {
+    if (availabilityDirtyRef.current) {
+      setPendingAction(() => action);
+    } else {
+      action();
+    }
+  };
+
+  const cancelLeave = () => {
+    setPendingAction(null);
+    if (blocker.state === "blocked") blocker.reset();
+  };
+
+  const handleLeaveWithoutSaving = () => {
+    const action = pendingAction;
+    handleDirtyChange(false);
+    setPendingAction(null);
+    if (blocker.state === "blocked") {
+      blocker.proceed();
+    } else {
+      action?.();
+    }
+  };
+
+  const handleSaveAndLeave = async () => {
+    setSavingBeforeLeave(true);
+    try {
+      const ok = (await saveAvailabilityRef.current?.()) ?? false;
+      if (ok) {
+        const action = pendingAction;
+        setPendingAction(null);
+        if (blocker.state === "blocked") {
+          blocker.proceed();
+        } else {
+          action?.();
+        }
+      }
+    } finally {
+      setSavingBeforeLeave(false);
+    }
+  };
+
+  const unsavedDialogOpen = pendingAction !== null || blocker.state === "blocked";
 
   return (
     <div className="min-h-screen bg-background">
-      <Tabs defaultValue="vaccination" className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => guardAction(() => setActiveTab(value))} className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
@@ -63,18 +134,18 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="px-4">
           <div className="container mx-auto">
-            
+
             <TabsContent value="calendar" className="mt-6">
               <Calendar />
             </TabsContent>
-            
+
             <TabsContent value="appointments" className="mt-6">
               <AppointmentsList />
             </TabsContent>
-            
+
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
             </TabsContent>
@@ -82,7 +153,7 @@ const AdminDashboard = () => {
             <TabsContent value="reservations" className="mt-6">
               <VaccineReservationsTab />
             </TabsContent>
-            
+
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -144,12 +215,16 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Button variant="outline" onClick={() => setSelectedUtility(null)}>← Retour aux utilitaires</Button>
-                  
+                  <Button variant="outline" onClick={() => guardAction(() => setSelectedUtility(null))}>← Retour aux utilitaires</Button>
+
                   {selectedUtility === 'availability' && (
-                    <AdvancedAvailabilityManager onAvailabilityChange={setSpecificAvailability} />
+                    <AdvancedAvailabilityManager
+                      onAvailabilityChange={setSpecificAvailability}
+                      onDirtyChange={handleDirtyChange}
+                      registerSaveHandler={(fn) => { saveAvailabilityRef.current = fn; }}
+                    />
                   )}
-                  
+
                   {selectedUtility === 'inventory' && (
                     <Card>
                       <CardHeader>
@@ -161,7 +236,7 @@ const AdminDashboard = () => {
                       </CardContent>
                     </Card>
                   )}
-                  
+
                   {selectedUtility === 'statistics' && (
                     <Card>
                       <CardHeader>
@@ -173,7 +248,7 @@ const AdminDashboard = () => {
                       </CardContent>
                     </Card>
                   )}
-                  
+
                   {selectedUtility === 'existing-patient' && (
                     <Card>
                       <CardHeader>
@@ -185,11 +260,11 @@ const AdminDashboard = () => {
                       </CardContent>
                     </Card>
                   )}
-                  
+
                   {selectedUtility === 'patients' && (
                     <PatientList />
                   )}
-                  
+
                   {selectedUtility === 'vaccines' && (
                     <VaccineList />
                   )}
@@ -207,6 +282,33 @@ const AdminDashboard = () => {
           </div>
         </div>
       </Tabs>
+
+      {/* Popup de confirmation en cas de modifications non sauvegardées */}
+      <AlertDialog open={unsavedDialogOpen} onOpenChange={(open) => { if (!open) cancelLeave(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non sauvegardées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez modifié les disponibilités sans les sauvegarder. Voulez-vous sauvegarder avant de quitter ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingBeforeLeave}>Annuler</AlertDialogCancel>
+            <Button variant="outline" disabled={savingBeforeLeave} onClick={handleLeaveWithoutSaving}>
+              Quitter sans sauvegarder
+            </Button>
+            <AlertDialogAction
+              disabled={savingBeforeLeave}
+              onClick={(e) => {
+                e.preventDefault();
+                handleSaveAndLeave();
+              }}
+            >
+              {savingBeforeLeave ? "Sauvegarde en cours..." : "Sauvegarder et continuer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
