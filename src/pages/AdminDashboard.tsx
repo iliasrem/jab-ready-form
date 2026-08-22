@@ -37,25 +37,25 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
-                <TabsTrigger value="vaccination" className="text-xs flex items-center gap-1">
-                  <Syringe className="h-3 w-3" />
+              <TabsList className="flex w-full gap-1">
+                <TabsTrigger value="vaccination" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <Syringe className="h-3 w-3 shrink-0" />
                   Vaccination
                 </TabsTrigger>
-                <TabsTrigger value="calendar" className="text-xs flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
+                <TabsTrigger value="calendar" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <CalendarIcon className="h-3 w-3 shrink-0" />
                   RDV du jour
                 </TabsTrigger>
-                <TabsTrigger value="appointments" className="text-xs flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                <TabsTrigger value="appointments" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <Clock className="h-3 w-3 shrink-0" />
                   Tous les RDV
                 </TabsTrigger>
-                <TabsTrigger value="reservations" className="text-xs flex items-center gap-1">
-                  <ClipboardList className="h-3 w-3" />
+                <TabsTrigger value="reservations" className="flex-[1.5] min-w-0 text-[10px] leading-tight flex items-center justify-center gap-1 px-1 py-1.5">
+                  <ClipboardList className="h-3 w-3 shrink-0" />
                   Réservation de vaccins manquants
                 </TabsTrigger>
-                <TabsTrigger value="utilities" className="text-xs flex items-center gap-1">
-                  <Wrench className="h-3 w-3" />
+                <TabsTrigger value="utilities" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <Wrench className="h-3 w-3 shrink-0" />
                   Utilitaires
                 </TabsTrigger>
               </TabsList>
