@@ -13,6 +13,7 @@ import { VaccineList } from "@/components/VaccineList";
 import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 import { AgeGroupStats } from "@/components/AgeGroupStats";
+import { PatientImport } from "@/components/PatientImport";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -179,6 +180,13 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-rose-50 dark:bg-rose-950/30" onClick={() => setSelectedUtility('import-patients')}>
+                    <CardHeader>
+                      <CardTitle>Import de patients (IA)</CardTitle>
+                      <CardDescription>Importer un fichier Excel/CSV et fusionner les doublons</CardDescription>
+                    </CardHeader>
+                  </Card>
+
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-green-50 dark:bg-green-950/30" onClick={() => setSelectedUtility('inventory')}>
                     <CardHeader>
                       <CardTitle>Inventaire</CardTitle>
@@ -287,6 +295,10 @@ const AdminDashboard = () => {
 
                   {selectedUtility === 'age-groups' && (
                     <AgeGroupStats />
+                  )}
+
+                  {selectedUtility === 'import-patients' && (
+                    <PatientImport />
                   )}
                 </div>
               )}
