@@ -50,6 +50,115 @@ const BookingSchema = z.object({
   notes: z.string().trim().max(500).optional().nullable(),
 });
 
+const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
+
+type SupabaseClient = ReturnType<typeof createClient>;
+
+// Fusionne en arrière-plan les fiches patients en doublon
+// (même email ou même téléphone normalisé) vers la fiche canonique.
+async function mergeDuplicatePatients(
+  supabase: SupabaseClient,
+  canonicalId: string,
+  emailNorm: string | null,
+  phoneNorm: string,
+) {
+  try {
+    // Filtre large côté base pour rattraper les variantes de formatage
+    // du téléphone (espaces, tirets, +32...) : chiffres significatifs en ilike.
+    const digits = phoneNorm.replace(/\D/g, "");
+    const significant = digits.slice(-8);
+    const phonePattern = "%" + significant.split("").join("%") + "%";
+
+    const filters: string[] = [];
+    if (emailNorm) filters.push(`email.eq.${emailNorm}`);
+    if (significant.length >= 8) filters.push(`phone.ilike.${phonePattern}`);
+    if (filters.length === 0) return;
+
+    const { data: candidates, error } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, email, phone, birth_date, notes")
+      .or(filters.join(","))
+      .limit(50);
+    if (error) {
+      console.error("merge search err", error);
+      return;
+    }
+
+    const duplicates = (candidates ?? []).filter((p) => {
+      if (p.id === canonicalId) return false;
+      const sameEmail =
+        emailNorm && p.email && p.email.trim().toLowerCase() === emailNorm;
+      const samePhone = p.phone && normalizePhone(p.phone) === phoneNorm;
+      return sameEmail || samePhone;
+    });
+
+    if (duplicates.length === 0) return;
+    const dupeIds = duplicates.map((p) => p.id);
+
+    // Réassigner les données liées vers la fiche canonique
+    for (const table of [
+      "appointments",
+      "makeup_appointments",
+      "vaccinations",
+      "vaccine_reservations",
+    ]) {
+      const { error: reassignErr } = await supabase
+        .from(table)
+        .update({ patient_id: canonicalId })
+        .in("patient_id", dupeIds);
+      if (reassignErr) console.error(`merge reassign ${table} err`, reassignErr);
+    }
+
+    // Enrichir la fiche canonique avec les infos manquantes
+    const { data: canonical } = await supabase
+      .from("patients")
+      .select("email, phone, birth_date, notes")
+      .eq("id", canonicalId)
+      .single();
+
+    const enrichment: Record<string, unknown> = {};
+    if (canonical) {
+      if (!canonical.email) {
+        const src = duplicates.find((p) => p.email);
+        if (src) enrichment.email = src.email!.trim().toLowerCase();
+      }
+      if (!canonical.phone) {
+        const src = duplicates.find((p) => p.phone);
+        if (src) enrichment.phone = src.phone;
+      }
+      if (!canonical.birth_date) {
+        const src = duplicates.find((p) => p.birth_date);
+        if (src) enrichment.birth_date = src.birth_date;
+      }
+    }
+    const mergedNotes = duplicates
+      .map((p) => p.notes)
+      .filter(Boolean)
+      .join(" | ");
+    if (mergedNotes) {
+      enrichment.notes = canonical?.notes
+        ? `${canonical.notes} | ${mergedNotes}`
+        : mergedNotes;
+    }
+    if (Object.keys(enrichment).length > 0) {
+      const { error: enrichErr } = await supabase
+        .from("patients")
+        .update(enrichment)
+        .eq("id", canonicalId);
+      if (enrichErr) console.error("merge enrich err", enrichErr);
+    }
+
+    // Supprimer les doublons
+    const { error: delErr } = await supabase
+      .from("patients")
+      .delete()
+      .in("id", dupeIds);
+    if (delErr) console.error("merge delete err", delErr);
+    else console.log(`Merged ${dupeIds.length} duplicate patient(s) into ${canonicalId}`);
+  } catch (e) {
+    console.error("merge duplicates error", e);
+  }
+}
 
 Deno.serve(async (req) => {
   const cors = buildCors(req);
@@ -101,7 +210,6 @@ Deno.serve(async (req) => {
     }
 
     // Recherche patient existant (téléphone normalisé ou email) filtrée en base
-    const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
     const phoneNorm = normalizePhone(d.phone);
     const emailNorm = d.email ? d.email.trim().toLowerCase() : null;
 
@@ -182,6 +290,18 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...cors, "Content-Type": "application/json" },
       });
+    }
+
+    // Vérification en arrière-plan : fusionner d'éventuels doublons
+    // du patient (même email ou même téléphone) sans bloquer la réponse.
+    const mergePromise = mergeDuplicatePatients(supabase, patientId, emailNorm, phoneNorm);
+    const edgeRuntime = (
+      globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } }
+    ).EdgeRuntime;
+    if (edgeRuntime?.waitUntil) {
+      edgeRuntime.waitUntil(mergePromise);
+    } else {
+      await mergePromise;
     }
 
     return new Response(
