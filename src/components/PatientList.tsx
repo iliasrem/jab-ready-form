@@ -103,6 +103,12 @@ export function PatientList() {
         }
       }
 
+      if (phoneFilter === 'with') {
+        query = query.not('phone', 'is', null).neq('phone', '');
+      } else if (phoneFilter === 'without') {
+        query = query.or('phone.is.null,phone.eq.');
+      }
+
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
