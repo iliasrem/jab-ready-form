@@ -562,6 +562,21 @@ export type Database = {
         }
         Relationships: []
       }
+      public_booked_slots: {
+        Row: {
+          appointment_date: string | null
+          appointment_time: string | null
+        }
+        Insert: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+        }
+        Update: {
+          appointment_date?: string | null
+          appointment_time?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_user_role: { Args: never; Returns: string }

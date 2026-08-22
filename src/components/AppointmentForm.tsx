@@ -251,12 +251,12 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
 
   // Fonction pour récupérer les créneaux déjà réservés
+  // Via la vue publique qui n'expose QUE date + heure (aucune donnée patient)
   const fetchBookedSlots = async () => {
     try {
       const { data: appointments, error } = await supabase
-        .from('appointments')
-        .select('appointment_date, appointment_time')
-        .eq('status', 'pending');
+        .from('public_booked_slots')
+        .select('appointment_date, appointment_time');
 
       if (error) {
         console.error('Erreur lors de la récupération des créneaux réservés:', error);

@@ -304,8 +304,10 @@ Deno.serve(async (req) => {
       await mergePromise;
     }
 
+    // Ne renvoyer que le strict nécessaire : pas d'identifiant patient
+    // ni aucune coordonnée dans la réponse publique.
     return new Response(
-      JSON.stringify({ success: true, appointment_id: appt.id, patient_id: patientId }),
+      JSON.stringify({ success: true, appointment_id: appt.id }),
       { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
     );
   } catch (e) {
