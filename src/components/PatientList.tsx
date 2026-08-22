@@ -511,6 +511,26 @@ export function PatientList() {
               </SelectContent>
             </Select>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setPhoneFilter(prev => {
+                if (prev === 'all') return 'with';
+                if (prev === 'with') return 'without';
+                return 'all';
+              });
+              setPage(0);
+            }}
+            className="flex items-center gap-2 whitespace-nowrap"
+          >
+            {phoneFilter === 'all' && <Phone className="h-4 w-4" />}
+            {phoneFilter === 'with' && <Phone className="h-4 w-4 text-green-600" />}
+            {phoneFilter === 'without' && <PhoneOff className="h-4 w-4 text-destructive" />}
+            {phoneFilter === 'all' && "Tous les patients"}
+            {phoneFilter === 'with' && "Avec téléphone"}
+            {phoneFilter === 'without' && "Sans téléphone"}
+          </Button>
         </div>
       </CardHeader>
 
