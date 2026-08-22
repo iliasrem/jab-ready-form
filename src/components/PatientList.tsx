@@ -74,6 +74,7 @@ export function PatientList() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [saving, setSaving] = useState(false);
   const [merging, setMerging] = useState(false);
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'with' | 'without'>('all');
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
