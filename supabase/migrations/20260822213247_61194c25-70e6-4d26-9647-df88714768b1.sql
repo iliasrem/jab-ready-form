@@ -1,0 +1,1 @@
+GRANT SELECT ON public.public_available_slots TO anon;
