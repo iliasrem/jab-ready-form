@@ -35,15 +35,45 @@ const saturdayTimeSlots = [
 interface AdvancedAvailabilityManagerProps {
   onAvailabilityChange: (availability: SpecificDateAvailability[]) => void;
   initialAvailability?: SpecificDateAvailability[];
+  onDirtyChange?: (dirty: boolean) => void;
+  registerSaveHandler?: (handler: (() => Promise<boolean>) | null) => void;
 }
 
-export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvailability }: AdvancedAvailabilityManagerProps) {
+export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvailability, onDirtyChange, registerSaveHandler }: AdvancedAvailabilityManagerProps) {
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedWeek, setSelectedWeek] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<string>("");
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
+
+  // ===== Suivi des modifications non sauvegardées =====
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const dirtyRef = useRef(false);
+  const setDirty = (dirty: boolean) => {
+    if (dirtyRef.current === dirty) return;
+    dirtyRef.current = dirty;
+    setHasUnsavedChanges(dirty);
+    onDirtyChange?.(dirty);
+  };
+
+  // Enregistrer une modification utilisateur (marque le formulaire comme "à sauvegarder")
+  const commitAvailability = (newAvailability: SpecificDateAvailability[]) => {
+    setSpecificAvailability(newAvailability);
+    onAvailabilityChange(newAvailability);
+    setDirty(true);
+  };
+
+  // Avertissement natif du navigateur en cas de fermeture/rechargement de la page
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
 
   // Synchroniser avec une disponibilité initiale éventuelle
   useEffect(() => {
@@ -76,8 +106,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
   const updateDateAvailability = (updatedAvailability: SpecificDateAvailability) => {
     const newAvailability = specificAvailability.filter(av => !isSameDay(av.date, updatedAvailability.date));
     newAvailability.push(updatedAvailability);
-    setSpecificAvailability(newAvailability);
-    onAvailabilityChange(newAvailability);
+    commitAvailability(newAvailability);
   };
 
   // Vérifier si un jour a des créneaux disponibles
@@ -147,8 +176,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       newAvailability.push(updated);
     });
 
-    setSpecificAvailability(newAvailability);
-    onAvailabilityChange(newAvailability);
+    commitAvailability(newAvailability);
 
     if (range.length > 1) {
       toast({
@@ -205,9 +233,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...newAvailabilities
     ];
     
-    setSpecificAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    
+    commitAvailability(updatedAvailability);
+
     toast({
       title: "Modèle appliqué",
       description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués à tout le mois.`,
@@ -269,9 +296,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...newAvailabilities
     ];
     
-    setSpecificAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    
+    commitAvailability(updatedAvailability);
+
     toast({
       title: "Semaine configurée",
       description: `Les disponibilités par défaut ont été appliquées à la semaine du ${format(weekDays[0], "d MMMM", { locale: fr })}.`,
@@ -296,9 +322,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...newAvailabilities
     ];
     
-    setSpecificAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    
+    commitAvailability(updatedAvailability);
+
     toast({
       title: "Semaine fermée",
       description: `La semaine du ${format(weekDays[0], "d MMMM", { locale: fr })} a été fermée.`,
@@ -316,7 +341,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     setCurrentMonth(newWeek);
   };
 
-  const saveAvailabilityToSupabase = async () => {
+  const saveAvailabilityToSupabase = async (): Promise<boolean> => {
     try {
       console.log('=== DÉBUT SAUVEGARDE ===');
       console.log('specificAvailability avant sauvegarde:', JSON.stringify(specificAvailability, null, 2));
@@ -332,7 +357,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
           description: "Vous devez être connecté pour sauvegarder les disponibilités.",
           variant: "destructive"
         });
-        return;
+        return false;
       }
 
       // Convertir TOUS les créneaux configurés (disponibles ET non disponibles)
@@ -418,6 +443,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         title: "Sauvegarde réussie",
         description: `${supabaseAvailabilities.length} créneaux sauvegardés avec succès.`,
       });
+      setDirty(false);
+      return true;
     } catch (error) {
       console.error('=== ERREUR SAUVEGARDE ===', error);
       
@@ -441,8 +468,17 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         description: errorMessage,
         variant: "destructive"
       });
+      return false;
     }
   };
+
+  // Exposer la fonction de sauvegarde au parent (popup de confirmation avant de quitter)
+  const saveRef = useRef(saveAvailabilityToSupabase);
+  saveRef.current = saveAvailabilityToSupabase;
+  useEffect(() => {
+    registerSaveHandler?.(() => saveRef.current());
+    return () => registerSaveHandler?.(null);
+  }, [registerSaveHandler]);
 
   // Charger les disponibilités depuis Supabase
   const loadAvailabilityFromSupabase = async () => {
@@ -623,7 +659,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
         
         setSpecificAvailability(defaultAvailabilities);
         onAvailabilityChange(defaultAvailabilities);
-        
+        setDirty(false);
+
         toast({
           title: "Disponibilités par défaut créées",
           description: "Configurez vos créneaux disponibles pour ce mois.",
@@ -631,6 +668,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       } else {
         setSpecificAvailability(loadedAvailabilities);
         onAvailabilityChange(loadedAvailabilities);
+        setDirty(false);
 
         const reservedCount = appointmentsData?.length || 0;
         toast({
@@ -870,8 +908,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                   ...newAvailabilities
                                 ];
                                 
-                                setSpecificAvailability(updatedAvailability);
-                                onAvailabilityChange(updatedAvailability);
+                                commitAvailability(updatedAvailability);
                               }
                             });
                             
