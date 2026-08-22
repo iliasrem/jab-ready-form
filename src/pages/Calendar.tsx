@@ -506,7 +506,7 @@ const CalendarPage = () => {
         <Card>
           <CardHeader className="space-y-3">
             <div className="p-3 bg-primary/10 rounded-lg">
-              <div className="flex items-center justify-center space-x-4">
+              <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -515,7 +515,7 @@ const CalendarPage = () => {
                 >
                   <ChevronLeft className="h-3 w-3" />
                 </Button>
-                <CardTitle className="text-xl">{getViewTitle()}</CardTitle>
+                <CardTitle className="text-xl text-center">{getViewTitle()}</CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
