@@ -269,9 +269,8 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...newAvailabilities
     ];
     
-    setSpecificAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    
+    commitAvailability(updatedAvailability);
+
     toast({
       title: "Modèle appliqué",
       description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués du ${format(selectedDate, "d MMMM", { locale: fr })} au ${format(endDateObj, "d MMMM yyyy", { locale: fr })}.`,
