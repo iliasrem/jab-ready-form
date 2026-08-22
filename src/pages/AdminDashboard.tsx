@@ -86,6 +86,20 @@ const AdminDashboard = () => {
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-indigo-50 dark:bg-indigo-950/30" onClick={() => setSelectedUtility('historique')}>
+                    <CardHeader>
+                      <CardTitle>Archives</CardTitle>
+                      <CardDescription>Consulter l'historique des saisons archivées</CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-teal-50 dark:bg-teal-950/30" onClick={() => setSelectedUtility('vaccines')}>
+                    <CardHeader>
+                      <CardTitle>Base Vaccins</CardTitle>
+                      <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
+                    </CardHeader>
+                  </Card>
+
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-blue-50 dark:bg-blue-950/30" onClick={() => setSelectedUtility('availability')}>
                     <CardHeader>
                       <CardTitle>Disponibilités</CardTitle>
@@ -100,17 +114,10 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-purple-50 dark:bg-purple-950/30" onClick={() => setSelectedUtility('statistics')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-amber-50 dark:bg-amber-950/30" onClick={() => setSelectedUtility('archives')}>
                     <CardHeader>
-                      <CardTitle>Statistiques</CardTitle>
-                      <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-orange-50 dark:bg-orange-950/30" onClick={() => setSelectedUtility('existing-patient')}>
-                    <CardHeader>
-                      <CardTitle>RDV pour patients Existants</CardTitle>
-                      <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
+                      <CardTitle>Module d'archivage manuel</CardTitle>
+                      <CardDescription>Archiver une saison terminée</CardDescription>
                     </CardHeader>
                   </Card>
 
@@ -121,24 +128,17 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-teal-50 dark:bg-teal-950/30" onClick={() => setSelectedUtility('vaccines')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-orange-50 dark:bg-orange-950/30" onClick={() => setSelectedUtility('existing-patient')}>
                     <CardHeader>
-                      <CardTitle>Base Vaccins</CardTitle>
-                      <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
+                      <CardTitle>RDV pour patients Existants</CardTitle>
+                      <CardDescription>Créer un rendez-vous pour un patient existant</CardDescription>
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-indigo-50 dark:bg-indigo-950/30" onClick={() => setSelectedUtility('historique')}>
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-purple-50 dark:bg-purple-950/30" onClick={() => setSelectedUtility('statistics')}>
                     <CardHeader>
-                      <CardTitle>Archives</CardTitle>
-                      <CardDescription>Consulter l'historique des saisons archivées</CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-amber-50 dark:bg-amber-950/30" onClick={() => setSelectedUtility('archives')}>
-                    <CardHeader>
-                      <CardTitle>Module d'archivage manuel</CardTitle>
-                      <CardDescription>Archiver une saison terminée</CardDescription>
+                      <CardTitle>Statistiques</CardTitle>
+                      <CardDescription>Vue d'ensemble des vaccinations et revenus</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
