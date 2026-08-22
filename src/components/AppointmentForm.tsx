@@ -372,8 +372,8 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
     { code: "GE", label: "Géorgie (+995)", prefix: "+995 " },
   ];
   const services = [
-    { id: "covid", label: "Vaccin 2025-2026 contre le COVID" },
-    { id: "grippe", label: "Vaccin contre la grippe 2025-2026" }
+    { id: "covid", label: "Vaccin 2026-2027 contre le COVID" },
+    { id: "grippe", label: "Vaccin contre la grippe 2026-2027" }
   ];
 
   return (
