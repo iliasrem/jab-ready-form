@@ -277,8 +277,8 @@ export function PatientList() {
   const mergeDuplicates = async () => {
     if (!confirm(
       "Fusionner les patients en double ayant exactement le même nom, prénom et date de naissance ?\n\n" +
-      "Les rendez-vous, vaccinations et réservations seront rattachés au dossier le plus ancien. " +
-      "Les patients sans date de naissance ne sont pas fusionnés (risque d'homonymes).\n\n" +
+      "Les fiches sans date de naissance mais avec un nom et un prénom identiques seront aussi fusionnées. " +
+      "Les rendez-vous, vaccinations et réservations seront rattachés au dossier le plus ancien.\n\n" +
       "Cette action est irréversible."
     )) {
       return;
