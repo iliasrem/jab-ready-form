@@ -170,7 +170,7 @@ export function PatientList() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, debouncedSearch, toast]);
+  }, [page, pageSize, debouncedSearch, phoneFilter, toast]);
 
   useEffect(() => {
     loadPatients();
