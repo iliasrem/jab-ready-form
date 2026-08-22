@@ -31,7 +31,7 @@ import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Mer
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDateForDb } from "@/lib/utils";
+import { formatDateForDb, cleanPhone } from "@/lib/utils";
 
 export interface Patient {
   id: string;
