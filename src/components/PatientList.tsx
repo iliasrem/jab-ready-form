@@ -525,7 +525,7 @@ export function PatientList() {
             className="flex items-center gap-2 whitespace-nowrap"
           >
             {phoneFilter === 'all' && <Phone className="h-4 w-4" />}
-            {phoneFilter === 'with' && <Phone className="h-4 w-4 text-green-600" />}
+            {phoneFilter === 'with' && <Phone className="h-4 w-4" />}
             {phoneFilter === 'without' && <PhoneOff className="h-4 w-4 text-destructive" />}
             {phoneFilter === 'all' && "Tous les patients"}
             {phoneFilter === 'with' && "Avec téléphone"}
