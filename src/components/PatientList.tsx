@@ -27,7 +27,7 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Merge } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +73,7 @@ export function PatientList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [saving, setSaving] = useState(false);
+  const [merging, setMerging] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
