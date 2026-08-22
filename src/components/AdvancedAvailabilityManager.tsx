@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,10 +103,88 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       ...slot,
       available: enable
     }));
-    
+
     const updated = { ...current, timeSlots: updatedTimeSlots };
     updateDateAvailability(updated);
   };
+
+  // ===== Sélection multiple par glisser-déposer (drag) =====
+  interface FlatSlot { key: string; day: Date; timeIndex: number; reserved: boolean; available: boolean; }
+  interface DragState { startIdx: number; currentIdx: number; target: boolean; }
+
+  const flatSlotsRef = useRef<FlatSlot[]>([]);
+  const dragRef = useRef<DragState | null>(null);
+  const [dragSelection, setDragSelection] = useState<DragState | null>(null);
+
+  const setDrag = (d: DragState | null) => {
+    dragRef.current = d;
+    setDragSelection(d);
+  };
+
+  // Appliquer l'ouverture/fermeture à tous les créneaux de la plage sélectionnée
+  const applyDragSelection = (d: DragState) => {
+    const slots = flatSlotsRef.current;
+    const a = Math.min(d.startIdx, d.currentIdx);
+    const b = Math.max(d.startIdx, d.currentIdx);
+    const range = slots.slice(a, b + 1).filter(s => !s.reserved);
+    if (range.length === 0) return;
+
+    const indicesByDay = new Map<string, { day: Date; indices: Set<number> }>();
+    range.forEach(s => {
+      const dayKey = format(s.day, 'yyyy-MM-dd');
+      if (!indicesByDay.has(dayKey)) indicesByDay.set(dayKey, { day: s.day, indices: new Set() });
+      indicesByDay.get(dayKey)!.indices.add(s.timeIndex);
+    });
+
+    let newAvailability = [...specificAvailability];
+    indicesByDay.forEach(({ day, indices }) => {
+      const current = newAvailability.find(av => isSameDay(av.date, day)) || getDefaultDayAvailability(day);
+      const updated: SpecificDateAvailability = {
+        ...current,
+        timeSlots: current.timeSlots.map((slot, i) => indices.has(i) ? { ...slot, available: d.target } : slot)
+      };
+      newAvailability = newAvailability.filter(av => !isSameDay(av.date, day));
+      newAvailability.push(updated);
+    });
+
+    setSpecificAvailability(newAvailability);
+    onAvailabilityChange(newAvailability);
+
+    if (range.length > 1) {
+      toast({
+        title: `${range.length} créneaux ${d.target ? "ouverts" : "fermés"}`,
+        description: "Sélection multiple appliquée.",
+      });
+    }
+  };
+
+  // Suivi du pointeur pendant le drag (fonctionne souris + tactile)
+  useEffect(() => {
+    if (!dragSelection) return;
+
+    const onMove = (e: PointerEvent) => {
+      const el = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest('[data-slot-index]');
+      if (el) {
+        const idx = Number(el.getAttribute('data-slot-index'));
+        const cur = dragRef.current;
+        if (cur && cur.currentIdx !== idx) setDrag({ ...cur, currentIdx: idx });
+      }
+    };
+    const onUp = () => {
+      if (dragRef.current) applyDragSelection(dragRef.current);
+      setDrag(null);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragSelection !== null]);
 
   // Appliquer un modèle à tout le mois
   const applyTemplateToMonth = () => {
@@ -651,6 +729,32 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
 
   const weekFillRate = selectedWeek ? calculateWeekFillRate() : 0;
 
+  // Liste aplatie et ordonnée des créneaux visibles de la semaine (pour la sélection par drag)
+  const weekDaysList = selectedWeek ? getWeekDays(selectedWeek).filter(day => day.getDay() !== 0) : [];
+  const flatSlots: FlatSlot[] = weekDaysList.flatMap(day => {
+    const dayAvailability = getAvailabilityForDate(day);
+    return dayAvailability.timeSlots
+      .map((slot, timeIndex) => ({ slot, timeIndex }))
+      .filter(({ slot }) => day.getDay() !== 6 || saturdayTimeSlots.includes(slot.time))
+      .map(({ slot, timeIndex }) => ({
+        key: `${format(day, 'yyyy-MM-dd')}_${slot.time}`,
+        day,
+        timeIndex,
+        reserved: !!slot.reserved,
+        available: slot.available,
+      }));
+  });
+  flatSlotsRef.current = flatSlots;
+  const flatIndexByKey = new Map(flatSlots.map((s, i) => [s.key, i]));
+
+  // Créneaux actuellement survolés par la sélection en cours
+  const dragSelectedKeys = new Set<string>();
+  if (dragSelection) {
+    const a = Math.min(dragSelection.startIdx, dragSelection.currentIdx);
+    const b = Math.max(dragSelection.startIdx, dragSelection.currentIdx);
+    flatSlots.slice(a, b + 1).forEach(s => { if (!s.reserved) dragSelectedKeys.add(s.key); });
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -783,7 +887,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-6 gap-2">
+                    <div className="grid grid-cols-6 gap-2 select-none">
                       {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0).map((day) => {
                         const dayAvailability = getAvailabilityForDate(day);
                         const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -846,12 +950,13 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     })
                                     .map((slot, slotIndex) => {
                                     let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
-                                    let buttonClass = "text-xs h-6 w-full";
+                                    let buttonClass = "text-xs h-6 w-full select-none touch-none";
                                     let isDisabled = false;
-                                    
-                                    // Debug pour vérifier les données des créneaux
-                                    console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
-                                    
+
+                                    const slotKey = `${format(day, 'yyyy-MM-dd')}_${slot.time}`;
+                                    const flatIndex = flatIndexByKey.get(slotKey) ?? -1;
+                                    const isDragSelected = dragSelectedKeys.has(slotKey);
+
                                     if (slot.reserved) {
                                       buttonVariant = "destructive"; // 🔴 Rouge pour réservé
                                       buttonClass += " opacity-75";
@@ -861,14 +966,29 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     } else {
                                       buttonVariant = "secondary"; // ⚫ Gris pour fermé
                                     }
-                                    
+
+                                    // Surbrillance de la sélection en cours
+                                    if (isDragSelected) {
+                                      buttonClass += " ring-2 ring-primary ring-offset-1 ring-offset-background brightness-110";
+                                    }
+
                                     return (
-                                      <div key={slot.time}>
+                                      <div key={slot.time} data-slot-index={flatIndex}>
                                         <Button
                                           variant={buttonVariant}
                                           size="sm"
                                           className={buttonClass}
-                                          onClick={() => !isDisabled && toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time))}
+                                          onPointerDown={(e) => {
+                                            if (isDisabled || flatIndex < 0) return;
+                                            e.preventDefault();
+                                            setDrag({ startIdx: flatIndex, currentIdx: flatIndex, target: !slot.available });
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if ((e.key === 'Enter' || e.key === ' ') && !isDisabled) {
+                                              e.preventDefault();
+                                              toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time));
+                                            }
+                                          }}
                                           disabled={isDisabled}
                                           title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
                                         >
