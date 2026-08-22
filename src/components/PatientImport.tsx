@@ -182,6 +182,8 @@ export const PatientImport = () => {
       return;
     }
     setImporting(true);
+    startTimeRef.current = Date.now();
+    setProgress({ done: 0, total: 0, phase: "Préparation de l'import…" });
     try {
       // 1. Dédupliquer au sein du fichier (fusion par nom + prénom)
       const fileMap = new Map<string, ImportRow>();
@@ -212,6 +214,17 @@ export const PatientImport = () => {
         const k = rowKey(p.last_name, p.first_name);
         byKey.set(k, [...(byKey.get(k) ?? []), p]);
       }
+
+      // Nombre total d'opérations : fusions de doublons en base + lignes du fichier à importer
+      const totalDupes = [...byKey.values()].reduce((n, g) => n + g.length - 1, 0);
+      const totalSteps = totalDupes + fileMap.size;
+      let done = 0;
+      const bump = (phase: string) => {
+        done++;
+        setProgress({ done, total: totalSteps, phase });
+      };
+      setProgress({ done: 0, total: totalSteps, phase: "Fusion des doublons en base…" });
+
       let dbMerged = 0;
       const keeperByKey = new Map<string, { id: string; birth_date: string | null; phone: string | null; email: string | null }>();
       for (const [k, group] of byKey) {
@@ -226,6 +239,7 @@ export const PatientImport = () => {
           if (!merged.email && dup.email) merged.email = dup.email;
           await supabase.from("patients").delete().eq("id", dup.id);
           dbMerged++;
+          bump("Fusion des doublons en base…");
         }
         if (group.length > 1) {
           await supabase.from("patients").update({
@@ -239,45 +253,50 @@ export const PatientImport = () => {
 
       // 4. Importer les lignes du fichier (mise à jour ou création)
       const importResults: ResultRow[] = [];
+      setProgress({ done, total: totalSteps, phase: "Import des patients du fichier…" });
       for (const r of fileMap.values()) {
-        const k = rowKey(r.lastName, r.firstName);
-        const existing = keeperByKey.get(k);
-        if (existing) {
-          const patch: { birth_date?: string; phone?: string; email?: string } = {};
-          if (!existing.birth_date && r.birthDate) patch.birth_date = r.birthDate;
-          if (!existing.phone && r.phone) patch.phone = r.phone;
-          if (!existing.email && r.email) patch.email = r.email;
-          if (Object.keys(patch).length > 0) {
-            const { error: upErr } = await supabase.from("patients").update(patch).eq("id", existing.id);
-            if (upErr) {
-              importResults.push({ ...r, status: "error", message: upErr.message });
+        try {
+          const k = rowKey(r.lastName, r.firstName);
+          const existing = keeperByKey.get(k);
+          if (existing) {
+            const patch: { birth_date?: string; phone?: string; email?: string } = {};
+            if (!existing.birth_date && r.birthDate) patch.birth_date = r.birthDate;
+            if (!existing.phone && r.phone) patch.phone = r.phone;
+            if (!existing.email && r.email) patch.email = r.email;
+            if (Object.keys(patch).length > 0) {
+              const { error: upErr } = await supabase.from("patients").update(patch).eq("id", existing.id);
+              if (upErr) {
+                importResults.push({ ...r, status: "error", message: upErr.message });
+                continue;
+              }
+              if (patch.birth_date) existing.birth_date = patch.birth_date;
+              if (patch.phone) existing.phone = patch.phone;
+              if (patch.email) existing.email = patch.email;
+              importResults.push({ ...r, status: "updated" });
+            } else {
+              importResults.push({ ...r, status: "unchanged" });
+            }
+          } else {
+            const { data: inserted, error: insErr } = await supabase
+              .from("patients")
+              .insert({
+                first_name: capitalizeName(r.firstName),
+                last_name: capitalizeName(r.lastName),
+                birth_date: r.birthDate,
+                phone: r.phone,
+                email: r.email,
+              })
+              .select("id")
+              .single();
+            if (insErr) {
+              importResults.push({ ...r, status: "error", message: insErr.message });
               continue;
             }
-            if (patch.birth_date) existing.birth_date = patch.birth_date;
-            if (patch.phone) existing.phone = patch.phone;
-            if (patch.email) existing.email = patch.email;
-            importResults.push({ ...r, status: "updated" });
-          } else {
-            importResults.push({ ...r, status: "unchanged" });
+            keeperByKey.set(k, { id: inserted.id, birth_date: r.birthDate, phone: r.phone, email: r.email });
+            importResults.push({ ...r, status: "created" });
           }
-        } else {
-          const { data: inserted, error: insErr } = await supabase
-            .from("patients")
-            .insert({
-              first_name: capitalizeName(r.firstName),
-              last_name: capitalizeName(r.lastName),
-              birth_date: r.birthDate,
-              phone: r.phone,
-              email: r.email,
-            })
-            .select("id")
-            .single();
-          if (insErr) {
-            importResults.push({ ...r, status: "error", message: insErr.message });
-            continue;
-          }
-          keeperByKey.set(k, { id: inserted.id, birth_date: r.birthDate, phone: r.phone, email: r.email });
-          importResults.push({ ...r, status: "created" });
+        } finally {
+          bump("Import des patients du fichier…");
         }
       }
 
@@ -303,6 +322,7 @@ export const PatientImport = () => {
       });
     } finally {
       setImporting(false);
+      setProgress(null);
     }
   };
 
