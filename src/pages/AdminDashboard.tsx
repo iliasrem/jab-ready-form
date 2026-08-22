@@ -10,7 +10,8 @@ import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointm
 import { Statistics } from "@/components/Statistics";
 import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
 import { VaccineList } from "@/components/VaccineList";
-import { SeasonArchives } from "@/components/SeasonArchives";
+import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
+import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -127,10 +128,17 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-indigo-50 dark:bg-indigo-950/30" onClick={() => setSelectedUtility('historique')}>
+                    <CardHeader>
+                      <CardTitle>Historique</CardTitle>
+                      <CardDescription>Consulter l'historique des saisons archivées</CardDescription>
+                    </CardHeader>
+                  </Card>
+
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-amber-50 dark:bg-amber-950/30" onClick={() => setSelectedUtility('archives')}>
                     <CardHeader>
-                      <CardTitle>Archives</CardTitle>
-                      <CardDescription>Archiver une saison terminée et consulter l'historique</CardDescription>
+                      <CardTitle>Archivage</CardTitle>
+                      <CardDescription>Archiver une saison terminée</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
