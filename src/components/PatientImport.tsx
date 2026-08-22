@@ -447,6 +447,21 @@ export const PatientImport = () => {
                 </>
               )}
             </Button>
+
+            {importing && progress && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{progress.phase}</span>
+                  <span className="font-medium tabular-nums">
+                    {progress.done} / {progress.total} patient(s)
+                  </span>
+                </div>
+                <Progress value={progress.total > 0 ? (progress.done / progress.total) * 100 : 0} />
+                <p className="text-xs text-muted-foreground">
+                  Temps restant estimé : {formatETA(progress.done, progress.total, startTimeRef.current)}
+                </p>
+              </div>
+            )}
           </>
         )}
 
