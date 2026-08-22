@@ -292,6 +292,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Vérification en arrière-plan : fusionner d'éventuels doublons
+    // du patient (même email ou même téléphone) sans bloquer la réponse.
+    const mergePromise = mergeDuplicatePatients(supabase, patientId, emailNorm, phoneNorm);
+    const edgeRuntime = (
+      globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } }
+    ).EdgeRuntime;
+    if (edgeRuntime?.waitUntil) {
+      edgeRuntime.waitUntil(mergePromise);
+    } else {
+      await mergePromise;
+    }
+
     return new Response(
       JSON.stringify({ success: true, appointment_id: appt.id, patient_id: patientId }),
       { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
