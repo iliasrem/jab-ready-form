@@ -137,7 +137,7 @@ const AdminDashboard = () => {
 
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-amber-50 dark:bg-amber-950/30" onClick={() => setSelectedUtility('archives')}>
                     <CardHeader>
-                      <CardTitle>Archivage</CardTitle>
+                      <CardTitle>Module d'archivage manuel</CardTitle>
                       <CardDescription>Archiver une saison terminée</CardDescription>
                     </CardHeader>
                   </Card>
