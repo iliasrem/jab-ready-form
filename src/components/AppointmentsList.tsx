@@ -26,8 +26,8 @@ export interface Appointment {
 }
 
 const serviceLabels: { [key: string]: string } = {
-  covid: "Vaccin 2025-2026 contre le COVID",
-  grippe: "Vaccin contre la grippe 2025-2026"
+  covid: "Vaccin 2026-2027 contre le COVID",
+  grippe: "Vaccin contre la grippe 2026-2027"
 };
 
 export function AppointmentsList() {
@@ -353,8 +353,8 @@ export function AppointmentsList() {
               <SelectValue placeholder="Sélectionner un service" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="covid">Vaccin 2025-2026 contre le COVID</SelectItem>
-              <SelectItem value="grippe">Vaccin contre la grippe 2025-2026</SelectItem>
+              <SelectItem value="covid">Vaccin 2026-2027 contre le COVID</SelectItem>
+              <SelectItem value="grippe">Vaccin contre la grippe 2026-2027</SelectItem>
             </SelectContent>
           </Select>
         ) : (
@@ -609,8 +609,8 @@ export function AppointmentsList() {
                                       <SelectValue placeholder="Sélectionner un service" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="covid">Vaccin 2025-2026 contre le COVID</SelectItem>
-                                      <SelectItem value="grippe">Vaccin contre la grippe 2025-2026</SelectItem>
+                                      <SelectItem value="covid">Vaccin 2026-2027 contre le COVID</SelectItem>
+                                      <SelectItem value="grippe">Vaccin contre la grippe 2026-2027</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 ) : (

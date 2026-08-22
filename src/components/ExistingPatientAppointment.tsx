@@ -354,8 +354,8 @@ export function ExistingPatientAppointment() {
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
   const services = [
-    { id: "covid", label: "Vaccin 2025-2026 contre le COVID" },
-    { id: "grippe", label: "Vaccin contre la grippe 2025-2026" }
+    { id: "covid", label: "Vaccin 2026-2027 contre le COVID" },
+    { id: "grippe", label: "Vaccin contre la grippe 2026-2027" }
   ];
 
   if (loading) {
