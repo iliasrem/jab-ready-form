@@ -684,8 +684,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
               <CardContent className="space-y-4">
                 {selectedWeek && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div className="flex items-center space-x-3">
+                    <div className="space-y-3">
+                      <div className="p-3 bg-muted/30 rounded-lg text-center">
+                        <p className="font-medium text-sm">
+                          Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })} {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0 && hasAvailableSlots(day)).length} jours ouverts sur 6
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -695,15 +701,6 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           <ChevronLeft className="h-4 w-4" />
                           <span>Précédente</span>
                         </Button>
-                        
-                        <div className="text-center">
-                          <p className="font-medium">
-                            Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0 && hasAvailableSlots(day)).length} jours ouverts sur 6
-                          </p>
-                        </div>
 
                         <Button
                           variant="outline"
@@ -714,9 +711,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           <span>Suivante</span>
                           <ChevronRight className="h-4 w-4" />
                         </Button>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -724,7 +719,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         >
                           Semaine actuelle
                         </Button>
-                        
+
                         <Button
                           variant="default"
                           size="sm"
@@ -732,7 +727,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         >
                           Horaires par défaut
                         </Button>
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -740,7 +735,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         >
                           Fermer la semaine
                         </Button>
-                        
+
                         <Button
                           variant="secondary"
                           size="sm"
