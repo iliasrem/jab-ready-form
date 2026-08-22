@@ -27,7 +27,7 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Merge } from "lucide-react";
+import { Edit, Trash2, Download, Search, ChevronLeft, ChevronRight, Loader2, Merge, Phone, PhoneOff } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +74,7 @@ export function PatientList() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [saving, setSaving] = useState(false);
   const [merging, setMerging] = useState(false);
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'with' | 'without'>('all');
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -100,6 +101,12 @@ export function PatientList() {
             `last_name.ilike.%${s}%,first_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`
           );
         }
+      }
+
+      if (phoneFilter === 'with') {
+        query = query.not('phone', 'is', null).neq('phone', '');
+      } else if (phoneFilter === 'without') {
+        query = query.or('phone.is.null,phone.eq.');
       }
 
       const from = page * pageSize;
@@ -163,7 +170,7 @@ export function PatientList() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, debouncedSearch, toast]);
+  }, [page, pageSize, debouncedSearch, phoneFilter, toast]);
 
   useEffect(() => {
     loadPatients();
@@ -504,6 +511,26 @@ export function PatientList() {
               </SelectContent>
             </Select>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setPhoneFilter(prev => {
+                if (prev === 'all') return 'with';
+                if (prev === 'with') return 'without';
+                return 'all';
+              });
+              setPage(0);
+            }}
+            className="flex items-center gap-2 whitespace-nowrap"
+          >
+            {phoneFilter === 'all' && <Phone className="h-4 w-4" />}
+            {phoneFilter === 'with' && <Phone className="h-4 w-4" />}
+            {phoneFilter === 'without' && <PhoneOff className="h-4 w-4 text-destructive" />}
+            {phoneFilter === 'all' && "Tous les patients"}
+            {phoneFilter === 'with' && "Avec téléphone"}
+            {phoneFilter === 'without' && "Sans téléphone"}
+          </Button>
         </div>
       </CardHeader>
 
