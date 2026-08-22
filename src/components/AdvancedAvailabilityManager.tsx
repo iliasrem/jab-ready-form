@@ -950,12 +950,13 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     })
                                     .map((slot, slotIndex) => {
                                     let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
-                                    let buttonClass = "text-xs h-6 w-full";
+                                    let buttonClass = "text-xs h-6 w-full select-none touch-none";
                                     let isDisabled = false;
-                                    
-                                    // Debug pour vérifier les données des créneaux
-                                    console.log(`Créneau ${slot.time} - available: ${slot.available}, reserved: ${slot.reserved}`);
-                                    
+
+                                    const slotKey = `${format(day, 'yyyy-MM-dd')}_${slot.time}`;
+                                    const flatIndex = flatIndexByKey.get(slotKey) ?? -1;
+                                    const isDragSelected = dragSelectedKeys.has(slotKey);
+
                                     if (slot.reserved) {
                                       buttonVariant = "destructive"; // 🔴 Rouge pour réservé
                                       buttonClass += " opacity-75";
@@ -965,14 +966,29 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                                     } else {
                                       buttonVariant = "secondary"; // ⚫ Gris pour fermé
                                     }
-                                    
+
+                                    // Surbrillance de la sélection en cours
+                                    if (isDragSelected) {
+                                      buttonClass += " ring-2 ring-primary ring-offset-1 ring-offset-background brightness-110";
+                                    }
+
                                     return (
-                                      <div key={slot.time}>
+                                      <div key={slot.time} data-slot-index={flatIndex}>
                                         <Button
                                           variant={buttonVariant}
                                           size="sm"
                                           className={buttonClass}
-                                          onClick={() => !isDisabled && toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time))}
+                                          onPointerDown={(e) => {
+                                            if (isDisabled || flatIndex < 0) return;
+                                            e.preventDefault();
+                                            setDrag({ startIdx: flatIndex, currentIdx: flatIndex, target: !slot.available });
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if ((e.key === 'Enter' || e.key === ' ') && !isDisabled) {
+                                              e.preventDefault();
+                                              toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time));
+                                            }
+                                          }}
                                           disabled={isDisabled}
                                           title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
                                         >
