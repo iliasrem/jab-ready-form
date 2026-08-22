@@ -866,6 +866,7 @@ export type Database = {
     Functions: {
       get_current_user_role: { Args: never; Returns: string }
       is_valid_email: { Args: { email_address: string }; Returns: boolean }
+      merge_duplicate_patients: { Args: never; Returns: Json }
     }
     Enums: {
       appointment_status: "pending" | "confirmed" | "completed" | "cancelled"
