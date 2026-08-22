@@ -691,14 +691,14 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg">
+                      <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigateWeek("prev")}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 h-7 px-2 text-xs"
                         >
-                          <ChevronLeft className="h-4 w-4" />
+                          <ChevronLeft className="h-3 w-3" />
                           <span>Précédente</span>
                         </Button>
 
@@ -706,16 +706,17 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           variant="outline"
                           size="sm"
                           onClick={() => navigateWeek("next")}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 h-7 px-2 text-xs"
                         >
                           <span>Suivante</span>
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-3 w-3" />
                         </Button>
 
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedWeek(new Date())}
+                          className="h-7 px-2 text-xs"
                         >
                           Semaine actuelle
                         </Button>
@@ -724,6 +725,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           variant="default"
                           size="sm"
                           onClick={() => applyDefaultToWeek(selectedWeek)}
+                          className="h-7 px-2 text-xs"
                         >
                           Horaires par défaut
                         </Button>
@@ -732,6 +734,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                           variant="outline"
                           size="sm"
                           onClick={() => closeWeek(selectedWeek)}
+                          className="h-7 px-2 text-xs"
                         >
                           Fermer la semaine
                         </Button>
@@ -773,6 +776,7 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
                               description: "Les horaires ont été appliqués à toutes les semaines du mois.",
                             });
                           }}
+                          className="h-7 px-2 text-xs"
                         >
                           Appliquer au mois
                         </Button>
