@@ -194,8 +194,12 @@ const AdminDashboard = () => {
                     <VaccineList />
                   )}
 
+                  {selectedUtility === 'historique' && (
+                    <SeasonHistoryViewer />
+                  )}
+
                   {selectedUtility === 'archives' && (
-                    <SeasonArchives />
+                    <ArchiveSeasonTool />
                   )}
                 </div>
               )}
