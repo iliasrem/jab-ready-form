@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { capitalizeName } from "@/lib/utils";
 import { FileSpreadsheet, Loader2, Upload } from "lucide-react";
@@ -105,6 +106,15 @@ const detectColumn = (headers: string[], patterns: RegExp[], exclude: number[] =
   );
 };
 
+const formatETA = (done: number, total: number, start: number): string => {
+  if (done === 0) return "calcul en cours…";
+  const elapsed = Date.now() - start;
+  const remaining = Math.round(((elapsed / done) * (total - done)) / 1000);
+  if (remaining <= 0) return "presque terminé…";
+  if (remaining < 60) return `≈ ${remaining} s`;
+  return `≈ ${Math.floor(remaining / 60)} min ${String(remaining % 60).padStart(2, "0")} s`;
+};
+
 export const PatientImport = () => {
   const { toast } = useToast();
   const [parsed, setParsed] = useState<ParsedFile | null>(null);
@@ -112,6 +122,8 @@ export const PatientImport = () => {
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState<ResultRow[] | null>(null);
   const [stats, setStats] = useState<ImportStats | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number; phase: string } | null>(null);
+  const startTimeRef = useRef(0);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
