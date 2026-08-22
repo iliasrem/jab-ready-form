@@ -85,7 +85,7 @@ const toPhone = (v: unknown): string | null => {
   let s = String(v).trim();
   if (!s) return null;
   if (/^\d+\.0$/.test(s)) s = s.slice(0, -2);
-  return s;
+  return cleanPhone(s);
 };
 
 const toEmail = (v: unknown): string | null => {
