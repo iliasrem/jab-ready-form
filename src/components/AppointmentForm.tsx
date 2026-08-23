@@ -243,7 +243,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: normalizedPhone,
-          birthDate: data.birthDate ? formatDateForDb(data.birthDate) : null,
+          birthDate: data.birthDate ? parseDateInput(data.birthDate) : null,
           appointmentDate: formatDateForDb(data.date),
           appointmentTime: data.time,
           services: data.services,
