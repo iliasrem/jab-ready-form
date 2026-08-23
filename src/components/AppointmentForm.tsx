@@ -43,6 +43,30 @@ interface SpecificAvailability {
   timeSlots: string[]; // Array of available times like ["09:00", "09:15"]
 }
 
+// Formate une saisie de date en JJ/MM/AAAA
+function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+}
+
+// Convertit une date saisie au format JJ/MM/AAAA en YYYY-MM-DD
+function parseDateInput(value: string): string | null {
+  if (!value) return null;
+  const [day, month, year] = value.split("/").map(Number);
+  if (!day || !month || !year) return null;
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 interface AppointmentFormProps {
   availability?: any[]; // Keeping for backward compatibility but not used
 }
