@@ -188,6 +188,17 @@ Deno.serve(async (req) => {
     }
     const d = parsed.data;
 
+    // Cohérence de la date de naissance optionnelle
+    if (d.birthDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (d.birthDate > today || d.birthDate < "1900-01-01") {
+        return new Response(
+          JSON.stringify({ error: "Date de naissance invalide" }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -224,7 +235,7 @@ Deno.serve(async (req) => {
 
     const { data: candidates, error: searchErr } = await supabase
       .from("patients")
-      .select("id, first_name, last_name, email, phone")
+      .select("id, first_name, last_name, email, phone, birth_date")
       .or(filters.join(","))
       .limit(10);
     if (searchErr) console.error("search err", searchErr);
