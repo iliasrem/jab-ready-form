@@ -43,6 +43,30 @@ interface SpecificAvailability {
   timeSlots: string[]; // Array of available times like ["09:00", "09:15"]
 }
 
+// Formate une saisie de date en JJ/MM/AAAA
+function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+}
+
+// Convertit une date saisie au format JJ/MM/AAAA en YYYY-MM-DD
+function parseDateInput(value: string): string | null {
+  if (!value) return null;
+  const [day, month, year] = value.split("/").map(Number);
+  if (!day || !month || !year) return null;
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 interface AppointmentFormProps {
   availability?: any[]; // Keeping for backward compatibility but not used
 }
@@ -57,7 +81,22 @@ const appointmentSchema = z.object({
   phone: z.string().min(1, {
     message: "Le numéro de téléphone est obligatoire.",
   }),
-  birthDate: z.date().optional(),
+  birthDate: z
+    .string()
+    .refine((val) => !val || /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
+      message: "Format attendu : JJ/MM/AAAA",
+    })
+    .refine((val) => {
+      if (!val) return true;
+      const [day, month, year] = val.split("/").map(Number);
+      const date = new Date(year, month - 1, day);
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+      );
+    }, { message: "Date de naissance invalide" })
+    .optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -204,7 +243,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: normalizedPhone,
-          birthDate: data.birthDate ? formatDateForDb(data.birthDate) : null,
+          birthDate: data.birthDate ? parseDateInput(data.birthDate) : null,
           appointmentDate: formatDateForDb(data.date),
           appointmentTime: data.time,
           services: data.services,
@@ -426,41 +465,19 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date de naissance (optionnel)</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: fr })
-                            ) : (
-                              <span>Choisir une date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          captionLayout="dropdown-buttons"
-                          fromYear={1900}
-                          toYear={new Date().getFullYear()}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="JJ/MM/AAAA"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value);
+                          field.onChange(formatted || undefined);
+                        }}
+                        maxLength={10}
+                      />
+                    </FormControl>
                     <FormDescription>
                       Optionnel : aide à vous retrouver dans notre fichier patient.
                     </FormDescription>
