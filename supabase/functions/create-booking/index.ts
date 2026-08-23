@@ -258,6 +258,10 @@ Deno.serve(async (req) => {
       if (normalizePhone(match.phone ?? "") !== phoneNorm) {
         updates.phone = d.phone;
       }
+      // Renseigner la date de naissance si elle manquait sur la fiche
+      if (d.birthDate && !match.birth_date) {
+        updates.birth_date = d.birthDate;
+      }
       if (Object.keys(updates).length > 0) {
         const { error: updErr } = await supabase
           .from("patients")
@@ -273,6 +277,7 @@ Deno.serve(async (req) => {
           last_name: d.lastName,
           email: emailNorm,
           phone: d.phone,
+          birth_date: d.birthDate ?? null,
           notes: d.notes ?? null,
         })
         .select("id")
