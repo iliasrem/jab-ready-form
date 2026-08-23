@@ -473,7 +473,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Numéro de téléphone *</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
