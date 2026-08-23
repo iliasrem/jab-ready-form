@@ -57,6 +57,7 @@ const appointmentSchema = z.object({
   phone: z.string().min(1, {
     message: "Le numéro de téléphone est obligatoire.",
   }),
+  birthDate: z.date().optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -203,6 +204,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: normalizedPhone,
+          birthDate: data.birthDate ? formatDateForDb(data.birthDate) : null,
           appointmentDate: formatDateForDb(data.date),
           appointmentTime: data.time,
           services: data.services,
@@ -493,8 +495,57 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
+                 )}
+               />
+
+            <FormField
+              control={form.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date de naissance (optionnel)</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: fr })
+                          ) : (
+                            <span>Choisir une date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={new Date().getFullYear()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>
+                    Optionnel : aide à vous retrouver dans notre fichier patient.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
 
             <FormField

@@ -45,6 +45,11 @@ const BookingSchema = z.object({
     .min(8)
     .max(20)
     .regex(/^[+]?[0-9\s\-\(\)\.]+$/, "Téléphone invalide"),
+  birthDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date de naissance invalide")
+    .optional()
+    .nullable(),
   appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
   appointmentTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Heure invalide"),
   services: z.array(z.string().min(1).max(50)).min(1).max(2),
@@ -183,6 +188,17 @@ Deno.serve(async (req) => {
     }
     const d = parsed.data;
 
+    // Cohérence de la date de naissance optionnelle
+    if (d.birthDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (d.birthDate > today || d.birthDate < "1900-01-01") {
+        return new Response(
+          JSON.stringify({ error: "Date de naissance invalide" }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -219,7 +235,7 @@ Deno.serve(async (req) => {
 
     const { data: candidates, error: searchErr } = await supabase
       .from("patients")
-      .select("id, first_name, last_name, email, phone")
+      .select("id, first_name, last_name, email, phone, birth_date")
       .or(filters.join(","))
       .limit(10);
     if (searchErr) console.error("search err", searchErr);
@@ -242,6 +258,10 @@ Deno.serve(async (req) => {
       if (normalizePhone(match.phone ?? "") !== phoneNorm) {
         updates.phone = d.phone;
       }
+      // Renseigner la date de naissance si elle manquait sur la fiche
+      if (d.birthDate && !match.birth_date) {
+        updates.birth_date = d.birthDate;
+      }
       if (Object.keys(updates).length > 0) {
         const { error: updErr } = await supabase
           .from("patients")
@@ -257,6 +277,7 @@ Deno.serve(async (req) => {
           last_name: d.lastName,
           email: emailNorm,
           phone: d.phone,
+          birth_date: d.birthDate ?? null,
           notes: d.notes ?? null,
         })
         .select("id")
