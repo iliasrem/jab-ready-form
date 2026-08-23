@@ -57,7 +57,22 @@ const appointmentSchema = z.object({
   phone: z.string().min(1, {
     message: "Le numéro de téléphone est obligatoire.",
   }),
-  birthDate: z.date().optional(),
+  birthDate: z
+    .string()
+    .refine((val) => !val || /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
+      message: "Format attendu : JJ/MM/AAAA",
+    })
+    .refine((val) => {
+      if (!val) return true;
+      const [day, month, year] = val.split("/").map(Number);
+      const date = new Date(year, month - 1, day);
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+      );
+    }, { message: "Date de naissance invalide" })
+    .optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
