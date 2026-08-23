@@ -465,41 +465,19 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date de naissance (optionnel)</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: fr })
-                            ) : (
-                              <span>Choisir une date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          captionLayout="dropdown-buttons"
-                          fromYear={1900}
-                          toYear={new Date().getFullYear()}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="JJ/MM/AAAA"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value);
+                          field.onChange(formatted || undefined);
+                        }}
+                        maxLength={10}
+                      />
+                    </FormControl>
                     <FormDescription>
                       Optionnel : aide à vous retrouver dans notre fichier patient.
                     </FormDescription>
