@@ -27,15 +27,22 @@ export const AgeGroupStats = () => {
   useEffect(() => {
     const fetchPatients = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("patients")
-        .select("birth_date")
-        .eq("status", "active");
-
-      if (error) {
-        console.error("Erreur chargement patients:", error);
-        setLoading(false);
-        return;
+      // Chargement paginé par blocs de 1 000 (limite PostgREST par défaut)
+      const data: { birth_date: string | null }[] = [];
+      const chunkSize = 1000;
+      for (let offset = 0; ; offset += chunkSize) {
+        const { data: chunk, error } = await supabase
+          .from("patients")
+          .select("birth_date")
+          .eq("status", "active")
+          .range(offset, offset + chunkSize - 1);
+        if (error) {
+          console.error("Erreur chargement patients:", error);
+          setLoading(false);
+          return;
+        }
+        data.push(...(chunk ?? []));
+        if (!chunk || chunk.length < chunkSize) break;
       }
 
       const now = new Date();
