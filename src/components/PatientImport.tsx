@@ -201,12 +201,29 @@ export const PatientImport = () => {
         }
       }
 
-      // 2. Charger les patients existants
-      const { data: patients, error } = await supabase
-        .from("patients")
-        .select("id, first_name, last_name, birth_date, phone, email, created_at")
-        .order("created_at", { ascending: true });
-      if (error) throw error;
+      // 2. Charger TOUS les patients existants (pagination par blocs de 1 000 — limite PostgREST)
+      const patients: {
+        id: string;
+        first_name: string;
+        last_name: string;
+        birth_date: string | null;
+        phone: string | null;
+        email: string | null;
+        created_at: string;
+      }[] = [];
+      const dbChunkSize = 1000;
+      setProgress({ done: 0, total: 0, phase: "Chargement des patients existants…" });
+      for (let offset = 0; ; offset += dbChunkSize) {
+        const { data: chunk, error } = await supabase
+          .from("patients")
+          .select("id, first_name, last_name, birth_date, phone, email, created_at")
+          .order("created_at", { ascending: true })
+          .range(offset, offset + dbChunkSize - 1);
+        if (error) throw error;
+        patients.push(...(chunk ?? []));
+        setProgress({ done: 0, total: 0, phase: `Chargement des patients existants… (${patients.length})` });
+        if (!chunk || chunk.length < dbChunkSize) break;
+      }
 
       // 3. Fusionner les doublons déjà présents en base (même nom + prénom)
       const byKey = new Map<string, typeof patients>();
