@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { Link, useBlocker } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useBlocker, useSearchParams } from "react-router-dom";
+
 
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
@@ -156,6 +157,11 @@ const AdminDashboard = () => {
             <TabsContent value="appointments" className="mt-6">
               <AppointmentsList />
             </TabsContent>
+
+            <TabsContent value="pharmacy-booking" className="mt-6">
+              <PharmacyBooking />
+            </TabsContent>
+
 
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
