@@ -123,10 +123,15 @@ const AdminDashboard = () => {
                   <Clock className="h-3 w-3 shrink-0" />
                   Tous les RDV
                 </TabsTrigger>
+                <TabsTrigger value="pharmacy-booking" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <Store className="h-3 w-3 shrink-0" />
+                  RDV via pharmacie
+                </TabsTrigger>
                 <TabsTrigger value="reservations" className="flex-[1.5] min-w-0 text-[10px] leading-tight flex items-center justify-center gap-1 px-1 py-1.5">
                   <ClipboardList className="h-3 w-3 shrink-0" />
                   Réservation de vaccins manquants
                 </TabsTrigger>
+
                 <TabsTrigger value="utilities" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
                   <Wrench className="h-3 w-3 shrink-0" />
                   Utilitaires
