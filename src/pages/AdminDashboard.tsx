@@ -47,7 +47,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("vaccination");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "vaccination");
+
+  // Permet d'ouvrir un onglet précis via ?tab=... (bouton du header)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && tab !== activeTab) setActiveTab(tab);
+  }, [searchParams]);
+
 
   // ===== Suivi des modifications non sauvegardées (disponibilités) =====
   const [availabilityDirty, setAvailabilityDirty] = useState(false);
