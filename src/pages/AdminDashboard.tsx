@@ -14,6 +14,8 @@ import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 import { AgeGroupStats } from "@/components/AgeGroupStats";
 import { PatientImport } from "@/components/PatientImport";
+import { PharmacyBooking } from "@/components/PharmacyBooking";
+
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,10 +35,12 @@ import {
   Clock,
   Settings,
   Package,
+  Store,
   Syringe,
   Wrench,
   ClipboardList
 } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminDashboard = () => {
