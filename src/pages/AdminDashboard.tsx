@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { Link, useBlocker } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useBlocker, useSearchParams } from "react-router-dom";
+
 
 import { AdvancedAvailabilityManager, SpecificDateAvailability } from "@/components/AdvancedAvailabilityManager";
 import { AppointmentsList } from "@/components/AppointmentsList";
@@ -14,6 +15,8 @@ import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 import { AgeGroupStats } from "@/components/AgeGroupStats";
 import { PatientImport } from "@/components/PatientImport";
+import { PharmacyBooking } from "@/components/PharmacyBooking";
+
 
 import Calendar from "./Calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,16 +36,26 @@ import {
   Clock,
   Settings,
   Package,
+  Store,
   Syringe,
   Wrench,
   ClipboardList
 } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("vaccination");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "vaccination");
+
+  // Permet d'ouvrir un onglet précis via ?tab=... (bouton du header)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && tab !== activeTab) setActiveTab(tab);
+  }, [searchParams]);
+
 
   // ===== Suivi des modifications non sauvegardées (disponibilités) =====
   const [availabilityDirty, setAvailabilityDirty] = useState(false);
@@ -106,7 +119,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Tabs value={activeTab} onValueChange={(value) => guardAction(() => setActiveTab(value))} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => guardAction(() => { setActiveTab(value); if (searchParams.get("tab")) setSearchParams({}, { replace: true }); })} className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
@@ -123,10 +136,15 @@ const AdminDashboard = () => {
                   <Clock className="h-3 w-3 shrink-0" />
                   Tous les RDV
                 </TabsTrigger>
+                <TabsTrigger value="pharmacy-booking" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <Store className="h-3 w-3 shrink-0" />
+                  RDV via pharmacie
+                </TabsTrigger>
                 <TabsTrigger value="reservations" className="flex-[1.5] min-w-0 text-[10px] leading-tight flex items-center justify-center gap-1 px-1 py-1.5">
                   <ClipboardList className="h-3 w-3 shrink-0" />
                   Réservation de vaccins manquants
                 </TabsTrigger>
+
                 <TabsTrigger value="utilities" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
                   <Wrench className="h-3 w-3 shrink-0" />
                   Utilitaires
@@ -147,6 +165,11 @@ const AdminDashboard = () => {
             <TabsContent value="appointments" className="mt-6">
               <AppointmentsList />
             </TabsContent>
+
+            <TabsContent value="pharmacy-booking" className="mt-6">
+              <PharmacyBooking />
+            </TabsContent>
+
 
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
