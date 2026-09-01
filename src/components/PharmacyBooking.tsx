@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon, Search, User } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useEffect, useState } from "react";
@@ -363,7 +364,7 @@ export function PharmacyBooking() {
         <CardContent className="space-y-6">
           {/* Recherche patient */}
           <div className="space-y-3">
-            <FormLabel>Rechercher un patient</FormLabel>
+            <Label>Rechercher un patient</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
