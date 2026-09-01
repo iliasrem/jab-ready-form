@@ -119,7 +119,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Tabs value={activeTab} onValueChange={(value) => guardAction(() => setActiveTab(value))} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => guardAction(() => { setActiveTab(value); if (searchParams.get("tab")) setSearchParams({}, { replace: true }); })} className="w-full">
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">

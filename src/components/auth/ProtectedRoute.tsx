@@ -1,7 +1,7 @@
 import { useAuth } from './AuthProvider'
 import { LoginForm } from './LoginForm'
 import { Button } from '@/components/ui/button'
-import { LogOut, Shield, Users } from 'lucide-react'
+import { LogOut, Shield, Store, Users } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Link } from 'react-router-dom'
 
@@ -59,7 +59,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <Button variant="default" size="sm">
               Administration
             </Button>
+            <Button asChild variant="secondary" size="sm" className="flex items-center space-x-2">
+              <Link to="/admin?tab=pharmacy-booking">
+                <Store className="h-4 w-4" />
+                <span>RDV via pharmacie</span>
+              </Link>
+            </Button>
           </div>
+
           <div className="flex items-center space-x-4">
             <Button
               variant="outline"
