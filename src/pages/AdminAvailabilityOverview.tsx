@@ -386,6 +386,7 @@ export default function AdminAvailabilityOverview() {
             <Button variant={viewMode === "week" ? "default" : "outline"} size="sm" onClick={() => setViewMode("week")}>Semaine</Button>
             <Button variant={viewMode === "month" ? "default" : "outline"} size="sm" onClick={() => setViewMode("month")}>Mois</Button>
             <Button variant={viewMode === "quarter" ? "default" : "outline"} size="sm" onClick={() => setViewMode("quarter")}>2 mois</Button>
+            <Button variant={viewMode === "season" ? "default" : "outline"} size="sm" onClick={() => setViewMode("season")}>Saison (oct → jan)</Button>
           </div>
           <div className="inline-flex gap-2">
             <Button variant="outline" size="sm" onClick={goPrev}>Précédent</Button>
