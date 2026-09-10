@@ -11,6 +11,7 @@ import { Star, UploadCloud, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { getSeasonRange } from "@/lib/season";
 
 // créneaux par défaut (doit refléter le gestionnaire avancé)
 const defaultTimeSlots = [
@@ -27,7 +28,7 @@ const saturdayTimeSlots = [
 
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition
 export default function AdminAvailabilityOverview() {
-  type ViewMode = "day" | "week" | "month" | "quarter";
+  type ViewMode = "day" | "week" | "month" | "quarter" | "season";
 
   const [viewMode, setViewMode] = useState<ViewMode>("quarter");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
