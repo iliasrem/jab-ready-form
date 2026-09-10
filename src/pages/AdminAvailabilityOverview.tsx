@@ -329,72 +329,23 @@ export default function AdminAvailabilityOverview() {
     };
   }, [period, toast]);
 
-  const groupContiguous = (times: string[]) => {
-    if (times.length === 0) return [] as Array<{ start: string; end: string }>;
-    const sorted = [...times].sort((a, b) => timeStrToMinutes(a) - timeStrToMinutes(b));
-    const ranges: Array<{ start: string; end: string }> = [];
-    let start = sorted[0];
-    let prev = sorted[0];
-    for (let i = 1; i < sorted.length; i++) {
-      const cur = sorted[i];
-      if (timeStrToMinutes(cur) !== timeStrToMinutes(prev) + 15) {
-        // close current range -> end is prev + 15 minutes to cover the last slot
-        ranges.push({ start: `${start}:00`, end: addMinutesStr(prev, 15) });
-        start = cur;
-      }
-      prev = cur;
-    }
-    ranges.push({ start: `${start}:00`, end: addMinutesStr(prev, 15) });
-    return ranges;
-  };
-
   const publishVisiblePeriod = async () => {
     setIsPublishing(true);
     try {
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !user) {
-        toast({ variant: "destructive", title: "Non connecté", description: "Veuillez vous connecter pour publier." });
-        return;
-      }
-      const userId = user.id;
+      const payload = period
+        .filter((d) => d.getDay() !== 0)
+        .map((d) => {
+          const grid = d.getDay() === 6 ? saturdayTimeSlots : defaultTimeSlots;
+          const av = getAvailabilityForDate(d);
+          const openTimes = av.timeSlots.filter((t) => t.available).map((t) => t.time);
+          return {
+            date: format(d, "yyyy-MM-dd"),
+            open_times: grid.filter((t) => openTimes.includes(t)),
+          };
+        });
 
-      // Dates de la période visible
-      const dates = period.map((d) => format(d, "yyyy-MM-dd"));
-
-      // Nettoyer toutes les dispos existantes sur la période
-      const { error: delErr } = await supabase
-        .from("specific_date_availability")
-        .delete()
-        .eq("user_id", userId)
-        .in("specific_date", dates);
-      if (delErr) throw delErr;
-
-      // Construire les nouveaux créneaux (regroupés par plages contiguës)
-      type Row = { user_id: string; specific_date: string; start_time: string; end_time: string; is_available: boolean };
-      const rows: Row[] = [];
-
-      period.forEach((d) => {
-        const av = getAvailabilityForDate(d);
-        const openTimes = av.timeSlots.filter((t) => t.available).map((t) => t.time);
-        if (openTimes.length > 0) {
-          const ranges = groupContiguous(openTimes);
-          ranges.forEach((r) => {
-            rows.push({
-              user_id: userId,
-              specific_date: format(d, "yyyy-MM-dd"),
-              start_time: r.start,
-              end_time: r.end,
-              is_available: true,
-            });
-          });
-        }
-        // Si fermé: aucune ligne insérée => jour fermé
-      });
-
-      if (rows.length > 0) {
-        const { error: insErr } = await supabase.from("specific_date_availability").insert(rows);
-        if (insErr) throw insErr;
-      }
+      const { error } = await supabase.rpc("save_availability", { p_days: payload });
+      if (error) throw error;
 
       toast({ title: "Disponibilités publiées", description: "La période visible a été enregistrée." });
     } catch (e: any) {
