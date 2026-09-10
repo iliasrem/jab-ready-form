@@ -939,6 +939,24 @@ export function AdvancedAvailabilityManager({
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pendingApply} onOpenChange={(o) => !o && setPendingApply(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Reproduire les horaires de cette semaine sur {pendingApply?.days.length ?? 0} jours ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Les horaires existants de ces jours seront remplacés ; les créneaux déjà réservés et
+              les jours bloqués ne sont pas modifiés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmApply}>Confirmer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
