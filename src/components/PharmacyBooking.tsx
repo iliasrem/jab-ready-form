@@ -338,15 +338,9 @@ export function PharmacyBooking() {
         return;
       }
 
-      toast({
-        title: "Rendez-vous créé",
-        description: `${capitalizeName(selectedPatient.first_name)} ${capitalizeName(
-          selectedPatient.last_name
-        )} — ${format(data.date, "PPP", { locale: fr })} à ${data.time}`,
-      });
-
       await fetchBookedSlots();
 
+      let emailSent = false;
       if (selectedPatient.email && insertedAppt?.id) {
         const { error: sendErr } = await supabase.functions.invoke("send-confirmation", {
           body: { appointment_id: insertedAppt.id },
@@ -354,15 +348,20 @@ export function PharmacyBooking() {
         if (sendErr) {
           console.error("send-confirmation error", sendErr);
         } else {
+          emailSent = true;
           toast({ title: "Email envoyé", description: "Confirmation envoyée au patient." });
         }
       }
 
-      form.reset({ services: [], notes: "" });
-      setSelectedPatient(null);
-      setSearchTerm("");
-      setResults([]);
-    } catch (e) {
+      setConfirmation({
+        appointmentId: insertedAppt.id,
+        patient: selectedPatient,
+        date: data.date,
+        time: data.time,
+        services: data.services,
+        notes: data.notes,
+        emailSent,
+      });
       console.error(e);
       toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
     }
