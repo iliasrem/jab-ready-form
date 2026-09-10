@@ -83,6 +83,10 @@ export default function AdminAvailabilityOverview() {
     } else if (viewMode === "month") {
       start = startOfMonth(start);
       end = endOfMonth(start);
+    } else if (viewMode === "season") {
+      const season = getSeasonRange(periodStart);
+      start = season.start;
+      end = season.end;
     } else {
       // 2 mois: du début du mois courant jusqu'à la fin dans 1 mois
       start = startOfMonth(start);
