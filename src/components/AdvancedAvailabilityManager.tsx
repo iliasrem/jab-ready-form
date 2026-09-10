@@ -596,6 +596,20 @@ export function AdvancedAvailabilityManager({
                 Semaine actuelle
               </Button>
 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const start = getSeasonRange(currentMonth).start;
+                  setSelectedWeek(start);
+                  setCurrentMonth(start);
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                Début de saison
+              </Button>
+
+
               <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
                 Horaires par défaut
               </Button>
