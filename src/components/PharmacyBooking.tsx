@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Search, User } from "lucide-react";
+import { CalendarIcon, Check, Clock, Mail, MapPin, Search, User } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -36,6 +36,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -58,6 +66,16 @@ interface Patient {
 interface SpecificAvailability {
   date: string;
   timeSlots: string[];
+}
+
+interface ConfirmationSummary {
+  appointmentId: string;
+  patient: Patient;
+  date: Date;
+  time: string;
+  services: string[];
+  notes?: string;
+  emailSent: boolean;
 }
 
 const bookingSchema = z.object({
@@ -94,6 +112,7 @@ export function PharmacyBooking() {
   const [realAvailability, setRealAvailability] = useState<SpecificAvailability[]>([]);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [loading, setLoading] = useState(true);
+  const [confirmation, setConfirmation] = useState<ConfirmationSummary | null>(null);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -319,15 +338,9 @@ export function PharmacyBooking() {
         return;
       }
 
-      toast({
-        title: "Rendez-vous créé",
-        description: `${capitalizeName(selectedPatient.first_name)} ${capitalizeName(
-          selectedPatient.last_name
-        )} — ${format(data.date, "PPP", { locale: fr })} à ${data.time}`,
-      });
-
       await fetchBookedSlots();
 
+      let emailSent = false;
       if (selectedPatient.email && insertedAppt?.id) {
         const { error: sendErr } = await supabase.functions.invoke("send-confirmation", {
           body: { appointment_id: insertedAppt.id },
@@ -335,19 +348,33 @@ export function PharmacyBooking() {
         if (sendErr) {
           console.error("send-confirmation error", sendErr);
         } else {
+          emailSent = true;
           toast({ title: "Email envoyé", description: "Confirmation envoyée au patient." });
         }
       }
 
-      form.reset({ services: [], notes: "" });
-      setSelectedPatient(null);
-      setSearchTerm("");
-      setResults([]);
+      setConfirmation({
+        appointmentId: insertedAppt.id,
+        patient: selectedPatient,
+        date: data.date,
+        time: data.time,
+        services: data.services,
+        notes: data.notes,
+        emailSent,
+      });
     } catch (e) {
       console.error(e);
       toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
     }
   }
+
+  const closeConfirmation = () => {
+    setConfirmation(null);
+    form.reset({ services: [], notes: "" });
+    setSelectedPatient(null);
+    setSearchTerm("");
+    setResults([]);
+  };
 
   if (loading) {
     return (
@@ -620,6 +647,110 @@ export function PharmacyBooking() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Modal de confirmation / récapitulatif */}
+      <Dialog open={!!confirmation} onOpenChange={(open) => !open && closeConfirmation()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              Rendez-vous enregistré
+            </DialogTitle>
+            <DialogDescription>
+              Voici le récapitulatif du rendez-vous créé au comptoir.
+            </DialogDescription>
+          </DialogHeader>
+
+          {confirmation && (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <User className="h-4 w-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Patient</p>
+                    <p className="font-medium">
+                      {capitalizeName(confirmation.patient.last_name)}{" "}
+                      {capitalizeName(confirmation.patient.first_name)}
+                    </p>
+                    {confirmation.patient.birth_date && (
+                      <p className="text-xs text-muted-foreground">
+                        Né(e) le {format(new Date(confirmation.patient.birth_date), "dd/MM/yyyy")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CalendarIcon className="h-4 w-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-medium">
+                      {format(confirmation.date, "EEEE d MMMM yyyy", { locale: fr })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Clock className="h-4 w-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Heure</p>
+                    <p className="font-medium">{confirmation.time}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lieu</p>
+                    <p className="font-medium">Pharmacie Remili</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Mail className="h-4 w-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Confirmation</p>
+                    <p className="font-medium">
+                      {confirmation.emailSent
+                        ? "Email de confirmation envoyé"
+                        : confirmation.patient.email
+                          ? "Envoi de l’email en échec"
+                          : "Aucun email renseigné"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground mb-2">Services</p>
+                <div className="flex flex-wrap gap-2">
+                  {confirmation.services.map((serviceId) => {
+                    const label = services.find((s) => s.id === serviceId)?.label || serviceId;
+                    return (
+                      <Badge key={serviceId} variant="secondary">
+                        {label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {confirmation.notes && (
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                  <p className="text-sm">{confirmation.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={closeConfirmation} className="w-full sm:w-auto">
+              Fermer et nouveau rendez-vous
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
