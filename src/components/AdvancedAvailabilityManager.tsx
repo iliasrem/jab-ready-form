@@ -1,36 +1,62 @@
-import { useEffect, useRef, useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Save, X } from "lucide-react";
-import { format, addMonths, subMonths, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, isBefore, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek } from "date-fns";
+import { ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
+import {
+  format,
+  parseISO,
+  addMonths,
+  subMonths,
+  addDays,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+} from "date-fns";
 import { fr } from "date-fns/locale";
-import { formatTimeForDisplay } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SpecificDateAvailability {
   date: Date;
   blocked?: boolean;
   blockActivity?: string;
-  timeSlots: { time: string; available: boolean; reserved?: boolean; }[];
+  timeSlots: { time: string; available: boolean; reserved?: boolean }[];
 }
 
-const defaultTimeSlots = [
-  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
+const WEEKDAY_SLOTS = [
+  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45",
   "11:00", "11:15", "11:30", "11:45", "12:00", "12:15",
   "14:00", "14:15", "14:30", "14:45",
-  "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00"
+  "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00",
 ];
 
-const saturdayTimeSlots = [
-  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
-  "11:00", "11:15", "11:30", "11:45"
+const SATURDAY_SLOTS = [
+  "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45",
+  "11:00", "11:15", "11:30", "11:45",
 ];
+
+/** Grille horaire réelle du jour (12 créneaux le samedi, aucun le dimanche). */
+const gridForDate = (date: Date): string[] => {
+  const dow = date.getDay();
+  if (dow === 0) return [];
+  if (dow === 6) return SATURDAY_SLOTS;
+  return WEEKDAY_SLOTS;
+};
+
+const toKey = (date: Date) => format(date, "yyyy-MM-dd");
+const hhmm = (t: string) => t.slice(0, 5);
+
+interface ServerDay {
+  open: string[];
+  reserved: string[];
+  blocked: boolean;
+  blockActivity?: string;
+}
 
 interface AdvancedAvailabilityManagerProps {
   onAvailabilityChange: (availability: SpecificDateAvailability[]) => void;
@@ -39,32 +65,27 @@ interface AdvancedAvailabilityManagerProps {
   registerSaveHandler?: (handler: (() => Promise<boolean>) | null) => void;
 }
 
-export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvailability, onDirtyChange, registerSaveHandler }: AdvancedAvailabilityManagerProps) {
+export function AdvancedAvailabilityManager({
+  onAvailabilityChange,
+  onDirtyChange,
+  registerSaveHandler,
+}: AdvancedAvailabilityManagerProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedWeek, setSelectedWeek] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<string>("");
-  const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const [isSaving, setIsSaving] = useState(false);
 
-  // ===== Suivi des modifications non sauvegardées =====
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const dirtyRef = useRef(false);
-  const setDirty = (dirty: boolean) => {
-    if (dirtyRef.current === dirty) return;
-    dirtyRef.current = dirty;
-    setHasUnsavedChanges(dirty);
-    onDirtyChange?.(dirty);
-  };
+  // Modifications locales non sauvegardées : date -> créneaux ouverts
+  const [localDays, setLocalDays] = useState<Record<string, string[]>>({});
+  const dirtyKeys = useMemo(() => Object.keys(localDays), [localDays]);
+  const hasUnsavedChanges = dirtyKeys.length > 0;
 
-  // Enregistrer une modification utilisateur (marque le formulaire comme "à sauvegarder")
-  const commitAvailability = (newAvailability: SpecificDateAvailability[]) => {
-    setSpecificAvailability(newAvailability);
-    onAvailabilityChange(newAvailability);
-    setDirty(true);
-  };
+  useEffect(() => {
+    onDirtyChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onDirtyChange]);
 
-  // Avertissement natif du navigateur en cas de fermeture/rechargement de la page
   useEffect(() => {
     if (!hasUnsavedChanges) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -75,71 +96,255 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
-  // Synchroniser avec une disponibilité initiale éventuelle
+  // ===== Chargement (mois affiché ± 1 mois) =====
+  const monthKey = format(currentMonth, "yyyy-MM");
+
+  const fetchRange = useCallback(async (month: Date): Promise<Record<string, ServerDay>> => {
+    const start = format(startOfMonth(subMonths(month, 1)), "yyyy-MM-dd");
+    const end = format(endOfMonth(addMonths(month, 1)), "yyyy-MM-dd");
+
+    const { data, error } = await supabase.rpc("get_availability_range", {
+      p_start: start,
+      p_end: end,
+    });
+    if (error) throw error;
+
+    const map: Record<string, ServerDay> = {};
+    (data ?? []).forEach((row) => {
+      map[row.specific_date] = {
+        open: (row.open_times ?? []).map(hhmm),
+        reserved: (row.reserved_times ?? []).map(hhmm),
+        blocked: !!row.is_blocked,
+        blockActivity: row.block_activity ?? undefined,
+      };
+    });
+    return map;
+  }, []);
+
+  const { data: serverDays, isFetching } = useQuery({
+    queryKey: ["availability", monthKey],
+    queryFn: () => fetchRange(currentMonth),
+    staleTime: 30_000,
+  });
+
+  // Préchargement du mois suivant
   useEffect(() => {
-    if (initialAvailability) {
-      setSpecificAvailability(initialAvailability);
-    }
-  }, [initialAvailability]);
+    const next = addMonths(currentMonth, 1);
+    queryClient.prefetchQuery({
+      queryKey: ["availability", format(next, "yyyy-MM")],
+      queryFn: () => fetchRange(next),
+      staleTime: 30_000,
+    });
+  }, [currentMonth, fetchRange, queryClient]);
 
-  // Générer les disponibilités par défaut pour un jour
-  const getDefaultDayAvailability = (date: Date): SpecificDateAvailability => {
-    const isSaturday = date.getDay() === 6;
-    const slots = isSaturday ? saturdayTimeSlots : defaultTimeSlots;
-    
-    return {
-      date,
-      timeSlots: slots.map(time => ({
-        time,
-        available: false // Tous les créneaux fermés par défaut
-      }))
+  // Temps réel : une seule souscription, créée au montage
+  useEffect(() => {
+    const channel = supabase
+      .channel("availability-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "blocked_dates" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["availability"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["availability"] });
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "specific_date_availability" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["availability"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
+  }, [queryClient]);
+
+  // ===== Fusion serveur + modifications locales =====
+  const getDay = useCallback(
+    (date: Date): SpecificDateAvailability => {
+      const key = toKey(date);
+      const server = serverDays?.[key];
+      const open = new Set(localDays[key] ?? server?.open ?? []);
+      const reserved = new Set(server?.reserved ?? []);
+
+      return {
+        date,
+        blocked: server?.blocked,
+        blockActivity: server?.blockActivity,
+        timeSlots: gridForDate(date).map((time) => ({
+          time,
+          available: open.has(time) && !server?.blocked,
+          reserved: reserved.has(time),
+        })),
+      };
+    },
+    [serverDays, localDays]
+  );
+
+  const openTimesOf = useCallback(
+    (date: Date): string[] => {
+      const key = toKey(date);
+      const grid = gridForDate(date);
+      const source = localDays[key] ?? serverDays?.[key]?.open ?? [];
+      return grid.filter((t) => source.includes(t));
+    },
+    [serverDays, localDays]
+  );
+
+  /** Applique des modifications locales (dates -> créneaux ouverts). */
+  const patchDays = useCallback((patch: Record<string, string[]>) => {
+    setLocalDays((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const weekDays = useMemo(
+    () =>
+      eachDayOfInterval({
+        start: startOfWeek(selectedWeek, { weekStartsOn: 1 }),
+        end: endOfWeek(selectedWeek, { weekStartsOn: 1 }),
+      }).filter((d) => d.getDay() !== 0),
+    [selectedWeek]
+  );
+
+  // Informer le parent des données visibles
+  useEffect(() => {
+    onAvailabilityChange(weekDays.map(getDay));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekDays, getDay]);
+
+  // ===== Actions =====
+  const toggleTimeSlot = (date: Date, time: string) => {
+    const open = openTimesOf(date);
+    const next = open.includes(time) ? open.filter((t) => t !== time) : [...open, time];
+    patchDays({ [toKey(date)]: gridForDate(date).filter((t) => next.includes(t)) });
   };
 
-  // Obtenir la disponibilité pour une date spécifique
-  const getAvailabilityForDate = (date: Date): SpecificDateAvailability => {
-    const existing = specificAvailability.find(av => isSameDay(av.date, date));
-    return existing || getDefaultDayAvailability(date);
+  const applyDefaultToWeek = () => {
+    const patch: Record<string, string[]> = {};
+    weekDays.forEach((d) => {
+      patch[toKey(d)] = gridForDate(d);
+    });
+    patchDays(patch);
+    toast({ title: "Semaine ouverte", description: "Tous les créneaux de la semaine sont ouverts." });
   };
 
-  // Mettre à jour la disponibilité pour une date
-  const updateDateAvailability = (updatedAvailability: SpecificDateAvailability) => {
-    const newAvailability = specificAvailability.filter(av => !isSameDay(av.date, updatedAvailability.date));
-    newAvailability.push(updatedAvailability);
-    commitAvailability(newAvailability);
+  const closeWeek = () => {
+    const patch: Record<string, string[]> = {};
+    weekDays.forEach((d) => {
+      patch[toKey(d)] = [];
+    });
+    patchDays(patch);
+    toast({ title: "Semaine fermée", description: "Tous les créneaux de la semaine sont fermés." });
   };
 
-  // Vérifier si un jour a des créneaux disponibles
-  const hasAvailableSlots = (date: Date): boolean => {
-    const current = getAvailabilityForDate(date);
-    return current.timeSlots.some(slot => slot.available);
+  /** Copie un modèle jour de semaine -> même jour de semaine, en restant dans la grille du jour cible. */
+  const copyWeekPattern = (targetDays: Date[], sourceWeek: Date[]) => {
+    const byDow = new Map<number, string[]>();
+    sourceWeek.forEach((d) => byDow.set(d.getDay(), openTimesOf(d)));
+
+    const patch: Record<string, string[]> = {};
+    targetDays.forEach((d) => {
+      const template = byDow.get(d.getDay());
+      if (!template) return;
+      patch[toKey(d)] = gridForDate(d).filter((t) => template.includes(t));
+    });
+    patchDays(patch);
   };
 
-  // Basculer un créneau horaire
-  const toggleTimeSlot = (date: Date, timeIndex: number) => {
-    const current = getAvailabilityForDate(date);
-    const updatedTimeSlots = [...current.timeSlots];
-    updatedTimeSlots[timeIndex].available = !updatedTimeSlots[timeIndex].available;
-    
-    const updated = { ...current, timeSlots: updatedTimeSlots };
-    updateDateAvailability(updated);
+  const copyPreviousWeek = () => {
+    const previous = weekDays.map((d) => addDays(d, -7));
+    copyWeekPattern(weekDays, previous);
+    toast({
+      title: "Semaine précédente copiée",
+      description: "Les horaires de la semaine précédente ont été repris.",
+    });
   };
 
-  // Sélectionner/désélectionner tous les créneaux d'un jour
-  const toggleAllTimeSlotsForDay = (date: Date, enable: boolean) => {
-    const current = getAvailabilityForDate(date);
-    const updatedTimeSlots = current.timeSlots.map(slot => ({
-      ...slot,
-      available: enable
-    }));
-
-    const updated = { ...current, timeSlots: updatedTimeSlots };
-    updateDateAvailability(updated);
+  const applyToMonth = () => {
+    const monthDays = eachDayOfInterval({
+      start: startOfMonth(currentMonth),
+      end: endOfMonth(currentMonth),
+    }).filter((d) => d.getDay() !== 0);
+    copyWeekPattern(monthDays, weekDays);
+    toast({
+      title: "Modèle appliqué",
+      description: `Les horaires ont été appliqués à ${format(currentMonth, "MMMM yyyy", { locale: fr })}.`,
+    });
   };
 
-  // ===== Sélection multiple par glisser-déposer (drag) =====
-  interface FlatSlot { key: string; day: Date; timeIndex: number; reserved: boolean; available: boolean; }
-  interface DragState { startIdx: number; currentIdx: number; target: boolean; }
+  const [rangeEnd, setRangeEnd] = useState<string>("");
+  const applyToRange = () => {
+    if (!rangeEnd) return;
+    const end = parseISO(rangeEnd);
+    const start = weekDays[0];
+    if (end < start) {
+      toast({
+        title: "Erreur",
+        description: "La date de fin doit être postérieure au début de la semaine.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const days = eachDayOfInterval({ start, end }).filter((d) => d.getDay() !== 0);
+    copyWeekPattern(days, weekDays);
+    toast({
+      title: "Modèle appliqué",
+      description: `Horaires appliqués jusqu'au ${format(end, "d MMMM yyyy", { locale: fr })}.`,
+    });
+  };
+
+  const navigateWeek = (direction: "prev" | "next") => {
+    const next = addDays(selectedWeek, direction === "next" ? 7 : -7);
+    setSelectedWeek(next);
+    if (format(next, "yyyy-MM") !== monthKey) setCurrentMonth(next);
+  };
+
+  // ===== Sauvegarde =====
+  const saveAvailability = useCallback(async (): Promise<boolean> => {
+    const keys = Object.keys(localDays);
+    if (keys.length === 0) {
+      toast({ title: "Aucune modification", description: "Rien à sauvegarder." });
+      return true;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = keys.map((key) => ({
+        date: key,
+        open_times: gridForDate(parseISO(key)).filter((t) => localDays[key].includes(t)),
+      }));
+
+      const { data, error } = await supabase.rpc("save_availability", { p_days: payload });
+      if (error) throw error;
+
+      setLocalDays({});
+      await queryClient.invalidateQueries({ queryKey: ["availability"] });
+
+      toast({
+        title: "Sauvegarde réussie",
+        description: `${data ?? keys.length} jour(s) enregistré(s).`,
+      });
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Veuillez réessayer.";
+      toast({ title: "Erreur de sauvegarde", description: message, variant: "destructive" });
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [localDays, queryClient, toast]);
+
+  const saveRef = useRef(saveAvailability);
+  saveRef.current = saveAvailability;
+  useEffect(() => {
+    registerSaveHandler?.(() => saveRef.current());
+    return () => registerSaveHandler?.(null);
+  }, [registerSaveHandler]);
+
+  // ===== Sélection multiple par glisser-déposer =====
+  interface FlatSlot { key: string; day: Date; time: string; reserved: boolean; available: boolean }
+  interface DragState { startIdx: number; currentIdx: number; target: boolean }
 
   const flatSlotsRef = useRef<FlatSlot[]>([]);
   const dragRef = useRef<DragState | null>(null);
@@ -150,33 +355,27 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     setDragSelection(d);
   };
 
-  // Appliquer l'ouverture/fermeture à tous les créneaux de la plage sélectionnée
   const applyDragSelection = (d: DragState) => {
     const slots = flatSlotsRef.current;
     const a = Math.min(d.startIdx, d.currentIdx);
     const b = Math.max(d.startIdx, d.currentIdx);
-    const range = slots.slice(a, b + 1).filter(s => !s.reserved);
+    const range = slots.slice(a, b + 1).filter((s) => !s.reserved);
     if (range.length === 0) return;
 
-    const indicesByDay = new Map<string, { day: Date; indices: Set<number> }>();
-    range.forEach(s => {
-      const dayKey = format(s.day, 'yyyy-MM-dd');
-      if (!indicesByDay.has(dayKey)) indicesByDay.set(dayKey, { day: s.day, indices: new Set() });
-      indicesByDay.get(dayKey)!.indices.add(s.timeIndex);
+    const byDay = new Map<string, { day: Date; times: Set<string> }>();
+    range.forEach((s) => {
+      const key = toKey(s.day);
+      if (!byDay.has(key)) byDay.set(key, { day: s.day, times: new Set() });
+      byDay.get(key)!.times.add(s.time);
     });
 
-    let newAvailability = [...specificAvailability];
-    indicesByDay.forEach(({ day, indices }) => {
-      const current = newAvailability.find(av => isSameDay(av.date, day)) || getDefaultDayAvailability(day);
-      const updated: SpecificDateAvailability = {
-        ...current,
-        timeSlots: current.timeSlots.map((slot, i) => indices.has(i) ? { ...slot, available: d.target } : slot)
-      };
-      newAvailability = newAvailability.filter(av => !isSameDay(av.date, day));
-      newAvailability.push(updated);
+    const patch: Record<string, string[]> = {};
+    byDay.forEach(({ day, times }, key) => {
+      const open = new Set(openTimesOf(day));
+      times.forEach((t) => (d.target ? open.add(t) : open.delete(t)));
+      patch[key] = gridForDate(day).filter((t) => open.has(t));
     });
-
-    commitAvailability(newAvailability);
+    patchDays(patch);
 
     if (range.length > 1) {
       toast({
@@ -186,14 +385,15 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
     }
   };
 
-  // Suivi du pointeur pendant le drag (fonctionne souris + tactile)
   useEffect(() => {
     if (!dragSelection) return;
 
     const onMove = (e: PointerEvent) => {
-      const el = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest('[data-slot-index]');
+      const el = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest(
+        "[data-slot-index]"
+      );
       if (el) {
-        const idx = Number(el.getAttribute('data-slot-index'));
+        const idx = Number(el.getAttribute("data-slot-index"));
         const cur = dragRef.current;
         if (cur && cur.currentIdx !== idx) setDrag({ ...cur, currentIdx: idx });
       }
@@ -203,857 +403,312 @@ export function AdvancedAvailabilityManager({ onAvailabilityChange, initialAvail
       setDrag(null);
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragSelection !== null]);
 
-  // Appliquer un modèle à tout le mois
-  const applyTemplateToMonth = () => {
-    if (!selectedDate) return;
-    
-    const template = getAvailabilityForDate(selectedDate);
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const allDaysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(day => day.getDay() !== 0); // Exclure les dimanches
-    
-    const newAvailabilities = allDaysInMonth.map(date => ({
-      ...template,
-      date: new Date(date)
-    }));
-    
-    const updatedAvailability = [
-      ...specificAvailability.filter(av => !allDaysInMonth.some(day => isSameDay(av.date, day))),
-      ...newAvailabilities
-    ];
-    
-    commitAvailability(updatedAvailability);
+  // ===== Données de rendu =====
+  const weekData = weekDays.map(getDay);
 
-    toast({
-      title: "Modèle appliqué",
-      description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués à tout le mois.`,
-    });
-  };
-
-  // Appliquer un modèle à une plage de dates
-  const applyTemplateToDateRange = () => {
-    if (!selectedDate || !endDate) return;
-    
-    const template = getAvailabilityForDate(selectedDate);
-    const endDateObj = new Date(endDate);
-    
-    if (isAfter(selectedDate, endDateObj)) {
-      toast({
-        title: "Erreur",
-        description: "La date de fin doit être postérieure à la date de début.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const allDaysInRange = eachDayOfInterval({ start: selectedDate, end: endDateObj }).filter(day => day.getDay() !== 0); // Exclure les dimanches
-    
-    const newAvailabilities = allDaysInRange.map(date => ({
-      ...template,
-      date: new Date(date)
-    }));
-    
-    const updatedAvailability = [
-      ...specificAvailability.filter(av => !allDaysInRange.some(day => isSameDay(av.date, day))),
-      ...newAvailabilities
-    ];
-    
-    commitAvailability(updatedAvailability);
-
-    toast({
-      title: "Modèle appliqué",
-      description: `Les horaires du ${format(selectedDate, "d MMMM", { locale: fr })} ont été appliqués du ${format(selectedDate, "d MMMM", { locale: fr })} au ${format(endDateObj, "d MMMM yyyy", { locale: fr })}.`,
-    });
-  };
-
-  // Obtenir les jours de la semaine sélectionnée
-  const getWeekDays = (date: Date) => {
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Commencer le lundi
-    const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start: weekStart, end: weekEnd });
-  };
-
-  // Appliquer des disponibilités par défaut à une semaine
-  const applyDefaultToWeek = (week: Date) => {
-    const weekDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
-    
-    const newAvailabilities = weekDays.map(date => getDefaultDayAvailability(date));
-    
-    const updatedAvailability = [
-      ...specificAvailability.filter(av => !weekDays.some(day => isSameDay(av.date, day))),
-      ...newAvailabilities
-    ];
-    
-    commitAvailability(updatedAvailability);
-
-    toast({
-      title: "Semaine configurée",
-      description: `Les disponibilités par défaut ont été appliquées à la semaine du ${format(weekDays[0], "d MMMM", { locale: fr })}.`,
-    });
-  };
-
-  // Fermer complètement une semaine - fermer tous les créneaux
-  const closeWeek = (week: Date) => {
-    const weekDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
-    
-    const newAvailabilities = weekDays.map(date => ({
-      ...getAvailabilityForDate(date),
-      date: new Date(date),
-      timeSlots: getAvailabilityForDate(date).timeSlots.map(slot => ({
-        ...slot,
-        available: false
-      }))
-    }));
-    
-    const updatedAvailability = [
-      ...specificAvailability.filter(av => !weekDays.some(day => isSameDay(av.date, day))),
-      ...newAvailabilities
-    ];
-    
-    commitAvailability(updatedAvailability);
-
-    toast({
-      title: "Semaine fermée",
-      description: `La semaine du ${format(weekDays[0], "d MMMM", { locale: fr })} a été fermée.`,
-    });
-  };
-
-  // Navigation entre les semaines
-  const navigateWeek = (direction: "prev" | "next") => {
-    if (!selectedWeek) return;
-    const newWeek = direction === "next" 
-      ? addDays(selectedWeek, 7) 
-      : addDays(selectedWeek, -7);
-    setSelectedWeek(newWeek);
-    // Mettre à jour currentMonth pour que le calendrier suive
-    setCurrentMonth(newWeek);
-  };
-
-  const saveAvailabilityToSupabase = async (): Promise<boolean> => {
-    try {
-      console.log('=== DÉBUT SAUVEGARDE ===');
-      console.log('specificAvailability avant sauvegarde:', JSON.stringify(specificAvailability, null, 2));
-      
-      // Récupérer l'utilisateur connecté
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('Utilisateur connecté:', user?.id);
-      
-      if (!user) {
-        console.error('Pas d\'utilisateur connecté');
-        toast({
-          title: "Erreur d'authentification",
-          description: "Vous devez être connecté pour sauvegarder les disponibilités.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Convertir TOUS les créneaux configurés (disponibles ET non disponibles)
-      // Respecter directement la valeur available du slot, sans dépendre de enabled
-      const supabaseAvailabilities = specificAvailability.flatMap(dayAvailability => 
-        dayAvailability.timeSlots.map(slot => ({
-          user_id: user.id,
-          specific_date: format(dayAvailability.date, 'yyyy-MM-dd'),
-          start_time: slot.time,
-          end_time: slot.time,
-          is_available: slot.available // Respecter directement la valeur available du slot
-        }))
-      );
-
-      console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
-      console.log('Créneaux disponibles:', supabaseAvailabilities.filter(s => s.is_available).length);
-      console.log('Créneaux fermés:', supabaseAvailabilities.filter(s => !s.is_available).length);
-
-      // Supprimer d'abord tous les anciens créneaux pour cette période
-      const dates = [...new Set(supabaseAvailabilities.map(s => s.specific_date))];
-      console.log('Suppression des anciens créneaux pour les dates:', dates);
-      
-      for (const date of dates) {
-        const { error: deleteError } = await supabase
-          .from('specific_date_availability')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('specific_date', date);
-
-        if (deleteError) {
-          console.error('Erreur lors de la suppression pour', date, ':', deleteError);
-          throw deleteError;
-        }
-      }
-      
-      console.log('Total créneaux à sauvegarder:', supabaseAvailabilities.length);
-
-      // Utiliser upsert au lieu de delete+insert pour éviter les erreurs de contrainte
-      if (supabaseAvailabilities.length > 0) {
-        console.log('Upsert des données...');
-        
-        // Supprimer les doublons potentiels
-        const uniqueAvailabilities = supabaseAvailabilities.filter((item, index, self) => 
-          index === self.findIndex(t => 
-            t.user_id === item.user_id && 
-            t.specific_date === item.specific_date && 
-            t.start_time === item.start_time &&
-            t.end_time === item.end_time
-          )
-        );
-        
-        console.log(`Données filtrées: ${uniqueAvailabilities.length} créneaux uniques`);
-        
-        // Traiter par lots avec upsert
-        const batchSize = 100;
-        for (let i = 0; i < uniqueAvailabilities.length; i += batchSize) {
-          const batch = uniqueAvailabilities.slice(i, i + batchSize);
-          console.log(`Upsert du lot ${Math.floor(i/batchSize) + 1}/${Math.ceil(uniqueAvailabilities.length/batchSize)}: ${batch.length} éléments`);
-          
-          const { error: upsertError } = await supabase
-            .from('specific_date_availability')
-            .upsert(batch, {
-              onConflict: 'user_id,specific_date,start_time,end_time'
-            });
-
-          if (upsertError) {
-            console.error('Erreur d\'upsert du lot:', upsertError);
-            throw upsertError;
-          }
-        }
-        
-        console.log('Upsert réussi');
-      } else {
-        console.log('Aucune donnée à sauvegarder');
-      }
-
-      console.log('=== SAUVEGARDE TERMINÉE ===');
-      
-      // Recharger les données depuis Supabase pour rafraîchir l'affichage
-      await loadAvailabilityFromSupabase();
-      
-      toast({
-        title: "Sauvegarde réussie",
-        description: `${supabaseAvailabilities.length} créneaux sauvegardés avec succès.`,
-      });
-      setDirty(false);
-      return true;
-    } catch (error) {
-      console.error('=== ERREUR SAUVEGARDE ===', error);
-      
-      // Afficher plus de détails sur l'erreur
-      let errorMessage = "Une erreur est survenue lors de la sauvegarde.";
-      if (error && typeof error === 'object') {
-        if ('message' in error) {
-          errorMessage = `Erreur: ${error.message}`;
-        }
-        if ('details' in error) {
-          console.error('Détails de l\'erreur:', error.details);
-          errorMessage += ` Détails: ${error.details}`;
-        }
-        if ('hint' in error) {
-          console.error('Suggestion:', error.hint);
-        }
-      }
-      
-      toast({
-        title: "Erreur de sauvegarde",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  // Exposer la fonction de sauvegarde au parent (popup de confirmation avant de quitter)
-  const saveRef = useRef(saveAvailabilityToSupabase);
-  saveRef.current = saveAvailabilityToSupabase;
-  useEffect(() => {
-    registerSaveHandler?.(() => saveRef.current());
-    return () => registerSaveHandler?.(null);
-  }, [registerSaveHandler]);
-
-  // Charger les disponibilités depuis Supabase
-  const loadAvailabilityFromSupabase = async () => {
-    try {
-      console.log('=== CHARGEMENT DEPUIS SUPABASE ===');
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Utiliser selectedWeek si disponible, sinon currentMonth
-      const referenceDate = selectedWeek || currentMonth;
-      
-      // Charger une plage beaucoup plus large pour voir tous les créneaux
-      const rangeStart = format(startOfMonth(subMonths(referenceDate, 12)), 'yyyy-MM-dd');
-      const rangeEnd = format(endOfMonth(addMonths(referenceDate, 12)), 'yyyy-MM-dd');
-      
-      console.log('Date de référence:', format(referenceDate, 'yyyy-MM-dd'));
-      console.log('Chargement période étendue:', rangeStart, 'à', rangeEnd);
-
-      // Charger les jours bloqués
-      const { data: blockedDatesData, error: blockedError } = await supabase
-        .from('blocked_dates')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('blocked_date', rangeStart)
-        .lte('blocked_date', rangeEnd);
-
-      if (blockedError) {
-        console.error('Erreur lors du chargement des jours bloqués:', blockedError);
-        throw blockedError;
-      }
-
-      console.log('Jours bloqués chargés:', blockedDatesData?.length || 0);
-      console.log('Détail des jours bloqués:', blockedDatesData);
-      
-      // Créer un map des jours bloqués pour une recherche rapide
-      const blockedDatesMap = new Map(
-        blockedDatesData?.map(blocked => [blocked.blocked_date, blocked.activity]) || []
-      );
-      
-      console.log('Map des jours bloqués:', blockedDatesMap);
-
-      // Charger TOUS les créneaux - pour les admins tous, pour les autres seulement les disponibles
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      const isAdmin = userProfile?.role === 'admin';
-
-      let query = supabase
-        .from('specific_date_availability')
-        .select('*')
-        .gte('specific_date', rangeStart)
-        .lte('specific_date', rangeEnd);
-
-      // Si c'est un admin, charger tous les créneaux de cet utilisateur
-      // Si c'est un visiteur/patient, charger seulement les créneaux disponibles
-      if (isAdmin) {
-        query = query.eq('user_id', user.id);
-      } else {
-        query = query.eq('is_available', true);
-      }
-
-      const { data: availabilityData, error: availabilityError } = await query;
-
-      console.log(`Données chargées: ${availabilityData?.length || 0} créneaux`);
-      console.log('Aperçu des données:', availabilityData?.slice(0, 5));
-
-      if (availabilityError) throw availabilityError;
-
-      // Charger les rendez-vous pour la même période
-      const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('appointment_date, appointment_time, status')
-        .gte('appointment_date', rangeStart)
-        .lte('appointment_date', rangeEnd)
-        .neq('status', 'cancelled'); // Exclure les rendez-vous annulés
-
-      if (appointmentsError) throw appointmentsError;
-
-      console.log('Créneaux disponibles chargés:', availabilityData?.length || 0);
-      console.log('Rendez-vous chargés:', appointmentsData?.length || 0);
-      console.log('Détail des données de disponibilité:', availabilityData);
-      console.log('Détail des rendez-vous:', appointmentsData);
-
-      // Créer un set des créneaux réservés pour une recherche rapide
-      const reservedSlots = new Set(
-        appointmentsData?.map(apt => {
-          console.log('Rendez-vous brut:', apt.appointment_date, apt.appointment_time);
-          const key = `${apt.appointment_date}_${formatTimeForDisplay(apt.appointment_time)}`;
-          console.log('Clé générée pour réservation:', key);
-          return key;
-        }) || []
-      );
-
-      console.log('TOUS les créneaux réservés:', Array.from(reservedSlots));
-
-       // Convertir les données Supabase en format local
-       const groupedByDate = availabilityData?.reduce((acc, item) => {
-         const dateKey = item.specific_date;
-         if (!acc[dateKey]) {
-           acc[dateKey] = [];
-         }
-          // Normaliser le format d'heure : "09:00:00" -> "09:00"
-          const normalizedTime = item.start_time.slice(0, 5);
-          const slotKey = `${dateKey}_${normalizedTime}`;
-          const isReserved = reservedSlots.has(slotKey);
-          console.log(`Vérification créneau: ${slotKey} - réservé: ${isReserved}`);
-         
-          acc[dateKey].push({
-            time: normalizedTime,
-            available: item.is_available, // Respecter la valeur is_available de la base de données
-            reserved: isReserved // Marquer si le créneau est réservé
-          });
-         return acc;
-       }, {} as Record<string, { time: string; available: boolean; reserved: boolean; }[]>);
-
-      const loadedAvailabilities: SpecificDateAvailability[] = Object.entries(groupedByDate || {}).map(([dateStr, slots]) => {
-        const date = new Date(dateStr);
-        // Compléter avec tous les créneaux par défaut
-        const allSlots = defaultTimeSlots.map(time => {
-          const existingSlot = slots.find(s => s.time === time);
-          if (existingSlot) {
-            return existingSlot;
-          }
-          // Si le créneau n'existe pas mais que d'autres créneaux existent pour ce jour,
-          // le marquer comme fermé plutôt que non disponible
-          const slotKey = `${dateStr}_${time}`;
-          const isReserved = reservedSlots.has(slotKey);
-          return { time, available: false, reserved: isReserved };
-        });
-        
-        // Déterminer si le jour est enabled en fonction des créneaux disponibles
-        const hasAvailableSlots = allSlots.some(slot => slot.available);
-        
-        // Vérifier si ce jour est bloqué
-        const isBlocked = blockedDatesMap.has(dateStr);
-        const blockActivity = blockedDatesMap.get(dateStr);
-        
-        console.log(`Date ${dateStr}: isBlocked=${isBlocked}, activity=${blockActivity}`);
-        
-        return {
-          date,
-          blocked: isBlocked,
-          blockActivity: blockActivity,
-          timeSlots: isBlocked ? allSlots.map(slot => ({ ...slot, available: false })) : allSlots // Si bloqué, tous les créneaux sont fermés
-        };
-      });
-
-      console.log('Jours avec créneaux:', loadedAvailabilities.length);
-      console.log('Détail des jours chargés:', loadedAvailabilities);
-      
-      // Si aucune disponibilité n'est configurée, créer des jours par défaut pour le mois actuel
-      if (loadedAvailabilities.length === 0) {
-        console.log('Aucune disponibilité trouvée, création des jours par défaut');
-        const monthDays = eachDayOfInterval({
-          start: startOfMonth(currentMonth),
-          end: endOfMonth(currentMonth)
-        });
-        
-        const defaultAvailabilities: SpecificDateAvailability[] = monthDays.map(date => {
-          const dateStr = format(date, 'yyyy-MM-dd');
-          const isBlocked = blockedDatesMap.has(dateStr);
-          const blockActivity = blockedDatesMap.get(dateStr);
-          
-          return {
-            date,
-            blocked: isBlocked,
-            blockActivity: blockActivity,
-            timeSlots: defaultTimeSlots.map(time => ({
-              time,
-              available: false,
-              reserved: reservedSlots.has(`${dateStr}_${time}`)
-            }))
-          };
-        });
-        
-        setSpecificAvailability(defaultAvailabilities);
-        onAvailabilityChange(defaultAvailabilities);
-        setDirty(false);
-
-        toast({
-          title: "Disponibilités par défaut créées",
-          description: "Configurez vos créneaux disponibles pour ce mois.",
-        });
-      } else {
-        setSpecificAvailability(loadedAvailabilities);
-        onAvailabilityChange(loadedAvailabilities);
-        setDirty(false);
-
-        const reservedCount = appointmentsData?.length || 0;
-        toast({
-          title: "Chargement réussi",
-          description: `${loadedAvailabilities.length} jours avec créneaux chargés. ${reservedCount} créneaux réservés.`,
-        });
-      }
-    } catch (error) {
-      console.error('=== ERREUR CHARGEMENT ===', error);
-      toast({
-        title: "Erreur de chargement",
-        description: "Une erreur est survenue lors du chargement.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Charger les disponibilités au changement de mois ET au montage du composant
-  useEffect(() => {
-    loadAvailabilityFromSupabase();
-  }, [currentMonth]);
-
-  // Recharger les données à chaque fois que le composant est monté ou que la semaine change
-  useEffect(() => {
-    loadAvailabilityFromSupabase();
-    
-    // S'abonner aux changements en temps réel des jours bloqués
-    const channel = supabase
-      .channel('blocked-dates-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'blocked_dates'
-        },
-        (payload) => {
-          console.log('Changement détecté dans blocked_dates:', payload);
-          loadAvailabilityFromSupabase(); // Recharger les données
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedWeek]);
-
-  // Naviguer entre les mois
-  const navigateMonth = (direction: "prev" | "next") => {
-    setCurrentMonth(direction === "next" ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
-  };
-
-  // Obtenir le statut d'un jour pour l'affichage du calendrier
-  const getDayStatus = (date: Date) => {
-    const availability = getAvailabilityForDate(date);
-    const availableSlots = availability.timeSlots.filter(slot => slot.available).length;
-    if (availableSlots === 0) return "closed";
-    
-    const totalSlots = availability.timeSlots.length;
-    
-    if (availableSlots === 0) return "no-slots";
-    if (availableSlots === totalSlots) return "fully-available";
-    return "partially-available";
-  };
-
-  const selectedDayAvailability = selectedDate ? getAvailabilityForDate(selectedDate) : null;
-
-  // Calculer le taux de remplissage pour la semaine sélectionnée
-  const calculateWeekFillRate = () => {
-    if (!selectedWeek) return 0;
-    
-    const weekDays = getWeekDays(selectedWeek).filter(day => day.getDay() !== 0); // Exclure les dimanches
-    let totalAvailableSlots = 0;
-    let totalReservedSlots = 0;
-    
-    weekDays.forEach(day => {
-      const dayAvailability = getAvailabilityForDate(day);
-      const isSaturday = day.getDay() === 6;
-      const visibleSlots = isSaturday 
-        ? dayAvailability.timeSlots.filter(slot => saturdayTimeSlots.includes(slot.time))
-        : dayAvailability.timeSlots;
-      
-      visibleSlots.forEach(slot => {
-        if (slot.available) {
-          totalAvailableSlots++;
-          if (slot.reserved) {
-            totalReservedSlots++;
-          }
-        }
-      });
-    });
-    
-    return totalAvailableSlots > 0 ? Math.round((totalReservedSlots / totalAvailableSlots) * 100) : 0;
-  };
-
-  const weekFillRate = selectedWeek ? calculateWeekFillRate() : 0;
-
-  // Liste aplatie et ordonnée des créneaux visibles de la semaine (pour la sélection par drag)
-  const weekDaysList = selectedWeek ? getWeekDays(selectedWeek).filter(day => day.getDay() !== 0) : [];
-  const flatSlots: FlatSlot[] = weekDaysList.flatMap(day => {
-    const dayAvailability = getAvailabilityForDate(day);
-    return dayAvailability.timeSlots
-      .map((slot, timeIndex) => ({ slot, timeIndex }))
-      .filter(({ slot }) => day.getDay() !== 6 || saturdayTimeSlots.includes(slot.time))
-      .map(({ slot, timeIndex }) => ({
-        key: `${format(day, 'yyyy-MM-dd')}_${slot.time}`,
-        day,
-        timeIndex,
-        reserved: !!slot.reserved,
-        available: slot.available,
-      }));
-  });
+  const flatSlots: FlatSlot[] = weekData.flatMap((day) =>
+    day.timeSlots.map((slot) => ({
+      key: `${toKey(day.date)}_${slot.time}`,
+      day: day.date,
+      time: slot.time,
+      reserved: !!slot.reserved,
+      available: slot.available,
+    }))
+  );
   flatSlotsRef.current = flatSlots;
   const flatIndexByKey = new Map(flatSlots.map((s, i) => [s.key, i]));
 
-  // Créneaux actuellement survolés par la sélection en cours
   const dragSelectedKeys = new Set<string>();
   if (dragSelection) {
     const a = Math.min(dragSelection.startIdx, dragSelection.currentIdx);
     const b = Math.max(dragSelection.startIdx, dragSelection.currentIdx);
-    flatSlots.slice(a, b + 1).forEach(s => { if (!s.reserved) dragSelectedKeys.add(s.key); });
+    flatSlots.slice(a, b + 1).forEach((s) => {
+      if (!s.reserved) dragSelectedKeys.add(s.key);
+    });
   }
+
+  const openDaysCount = weekData.filter((d) => d.timeSlots.some((s) => s.available)).length;
+
+  const weekFillRate = (() => {
+    let open = 0;
+    let reserved = 0;
+    weekData.forEach((day) =>
+      day.timeSlots.forEach((slot) => {
+        if (slot.available) {
+          open++;
+          if (slot.reserved) reserved++;
+        }
+      })
+    );
+    return open > 0 ? Math.round((reserved / open) * 100) : 0;
+  })();
+
+  const showSkeleton = isFetching && !serverDays;
 
   return (
     <div className="space-y-6">
       <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
-                    <CardDescription>
-                      Configurez rapidement les disponibilités pour une semaine entière
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
-                      <div className="text-sm font-medium">Taux de remplissage:</div>
-                      <Badge variant={weekFillRate >= 80 ? "destructive" : weekFillRate >= 50 ? "default" : "secondary"}>
-                        {weekFillRate}%
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={saveAvailabilityToSupabase}
-                      className="flex items-center space-x-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>Sauvegarder</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedWeek && (
-                  <div className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="p-3 bg-primary/10 rounded-lg text-center">
-                        <p className="font-medium text-sm">
-                          Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })} {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0 && hasAvailableSlots(day)).length} jours ouverts sur 6
-                        </p>
-                      </div>
-
-                      <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigateWeek("prev")}
-                          className="flex items-center space-x-1 h-7 px-2 text-xs"
-                        >
-                          <ChevronLeft className="h-3 w-3" />
-                          <span>Précédente</span>
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigateWeek("next")}
-                          className="flex items-center space-x-1 h-7 px-2 text-xs"
-                        >
-                          <span>Suivante</span>
-                          <ChevronRight className="h-3 w-3" />
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedWeek(new Date())}
-                          className="h-7 px-2 text-xs"
-                        >
-                          Semaine actuelle
-                        </Button>
-
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => applyDefaultToWeek(selectedWeek)}
-                          className="h-7 px-2 text-xs"
-                        >
-                          Horaires par défaut
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => closeWeek(selectedWeek)}
-                          className="h-7 px-2 text-xs"
-                        >
-                          Fermer la semaine
-                        </Button>
-
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            const weeks = eachWeekOfInterval(
-                              { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) },
-                              { weekStartsOn: 1 }
-                            );
-                            weeks.forEach(week => {
-                              if (!isSameWeek(week, selectedWeek)) {
-                                const weekDays = getWeekDays(selectedWeek).filter(day => day.getDay() !== 0); // Exclure les dimanches
-                                const templateDays = getWeekDays(week).filter(day => day.getDay() !== 0); // Exclure les dimanches
-                                
-                                const newAvailabilities = templateDays.map((date, index) => {
-                                  const templateDay = weekDays[index];
-                                  const template = getAvailabilityForDate(templateDay);
-                                  return {
-                                    ...template,
-                                    date: new Date(date)
-                                  };
-                                });
-                                
-                                const updatedAvailability = [
-                                  ...specificAvailability.filter(av => !templateDays.some(day => isSameDay(av.date, day))),
-                                  ...newAvailabilities
-                                ];
-                                
-                                commitAvailability(updatedAvailability);
-                              }
-                            });
-                            
-                            toast({
-                              title: "Modèle appliqué",
-                              description: "Les horaires ont été appliqués à toutes les semaines du mois.",
-                            });
-                          }}
-                          className="h-7 px-2 text-xs"
-                        >
-                          Appliquer au mois
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-6 gap-2 select-none">
-                      {getWeekDays(selectedWeek).filter(day => day.getDay() !== 0).map((day) => {
-                        const dayAvailability = getAvailabilityForDate(day);
-                        const isSelected = selectedDate && isSameDay(day, selectedDate);
-                        const availableSlots = dayAvailability.timeSlots.filter(slot => slot.available).length;
-                        
-                        return (
-                          <div
-                            key={day.toISOString()}
-                            className={`p-2 rounded-lg border text-center transition-colors ${
-                              isSelected 
-                                ? 'border-primary bg-primary/10' 
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                          >
-                            <div className="text-xs font-medium">
-                              {format(day, "EEE", { locale: fr })}
-                            </div>
-                            <div className="text-sm font-bold mb-2">
-                              {format(day, "d", { locale: fr })}
-                            </div>
-                            
-                            {/* Badge de statut du jour */}
-                            <div className="flex items-center justify-center mb-2">
-                              {dayAvailability.blocked ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  Bloqué
-                                </Badge>
-                              ) : availableSlots > 0 ? (
-                                <Badge variant="default" className="text-xs">
-                                  {availableSlots} créneaux
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">
-                                  Fermé
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {dayAvailability.blocked && (
-                              <div className="text-xs text-destructive text-center">
-                                {dayAvailability.blockActivity}
-                              </div>
-                            )}
-                            
-                            {availableSlots >= 0 && !dayAvailability.blocked && (
-                              <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground mb-1">
-                                  {availableSlots}/{dayAvailability.timeSlots.length}
-                                </div>
-                                
-                                {/* Affichage de tous les créneaux de 15 minutes verticalement */}
-                                <div className="space-y-1">
-                                  {dayAvailability.timeSlots
-                                    .filter(slot => {
-                                      // Pour les samedis, afficher uniquement jusqu'à 11h45
-                                      if (day.getDay() === 6) {
-                                        return saturdayTimeSlots.includes(slot.time);
-                                      }
-                                      return true;
-                                    })
-                                    .map((slot, slotIndex) => {
-                                    let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
-                                    let buttonClass = "text-xs h-6 w-full select-none touch-none";
-                                    let isDisabled = false;
-
-                                    const slotKey = `${format(day, 'yyyy-MM-dd')}_${slot.time}`;
-                                    const flatIndex = flatIndexByKey.get(slotKey) ?? -1;
-                                    const isDragSelected = dragSelectedKeys.has(slotKey);
-
-                                    if (slot.reserved) {
-                                      buttonVariant = "destructive"; // 🔴 Rouge pour réservé
-                                      buttonClass += " opacity-75";
-                                      isDisabled = true;
-                                    } else if (slot.available) {
-                                      buttonVariant = "success"; // 🟢 Vert pour disponible
-                                    } else {
-                                      buttonVariant = "secondary"; // ⚫ Gris pour fermé
-                                    }
-
-                                    // Surbrillance de la sélection en cours
-                                    if (isDragSelected) {
-                                      buttonClass += " ring-2 ring-primary ring-offset-1 ring-offset-background brightness-110";
-                                    }
-
-                                    return (
-                                      <div key={slot.time} data-slot-index={flatIndex}>
-                                        <Button
-                                          variant={buttonVariant}
-                                          size="sm"
-                                          className={buttonClass}
-                                          onPointerDown={(e) => {
-                                            if (isDisabled || flatIndex < 0) return;
-                                            e.preventDefault();
-                                            setDrag({ startIdx: flatIndex, currentIdx: flatIndex, target: !slot.available });
-                                          }}
-                                          onKeyDown={(e) => {
-                                            if ((e.key === 'Enter' || e.key === ' ') && !isDisabled) {
-                                              e.preventDefault();
-                                              toggleTimeSlot(day, dayAvailability.timeSlots.findIndex(s => s.time === slot.time));
-                                            }
-                                          }}
-                                          disabled={isDisabled}
-                                          title={slot.reserved ? "Créneau réservé" : (slot.available ? "Créneau disponible" : "Créneau fermé")}
-                                        >
-                                          {slot.time}
-                                          {slot.reserved && <span className="ml-1 text-xs">📅</span>}
-                                        </Button>
-                                        {/* Ligne de séparation après 12:15 pour indiquer la pause déjeuner */}
-                                        {slot.time === "12:15" && (
-                                          <div className="flex items-center gap-2 py-2">
-                                            <div className="flex-1 border-t border-muted-foreground/30"></div>
-                                            <span className="text-xs text-muted-foreground px-2">Pause déjeuner</span>
-                                            <div className="flex-1 border-t border-muted-foreground/30"></div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                            
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
+              <CardDescription>
+                Configurez rapidement les disponibilités pour une semaine entière
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3">
+              {isFetching && !showSkeleton && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+                <div className="text-sm font-medium">Taux de remplissage:</div>
+                <Badge
+                  variant={weekFillRate >= 80 ? "destructive" : weekFillRate >= 50 ? "default" : "secondary"}
+                >
+                  {weekFillRate}%
+                </Badge>
+              </div>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={saveAvailability}
+                disabled={isSaving || !hasUnsavedChanges}
+                className="flex items-center space-x-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
                 )}
-              </CardContent>
-            </Card>
+                <span>
+                  {isSaving
+                    ? "Sauvegarde..."
+                    : `Sauvegarder${hasUnsavedChanges ? ` (${dirtyKeys.length} jours)` : ""}`}
+                </span>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="p-3 bg-primary/10 rounded-lg text-center">
+              <p className="font-medium text-sm">
+                Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
+                {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}{" "}
+                {openDaysCount} jours ouverts sur 6
+              </p>
+            </div>
+
+            <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateWeek("prev")}
+                className="flex items-center space-x-1 h-7 px-2 text-xs"
+              >
+                <ChevronLeft className="h-3 w-3" />
+                <span>Précédente</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateWeek("next")}
+                className="flex items-center space-x-1 h-7 px-2 text-xs"
+              >
+                <span>Suivante</span>
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  setSelectedWeek(today);
+                  setCurrentMonth(today);
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                Semaine actuelle
+              </Button>
+
+              <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
+                Horaires par défaut
+              </Button>
+
+              <Button variant="outline" size="sm" onClick={closeWeek} className="h-7 px-2 text-xs">
+                Fermer la semaine
+              </Button>
+
+              <Button variant="outline" size="sm" onClick={copyPreviousWeek} className="h-7 px-2 text-xs">
+                Copier la semaine précédente
+              </Button>
+
+              <Button variant="secondary" size="sm" onClick={applyToMonth} className="h-7 px-2 text-xs">
+                Appliquer au mois
+              </Button>
+
+              <div className="flex items-center gap-1">
+                <input
+                  type="date"
+                  value={rangeEnd}
+                  onChange={(e) => setRangeEnd(e.target.value)}
+                  className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={applyToRange}
+                  disabled={!rangeEnd}
+                  className="h-7 px-2 text-xs"
+                >
+                  Appliquer à une plage
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {showSkeleton ? (
+            <div className="grid grid-cols-6 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2 rounded-lg border p-2">
+                  <Skeleton className="h-3 w-10 mx-auto" />
+                  <Skeleton className="h-4 w-6 mx-auto" />
+                  {Array.from({ length: 10 }).map((__, j) => (
+                    <Skeleton key={j} className="h-6 w-full" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-6 gap-2 select-none">
+              {weekData.map((dayAvailability) => {
+                const day = dayAvailability.date;
+                const availableSlots = dayAvailability.timeSlots.filter((s) => s.available).length;
+
+                return (
+                  <div
+                    key={toKey(day)}
+                    className="p-2 rounded-lg border border-border text-center transition-colors hover:border-primary/50"
+                  >
+                    <div className="text-xs font-medium">{format(day, "EEE", { locale: fr })}</div>
+                    <div className="text-sm font-bold mb-2">{format(day, "d", { locale: fr })}</div>
+
+                    <div className="flex items-center justify-center mb-2">
+                      {dayAvailability.blocked ? (
+                        <Badge variant="destructive" className="text-xs">
+                          Bloqué
+                        </Badge>
+                      ) : availableSlots > 0 ? (
+                        <Badge variant="default" className="text-xs">
+                          {availableSlots} créneaux
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Fermé
+                        </Badge>
+                      )}
+                    </div>
+
+                    {dayAvailability.blocked && (
+                      <div className="text-xs text-destructive text-center">
+                        {dayAvailability.blockActivity}
+                      </div>
+                    )}
+
+                    {!dayAvailability.blocked && (
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {availableSlots}/{dayAvailability.timeSlots.length}
+                        </div>
+
+                        <div className="space-y-1">
+                          {dayAvailability.timeSlots.map((slot) => {
+                            const slotKey = `${toKey(day)}_${slot.time}`;
+                            const flatIndex = flatIndexByKey.get(slotKey) ?? -1;
+                            const isDragSelected = dragSelectedKeys.has(slotKey);
+
+                            let buttonVariant: "success" | "secondary" | "destructive" = "secondary";
+                            let buttonClass = "text-xs h-6 w-full select-none touch-none";
+                            const isDisabled = !!slot.reserved;
+
+                            if (slot.reserved) {
+                              buttonVariant = "destructive";
+                              buttonClass += " opacity-75";
+                            } else if (slot.available) {
+                              buttonVariant = "success";
+                            }
+
+                            if (isDragSelected) {
+                              buttonClass +=
+                                " ring-2 ring-primary ring-offset-1 ring-offset-background brightness-110";
+                            }
+
+                            return (
+                              <div key={slot.time} data-slot-index={flatIndex}>
+                                <Button
+                                  variant={buttonVariant}
+                                  size="sm"
+                                  className={buttonClass}
+                                  onPointerDown={(e) => {
+                                    if (isDisabled || flatIndex < 0) return;
+                                    e.preventDefault();
+                                    setDrag({
+                                      startIdx: flatIndex,
+                                      currentIdx: flatIndex,
+                                      target: !slot.available,
+                                    });
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if ((e.key === "Enter" || e.key === " ") && !isDisabled) {
+                                      e.preventDefault();
+                                      toggleTimeSlot(day, slot.time);
+                                    }
+                                  }}
+                                  disabled={isDisabled}
+                                  title={
+                                    slot.reserved
+                                      ? "Créneau réservé"
+                                      : slot.available
+                                        ? "Créneau disponible"
+                                        : "Créneau fermé"
+                                  }
+                                >
+                                  {slot.time}
+                                  {slot.reserved && <span className="ml-1 text-xs">📅</span>}
+                                </Button>
+                                {slot.time === "12:15" && (
+                                  <div className="flex items-center gap-2 py-2">
+                                    <div className="flex-1 border-t border-muted-foreground/30"></div>
+                                    <span className="text-xs text-muted-foreground px-2">Pause déjeuner</span>
+                                    <div className="flex-1 border-t border-muted-foreground/30"></div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
-  };
+}
