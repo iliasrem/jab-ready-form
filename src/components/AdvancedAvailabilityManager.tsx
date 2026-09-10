@@ -240,10 +240,30 @@ export function AdvancedAvailabilityManager({
     [serverDays, localDays]
   );
 
-  /** Applique des modifications locales (dates -> créneaux ouverts). */
-  const patchDays = useCallback((patch: Record<string, string[]>) => {
-    setLocalDays((prev) => ({ ...prev, ...patch }));
-  }, []);
+  /** Applique des modifications locales (dates -> créneaux ouverts). Ignore les jours inchangés. */
+  const patchDays = useCallback(
+    (patch: Record<string, string[]>) => {
+      setLocalDays((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        Object.entries(patch).forEach(([key, times]) => {
+          const current = next[key] ?? serverDays?.[key]?.open ?? [];
+          const same = current.length === times.length && times.every((t) => current.includes(t));
+          if (same && !(key in prev)) return; // pas de vrai changement
+          if (same && key in prev) {
+            // Revenu à l'état serveur : retirer la modification locale
+            delete next[key];
+            changed = true;
+            return;
+          }
+          next[key] = times;
+          changed = true;
+        });
+        return changed ? next : prev;
+      });
+    },
+    [serverDays]
+  );
 
   const weekDays = useMemo(
     () =>
