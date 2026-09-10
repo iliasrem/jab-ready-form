@@ -11,7 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -234,10 +240,30 @@ export function AdvancedAvailabilityManager({
     [serverDays, localDays]
   );
 
-  /** Applique des modifications locales (dates -> créneaux ouverts). */
-  const patchDays = useCallback((patch: Record<string, string[]>) => {
-    setLocalDays((prev) => ({ ...prev, ...patch }));
-  }, []);
+  /** Applique des modifications locales (dates -> créneaux ouverts). Ignore les jours inchangés. */
+  const patchDays = useCallback(
+    (patch: Record<string, string[]>) => {
+      setLocalDays((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        Object.entries(patch).forEach(([key, times]) => {
+          const current = next[key] ?? serverDays?.[key]?.open ?? [];
+          const same = current.length === times.length && times.every((t) => current.includes(t));
+          if (same && !(key in prev)) return; // pas de vrai changement
+          if (same && key in prev) {
+            // Revenu à l'état serveur : retirer la modification locale
+            delete next[key];
+            changed = true;
+            return;
+          }
+          next[key] = times;
+          changed = true;
+        });
+        return changed ? next : prev;
+      });
+    },
+    [serverDays]
+  );
 
   const weekDays = useMemo(
     () =>
@@ -310,6 +336,7 @@ export function AdvancedAvailabilityManager({
   const [pendingApply, setPendingApply] = useState<{ days: Date[]; description: string } | null>(
     null
   );
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [customDate, setCustomDate] = useState<string>(() =>
     format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
@@ -418,8 +445,13 @@ export function AdvancedAvailabilityManager({
   }, [registerSaveHandler]);
 
   // ===== Raccourcis clavier =====
+  const navigateRef = useRef(navigateWeek);
+  navigateRef.current = navigateWeek;
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (document.querySelector('[role="menu"], [role="dialog"], [role="alertdialog"]')) return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
@@ -431,12 +463,7 @@ export function AdvancedAvailabilityManager({
       }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const delta = e.key === "ArrowRight" ? 7 : -7;
-        setSelectedWeek((prev) => {
-          const next = addDays(prev, delta);
-          setCurrentMonth((m) => (format(next, "yyyy-MM") !== format(m, "yyyy-MM") ? next : m));
-          return next;
-        });
+        navigateRef.current(e.key === "ArrowRight" ? "next" : "prev");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -612,7 +639,7 @@ export function AdvancedAvailabilityManager({
                   variant="ghost"
                   size="sm"
                   className="h-9 gap-2"
-                  onClick={() => setLocalDays({})}
+                  onClick={() => setDiscardConfirmOpen(true)}
                 >
                   <Undo2 className="h-4 w-4" />
                   Annuler les modifications
@@ -764,29 +791,24 @@ export function AdvancedAvailabilityManager({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onSelect={() => applyToMonth()}>
-                    Sur le reste du mois
+                    Sur le reste de {format(currentMonth, "MMMM", { locale: fr })}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => applyToRange(format(season.end, "yyyy-MM-dd"))}
                   >
                     Jusqu'à la fin de saison (31 janvier)
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setCustomOpen(true);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => setCustomOpen(true)}>
                     Jusqu'à une date…
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Popover open={customOpen} onOpenChange={setCustomOpen}>
-                <PopoverTrigger asChild>
-                  <span />
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto space-y-2 p-3">
+              <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Reproduire jusqu'à une date</DialogTitle>
+                  </DialogHeader>
                   <input
                     type="date"
                     aria-label="Reproduire jusqu'au"
@@ -794,19 +816,21 @@ export function AdvancedAvailabilityManager({
                     onChange={(e) => setCustomDate(e.target.value)}
                     className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                   />
-                  <Button
-                    size="sm"
-                    className="h-9 w-full"
-                    disabled={!customDate}
-                    onClick={() => {
-                      setCustomOpen(false);
-                      applyToRange(customDate);
-                    }}
-                  >
-                    Valider
-                  </Button>
-                </PopoverContent>
-              </Popover>
+                  <DialogFooter>
+                    <Button
+                      size="sm"
+                      className="h-9"
+                      disabled={!customDate}
+                      onClick={() => {
+                        setCustomOpen(false);
+                        applyToRange(customDate);
+                      }}
+                    >
+                      Continuer
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -954,6 +978,30 @@ export function AdvancedAvailabilityManager({
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={confirmApply}>Confirmer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Abandonner les modifications de {dirtyKeys.length} jours ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Les créneaux non sauvegardés seront perdus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setLocalDays({});
+                setDiscardConfirmOpen(false);
+              }}
+            >
+              Abandonner
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
