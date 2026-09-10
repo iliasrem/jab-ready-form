@@ -689,20 +689,23 @@ export function AdvancedAvailabilityManager({
           <div className="space-y-3">
             {/* Navigation */}
             <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center justify-between gap-2 md:justify-start">
+              <div className="flex w-full items-center justify-between gap-4 md:w-auto md:justify-start">
                 <Button
                   variant="outline"
                   size="sm"
                   aria-label="Semaine précédente"
-                  title="Semaine précédente"
+                  title="Semaine précédente (clic maintenu pour défiler)"
                   onClick={() => navigateWeek("prev")}
-                  className="h-9 min-w-[44px] px-2"
+                  onPointerDown={() => startRepeat("prev")}
+                  onPointerUp={stopRepeat}
+                  onPointerLeave={stopRepeat}
+                  className="h-10 w-12 shrink-0"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
-                <div className="text-center">
-                  <p className="font-medium">
+                <div className="w-full shrink-0 text-center tabular-nums md:w-[21rem]">
+                  <p className="font-medium whitespace-nowrap">
                     Semaine du{" "}
                     {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
                     {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
@@ -714,9 +717,12 @@ export function AdvancedAvailabilityManager({
                   variant="outline"
                   size="sm"
                   aria-label="Semaine suivante"
-                  title="Semaine suivante"
+                  title="Semaine suivante (clic maintenu pour défiler)"
                   onClick={() => navigateWeek("next")}
-                  className="h-9 min-w-[44px] px-2"
+                  onPointerDown={() => startRepeat("next")}
+                  onPointerUp={stopRepeat}
+                  onPointerLeave={stopRepeat}
+                  className="h-10 w-12 shrink-0"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
