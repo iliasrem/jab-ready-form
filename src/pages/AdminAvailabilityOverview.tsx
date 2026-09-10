@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
+import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, parseISO, startOfMonth } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { fr } from "date-fns/locale";
 import { Star, UploadCloud, Loader2, ArrowLeft } from "lucide-react";
@@ -238,87 +238,41 @@ export default function AdminAvailabilityOverview() {
   useEffect(() => {
     const loadAvailability = async () => {
       try {
-        const { data: { user }, error: userErr } = await supabase.auth.getUser();
-        if (userErr || !user) return;
-
-        // Calculer les dates min et max de la période
         const dates = period;
         if (dates.length === 0) return;
 
         const minDate = format(dates[0], "yyyy-MM-dd");
         const maxDate = format(dates[dates.length - 1], "yyyy-MM-dd");
-        
-        console.log("📅 Chargement des disponibilités:", { minDate, maxDate, userId: user.id, totalDays: dates.length });
 
-        // Charger TOUTES les disponibilités (is_available true ET false) pour afficher l'état actuel
-        const { data, error } = await supabase
-          .from("specific_date_availability")
-          .select("*")
-          .eq("user_id", user.id)
-          .gte("specific_date", minDate)
-          .lte("specific_date", maxDate);
+        // Agrégation côté serveur : aucune limite de 1000 lignes
+        const { data, error } = await supabase.rpc("get_availability_range", {
+          p_start: minDate,
+          p_end: maxDate,
+        });
 
         if (error) throw error;
-        
-        console.log("✅ Données récupérées:", data?.length || 0, "entrées");
 
-        if (data && data.length > 0) {
-          // Regrouper par date et créer les objets SpecificDateAvailability
-          const byDateMap = new Map<string, SpecificDateAvailability>();
+        const loaded: SpecificDateAvailability[] = (data ?? []).map((row) => {
+          const date = parseISO(row.specific_date);
+          const isSaturday = date.getDay() === 6;
+          const grid = isSaturday ? saturdayTimeSlots : defaultTimeSlots;
+          const open = new Set((row.open_times ?? []).map((t: string) => t.slice(0, 5)));
+          const reserved = new Set((row.reserved_times ?? []).map((t: string) => t.slice(0, 5)));
 
-          data.forEach((row) => {
-            const dateKey = row.specific_date;
-            if (!byDateMap.has(dateKey)) {
-              const date = new Date(dateKey + "T00:00:00");
-              byDateMap.set(dateKey, {
-                date,
-                timeSlots: defaultTimeSlots.map((time) => ({
-                  time,
-                  available: false
-                }))
-              });
-            }
+          return {
+            date,
+            blocked: !!row.is_blocked,
+            blockActivity: row.block_activity ?? undefined,
+            timeSlots: grid.map((time) => ({
+              time,
+              available: open.has(time) && !row.is_blocked,
+              reserved: reserved.has(time),
+            })),
+          };
+        });
 
-            const dayAvailability = byDateMap.get(dateKey)!;
-            const startMinutes = timeStrToMinutes(row.start_time.substring(0, 5));
-            const endMinutes = timeStrToMinutes(row.end_time.substring(0, 5));
-
-            // Gérer le cas où start_time = end_time (créneau ponctuel de 15 minutes)
-            const isSingleSlot = startMinutes === endMinutes;
-
-            // Marquer les créneaux selon is_available
-            dayAvailability.timeSlots.forEach((slot) => {
-              const slotMinutes = timeStrToMinutes(slot.time);
-              
-              if (isSingleSlot) {
-                // Créneau ponctuel: correspondance exacte
-                if (slotMinutes === startMinutes) {
-                  slot.available = row.is_available;
-                }
-              } else {
-                // Plage de créneaux: inclure tous les créneaux dans l'intervalle
-                if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
-                  slot.available = row.is_available;
-                }
-              }
-            });
-
-            // Les créneaux disponibles sont maintenant marqués
-          });
-          
-          console.log("📊 Disponibilités créées:", {
-            totalDates: byDateMap.size,
-            dates: Array.from(byDateMap.keys()),
-            sampleData: Array.from(byDateMap.values()).slice(0, 2)
-          });
-
-          setAvailability(Array.from(byDateMap.values()));
-        } else {
-          // Aucune donnée en base pour cette période
-          setAvailability([]);
-        }
+        setAvailability(loaded);
       } catch (e: any) {
-        console.error("Erreur lors du chargement des disponibilités:", e);
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
