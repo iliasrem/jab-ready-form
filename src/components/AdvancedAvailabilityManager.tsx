@@ -20,7 +20,7 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { getSeasonRange, seasonLabel } from "@/lib/season";
+import { getSeasonRange, getStableWindow, seasonLabel } from "@/lib/season";
 
 export interface SpecificDateAvailability {
   date: Date;
@@ -98,18 +98,11 @@ export function AdvancedAvailabilityManager({
   }, [hasUnsavedChanges]);
 
   // ===== Chargement : toute la saison (1er oct -> 31 jan) en une seule requête =====
-  const monthKey = format(currentMonth, "yyyy-MM");
+  // La saison est ancrée sur aujourd'hui, jamais sur le mois visualisé.
+  const today = useMemo(() => new Date(), []);
+  const season = useMemo(() => getSeasonRange(today), [today]);
 
-  const season = useMemo(() => getSeasonRange(currentMonth), [currentMonth]);
-
-  const windowRange = useMemo(() => {
-    const monthStart = startOfMonth(subMonths(currentMonth, 1));
-    const monthEnd = endOfMonth(addMonths(currentMonth, 1));
-    return {
-      start: monthStart < season.start ? monthStart : season.start,
-      end: monthEnd > season.end ? monthEnd : season.end,
-    };
-  }, [currentMonth, season]);
+  const windowRange = useMemo(() => getStableWindow(today, currentMonth), [today, currentMonth]);
 
   const startKey = format(windowRange.start, "yyyy-MM-dd");
   const endKey = format(windowRange.end, "yyyy-MM-dd");
