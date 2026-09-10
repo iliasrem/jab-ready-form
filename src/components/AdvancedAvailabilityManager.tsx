@@ -336,6 +336,7 @@ export function AdvancedAvailabilityManager({
   const [pendingApply, setPendingApply] = useState<{ days: Date[]; description: string } | null>(
     null
   );
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [customDate, setCustomDate] = useState<string>(() =>
     format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
@@ -638,7 +639,7 @@ export function AdvancedAvailabilityManager({
                   variant="ghost"
                   size="sm"
                   className="h-9 gap-2"
-                  onClick={() => setLocalDays({})}
+                  onClick={() => setDiscardConfirmOpen(true)}
                 >
                   <Undo2 className="h-4 w-4" />
                   Annuler les modifications
