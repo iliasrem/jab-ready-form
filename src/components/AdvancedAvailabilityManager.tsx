@@ -582,8 +582,8 @@ export function AdvancedAvailabilityManager({
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
+        <CardHeader className="sticky top-0 z-10 border-b bg-background">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <CardTitle className="text-lg">Gestion par Semaine</CardTitle>
               <CardDescription>
@@ -594,11 +594,11 @@ export function AdvancedAvailabilityManager({
                 {seasonSummary.openSlots} créneaux ouverts, {seasonSummary.reservedSlots} réservés
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {isFetching && !showSkeleton && (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
                 <div className="text-sm font-medium">Taux de remplissage:</div>
                 <Badge
                   variant={weekFillRate >= 80 ? "destructive" : weekFillRate >= 50 ? "default" : "secondary"}
@@ -606,12 +606,25 @@ export function AdvancedAvailabilityManager({
                   {weekFillRate}%
                 </Badge>
               </div>
+
+              {hasUnsavedChanges && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={() => setLocalDays({})}
+                >
+                  <Undo2 className="h-4 w-4" />
+                  Annuler les modifications
+                </Button>
+              )}
+
               <Button
                 variant="default"
                 size="sm"
                 onClick={saveAvailability}
                 disabled={isSaving || !hasUnsavedChanges}
-                className="flex items-center space-x-2"
+                className="h-9 gap-2"
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -627,102 +640,173 @@ export function AdvancedAvailabilityManager({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2 p-3 bg-primary/10 rounded-lg">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateWeek("prev")}
-                className="flex items-center space-x-1 h-7 px-2 text-xs shrink-0"
-              >
-                <ChevronLeft className="h-3 w-3" />
-                <span>Précédente</span>
-              </Button>
-
-              <p className="font-medium text-sm text-center">
-                Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
-                {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}{" "}
-                {openDaysCount} jours ouverts sur 6
-              </p>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateWeek("next")}
-                className="flex items-center space-x-1 h-7 px-2 text-xs shrink-0"
-              >
-                <span>Suivante</span>
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </div>
-
-            <div className="space-y-2 p-2 bg-secondary/50 rounded-lg">
-              <div className="flex flex-wrap items-center justify-center gap-2">
+            {/* Navigation */}
+            <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center justify-between gap-2 md:justify-start">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    const today = new Date();
-                    setSelectedWeek(today);
-                    setCurrentMonth(today);
-                  }}
-                  className="h-7 px-2 text-xs"
+                  aria-label="Semaine précédente"
+                  title="Semaine précédente"
+                  onClick={() => navigateWeek("prev")}
+                  className="h-9 min-w-[44px] px-2"
                 >
-                  Semaine actuelle
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <div className="text-center">
+                  <p className="font-medium">
+                    Semaine du{" "}
+                    {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
+                    {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{openDaysCount}/6 jours ouverts</p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Semaine suivante"
+                  title="Semaine suivante"
+                  onClick={() => navigateWeek("next")}
+                  className="h-9 min-w-[44px] px-2"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={() => {
+                    const now = new Date();
+                    setSelectedWeek(now);
+                    setCurrentMonth(now);
+                  }}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Aujourd'hui
                 </Button>
 
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-9 gap-2"
                   onClick={() => {
-                    const start = season.start;
-                    setSelectedWeek(start);
-                    setCurrentMonth(start);
+                    setSelectedWeek(season.start);
+                    setCurrentMonth(season.start);
                   }}
-                  className="h-7 px-2 text-xs"
                 >
+                  <Flag className="h-4 w-4" />
                   Début de saison
                 </Button>
+
+                <input
+                  type="date"
+                  aria-label="Aller à la semaine du"
+                  value={format(selectedWeek, "yyyy-MM-dd")}
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    const d = parseISO(e.target.value);
+                    setSelectedWeek(d);
+                    setCurrentMonth(d);
+                  }}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                />
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
-                  Horaires par défaut
-                </Button>
+            {/* Actions de la semaine */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs uppercase text-muted-foreground">Cette semaine</span>
 
-                <Button variant="outline" size="sm" onClick={closeWeek} className="h-7 px-2 text-xs">
-                  Fermer la semaine
-                </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={applyDefaultToWeek}
+                className="h-9 gap-2 max-md:w-full"
+              >
+                <CalendarCheck className="h-4 w-4" />
+                Tout ouvrir
+              </Button>
 
-                <Button variant="outline" size="sm" onClick={copyPreviousWeek} className="h-7 px-2 text-xs">
-                  Copier la semaine précédente
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={closeWeek}
+                className="h-9 gap-2 hover:bg-destructive/10 hover:text-destructive max-md:w-full"
+              >
+                <CalendarX className="h-4 w-4" />
+                Tout fermer
+              </Button>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button variant="secondary" size="sm" onClick={applyToMonth} className="h-7 px-2 text-xs">
-                  Appliquer au mois
-                </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyPreviousWeek}
+                className="h-9 gap-2 max-md:w-full"
+              >
+                <Copy className="h-4 w-4" />
+                Copier la semaine précédente
+              </Button>
 
-                <div className="flex items-center gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2 max-md:w-full">
+                    <Repeat className="h-4 w-4" />
+                    Reproduire cette semaine…
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onSelect={() => applyToMonth()}>
+                    Sur le reste du mois
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => applyToRange(format(season.end, "yyyy-MM-dd"))}
+                  >
+                    Jusqu'à la fin de saison (31 janvier)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setCustomOpen(true);
+                    }}
+                  >
+                    Jusqu'à une date…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Popover open={customOpen} onOpenChange={setCustomOpen}>
+                <PopoverTrigger asChild>
+                  <span />
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto space-y-2 p-3">
                   <input
                     type="date"
-                    value={rangeEnd}
-                    onChange={(e) => setRangeEnd(e.target.value)}
-                    className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                    aria-label="Reproduire jusqu'au"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                   />
                   <Button
-                    variant="secondary"
                     size="sm"
-                    onClick={applyToRange}
-                    disabled={!rangeEnd}
-                    className="h-7 px-2 text-xs"
+                    className="h-9 w-full"
+                    disabled={!customDate}
+                    onClick={() => {
+                      setCustomOpen(false);
+                      applyToRange(customDate);
+                    }}
                   >
-                    Appliquer à une plage
+                    Valider
                   </Button>
-                </div>
-              </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
