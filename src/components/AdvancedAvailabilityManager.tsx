@@ -101,7 +101,7 @@ export function AdvancedAvailabilityManager({
   const today = useMemo(() => new Date(), []);
   const season = useMemo(() => getSeasonRange(today), [today]);
 
-  const windowRange = useMemo(() => getStableWindow(today, currentMonth), [today, currentMonth]);
+  const windowRange = useMemo(() => getStableWindow(today, selectedWeek), [today, selectedWeek]);
 
   const startKey = format(windowRange.start, "yyyy-MM-dd");
   const endKey = format(windowRange.end, "yyyy-MM-dd");

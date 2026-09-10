@@ -1,4 +1,13 @@
-import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
+import {
+  addMonths,
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+} from "date-fns";
 
 // Saison de vaccination : du 1er octobre au 31 janvier inclus.
 export const SEASON_START = { month: 10, day: 1 } as const;
@@ -45,25 +54,42 @@ export function seasonLabel(referenceDate: Date = new Date()): string {
 /**
  * Fenêtre de chargement stable pour la navigation :
  * base = saison(aujourd'hui) élargie au mois courant, puis extension par pas
- * de 3 mois si le mois visualisé (± 1 mois) sort de la fenêtre. Les pas de
- * 3 mois garantissent une clé de cache stable pendant la navigation.
+ * de 3 mois si la semaine visualisée sort de la fenêtre. Les pas de 3 mois
+ * garantissent une clé de cache stable pendant la navigation.
  */
 export function getStableWindow(today: Date, viewed: Date): SeasonRange {
   const season = getSeasonRange(today);
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
 
-  let start = monthStart < season.start ? monthStart : season.start;
-  let end = monthEnd > season.end ? monthEnd : season.end;
+  let start = startOfMonth(today);
+  let end = endOfMonth(today);
 
-  const viewedMin = startOfMonth(subMonths(viewed, 1));
-  while (viewedMin < start) {
-    start = startOfMonth(subMonths(start, 3));
+  // Normaliser les bornes avant comparaison pour éviter les décalages horaires.
+  start = startOfDay(start);
+  end = endOfDay(end);
+  const seasonStart = startOfDay(season.start);
+  const seasonEnd = endOfDay(season.end);
+
+  if (start < seasonStart) {
+    start = seasonStart;
+  } else {
+    start = seasonStart < start ? seasonStart : start;
   }
 
-  const viewedMax = endOfMonth(addMonths(viewed, 1));
+  if (end > seasonEnd) {
+    end = seasonEnd;
+  } else {
+    end = seasonEnd > end ? seasonEnd : end;
+  }
+
+  const viewedMin = startOfWeek(viewed, { weekStartsOn: 1 });
+  const viewedMax = endOfWeek(viewed, { weekStartsOn: 1 });
+
+  while (viewedMin < start) {
+    start = startOfDay(startOfMonth(subMonths(start, 3)));
+  }
+
   while (viewedMax > end) {
-    end = endOfMonth(addMonths(end, 3));
+    end = endOfDay(endOfMonth(addMonths(end, 3)));
   }
 
   return { start, end };
