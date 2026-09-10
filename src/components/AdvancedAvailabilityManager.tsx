@@ -397,6 +397,24 @@ export function AdvancedAvailabilityManager({
     if (format(next, "yyyy-MM") !== format(currentMonth, "yyyy-MM")) setCurrentMonth(next);
   };
 
+  // Clic maintenu sur les flèches : répétition automatique après 400 ms, toutes les 150 ms
+  const repeatTimersRef = useRef<{ delay?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> }>({});
+
+  const stopRepeat = useCallback(() => {
+    if (repeatTimersRef.current.delay) clearTimeout(repeatTimersRef.current.delay);
+    if (repeatTimersRef.current.interval) clearInterval(repeatTimersRef.current.interval);
+    repeatTimersRef.current = {};
+  }, []);
+
+  useEffect(() => stopRepeat, [stopRepeat]);
+
+  const startRepeat = useCallback((direction: "prev" | "next") => {
+    stopRepeat();
+    repeatTimersRef.current.delay = setTimeout(() => {
+      repeatTimersRef.current.interval = setInterval(() => navigateRef.current(direction), 150);
+    }, 400);
+  }, [stopRepeat]);
+
   // ===== Sauvegarde =====
   const saveAvailability = useCallback(async (): Promise<boolean> => {
     const keys = Object.keys(localDays);
@@ -671,20 +689,23 @@ export function AdvancedAvailabilityManager({
           <div className="space-y-3">
             {/* Navigation */}
             <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center justify-between gap-2 md:justify-start">
+              <div className="flex w-full items-center justify-between gap-4 md:w-auto md:justify-start">
                 <Button
                   variant="outline"
                   size="sm"
                   aria-label="Semaine précédente"
-                  title="Semaine précédente"
+                  title="Semaine précédente (clic maintenu pour défiler)"
                   onClick={() => navigateWeek("prev")}
-                  className="h-9 min-w-[44px] px-2"
+                  onPointerDown={() => startRepeat("prev")}
+                  onPointerUp={stopRepeat}
+                  onPointerLeave={stopRepeat}
+                  className="h-10 w-12 shrink-0"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
-                <div className="text-center">
-                  <p className="font-medium">
+                <div className="w-full shrink-0 text-center tabular-nums md:w-[21rem]">
+                  <p className="font-medium whitespace-nowrap">
                     Semaine du{" "}
                     {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
                     {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}
@@ -696,9 +717,12 @@ export function AdvancedAvailabilityManager({
                   variant="outline"
                   size="sm"
                   aria-label="Semaine suivante"
-                  title="Semaine suivante"
+                  title="Semaine suivante (clic maintenu pour défiler)"
                   onClick={() => navigateWeek("next")}
-                  className="h-9 min-w-[44px] px-2"
+                  onPointerDown={() => startRepeat("next")}
+                  onPointerUp={stopRepeat}
+                  onPointerLeave={stopRepeat}
+                  className="h-10 w-12 shrink-0"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
