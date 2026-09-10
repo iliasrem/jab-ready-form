@@ -68,6 +68,16 @@ interface SpecificAvailability {
   timeSlots: string[];
 }
 
+interface ConfirmationSummary {
+  appointmentId: string;
+  patient: Patient;
+  date: Date;
+  time: string;
+  services: string[];
+  notes?: string;
+  emailSent: boolean;
+}
+
 const bookingSchema = z.object({
   date: z.date({ required_error: "Veuillez sélectionner une date de rendez-vous." }),
   time: z.string({ required_error: "Veuillez sélectionner une heure de rendez-vous." }),
