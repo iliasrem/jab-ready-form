@@ -444,8 +444,13 @@ export function AdvancedAvailabilityManager({
   }, [registerSaveHandler]);
 
   // ===== Raccourcis clavier =====
+  const navigateRef = useRef(navigateWeek);
+  navigateRef.current = navigateWeek;
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (document.querySelector('[role="menu"], [role="dialog"], [role="alertdialog"]')) return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
@@ -457,12 +462,7 @@ export function AdvancedAvailabilityManager({
       }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const delta = e.key === "ArrowRight" ? 7 : -7;
-        setSelectedWeek((prev) => {
-          const next = addDays(prev, delta);
-          setCurrentMonth((m) => (format(next, "yyyy-MM") !== format(m, "yyyy-MM") ? next : m));
-          return next;
-        });
+        navigateRef.current(e.key === "ArrowRight" ? "next" : "prev");
       }
     };
     window.addEventListener("keydown", onKeyDown);
