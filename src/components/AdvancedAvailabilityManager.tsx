@@ -551,35 +551,35 @@ export function AdvancedAvailabilityManager({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <div className="p-3 bg-primary/10 rounded-lg text-center">
-              <p className="font-medium text-sm">
-                Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
-                {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}{" "}
-                {openDaysCount} jours ouverts sur 6
-              </p>
-            </div>
-
-            <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
+            <div className="flex items-center justify-between gap-2 p-3 bg-primary/10 rounded-lg">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigateWeek("prev")}
-                className="flex items-center space-x-1 h-7 px-2 text-xs"
+                className="flex items-center space-x-1 h-7 px-2 text-xs shrink-0"
               >
                 <ChevronLeft className="h-3 w-3" />
                 <span>Précédente</span>
               </Button>
 
+              <p className="font-medium text-sm text-center">
+                Semaine du {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
+                {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: fr })}{" "}
+                {openDaysCount} jours ouverts sur 6
+              </p>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigateWeek("next")}
-                className="flex items-center space-x-1 h-7 px-2 text-xs"
+                className="flex items-center space-x-1 h-7 px-2 text-xs shrink-0"
               >
                 <span>Suivante</span>
                 <ChevronRight className="h-3 w-3" />
               </Button>
+            </div>
 
+            <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -605,7 +605,6 @@ export function AdvancedAvailabilityManager({
               >
                 Début de saison
               </Button>
-
 
               <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
                 Horaires par défaut
