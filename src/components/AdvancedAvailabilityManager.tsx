@@ -790,19 +790,14 @@ export function AdvancedAvailabilityManager({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onSelect={() => applyToMonth()}>
-                    Sur le reste du mois
+                    Sur le reste de {format(currentMonth, "MMMM", { locale: fr })}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => applyToRange(format(season.end, "yyyy-MM-dd"))}
                   >
                     Jusqu'à la fin de saison (31 janvier)
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setCustomOpen(true);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => setCustomOpen(true)}>
                     Jusqu'à une date…
                   </DropdownMenuItem>
                 </DropdownMenuContent>
