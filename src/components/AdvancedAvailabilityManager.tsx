@@ -132,7 +132,7 @@ export function AdvancedAvailabilityManager({
   const { data: serverDays, isFetching } = useQuery({
     queryKey: ["availability", startKey, endKey],
     queryFn: () => fetchRange(startKey, endKey),
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   });
 
@@ -338,7 +338,12 @@ export function AdvancedAvailabilityManager({
       if (error) throw error;
 
       setLocalDays({});
-      await queryClient.invalidateQueries({ queryKey: ["availability"] });
+      // Invalide uniquement la fenêtre courante et purge les anciennes entrées du cache
+      await queryClient.invalidateQueries({ queryKey: ["availability", startKey, endKey] });
+      queryClient.removeQueries({
+        queryKey: ["availability"],
+        predicate: (q) => q.queryKey[1] !== startKey || q.queryKey[2] !== endKey,
+      });
 
       toast({
         title: "Sauvegarde réussie",
