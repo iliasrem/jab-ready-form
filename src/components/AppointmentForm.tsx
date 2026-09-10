@@ -110,8 +110,7 @@ const appointmentSchema = z.object({
       message: "Numéro de téléphone invalide. Ex. 0471 12 34 56 ou +33 6 12 34 56 78.",
     }),
   birthDate: z
-    .string()
-    .min(1, { message: "La date de naissance est obligatoire." })
+    .string({ required_error: "La date de naissance est obligatoire." })
     .refine((val) => /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
       message: "Format incorrect. Veuillez utiliser JJ/MM/AAAA (ex. 15/09/1985).",
     })
