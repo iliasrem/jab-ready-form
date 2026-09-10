@@ -397,6 +397,24 @@ export function AdvancedAvailabilityManager({
     if (format(next, "yyyy-MM") !== format(currentMonth, "yyyy-MM")) setCurrentMonth(next);
   };
 
+  // Clic maintenu sur les flèches : répétition automatique après 400 ms, toutes les 150 ms
+  const repeatTimersRef = useRef<{ delay?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> }>({});
+
+  const stopRepeat = useCallback(() => {
+    if (repeatTimersRef.current.delay) clearTimeout(repeatTimersRef.current.delay);
+    if (repeatTimersRef.current.interval) clearInterval(repeatTimersRef.current.interval);
+    repeatTimersRef.current = {};
+  }, []);
+
+  useEffect(() => stopRepeat, [stopRepeat]);
+
+  const startRepeat = useCallback((direction: "prev" | "next") => {
+    stopRepeat();
+    repeatTimersRef.current.delay = setTimeout(() => {
+      repeatTimersRef.current.interval = setInterval(() => navigateRef.current(direction), 150);
+    }, 400);
+  }, [stopRepeat]);
+
   // ===== Sauvegarde =====
   const saveAvailability = useCallback(async (): Promise<boolean> => {
     const keys = Object.keys(localDays);
