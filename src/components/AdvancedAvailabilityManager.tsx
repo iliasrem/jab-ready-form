@@ -417,6 +417,32 @@ export function AdvancedAvailabilityManager({
     return () => registerSaveHandler?.(null);
   }, [registerSaveHandler]);
 
+  // ===== Raccourcis clavier =====
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveRef.current();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const delta = e.key === "ArrowRight" ? 7 : -7;
+        setSelectedWeek((prev) => {
+          const next = addDays(prev, delta);
+          setCurrentMonth((m) => (format(next, "yyyy-MM") !== format(m, "yyyy-MM") ? next : m));
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   // ===== Sélection multiple par glisser-déposer =====
   interface FlatSlot { key: string; day: Date; time: string; reserved: boolean; available: boolean }
   interface DragState { startIdx: number; currentIdx: number; target: boolean }
