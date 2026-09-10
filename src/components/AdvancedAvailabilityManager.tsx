@@ -10,7 +10,6 @@ import {
   format,
   parseISO,
   addMonths,
-  subMonths,
   addDays,
   startOfMonth,
   endOfMonth,
@@ -20,7 +19,7 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { getSeasonRange, seasonLabel } from "@/lib/season";
+import { getSeasonRange, getStableWindow, seasonLabel } from "@/lib/season";
 
 export interface SpecificDateAvailability {
   date: Date;
@@ -98,18 +97,11 @@ export function AdvancedAvailabilityManager({
   }, [hasUnsavedChanges]);
 
   // ===== Chargement : toute la saison (1er oct -> 31 jan) en une seule requête =====
-  const monthKey = format(currentMonth, "yyyy-MM");
+  // La saison est ancrée sur aujourd'hui, jamais sur le mois visualisé.
+  const today = useMemo(() => new Date(), []);
+  const season = useMemo(() => getSeasonRange(today), [today]);
 
-  const season = useMemo(() => getSeasonRange(currentMonth), [currentMonth]);
-
-  const windowRange = useMemo(() => {
-    const monthStart = startOfMonth(subMonths(currentMonth, 1));
-    const monthEnd = endOfMonth(addMonths(currentMonth, 1));
-    return {
-      start: monthStart < season.start ? monthStart : season.start,
-      end: monthEnd > season.end ? monthEnd : season.end,
-    };
-  }, [currentMonth, season]);
+  const windowRange = useMemo(() => getStableWindow(today, currentMonth), [today, currentMonth]);
 
   const startKey = format(windowRange.start, "yyyy-MM-dd");
   const endKey = format(windowRange.end, "yyyy-MM-dd");
@@ -139,7 +131,7 @@ export function AdvancedAvailabilityManager({
   const { data: serverDays, isFetching } = useQuery({
     queryKey: ["availability", startKey, endKey],
     queryFn: () => fetchRange(startKey, endKey),
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   });
 
@@ -323,7 +315,7 @@ export function AdvancedAvailabilityManager({
   const navigateWeek = (direction: "prev" | "next") => {
     const next = addDays(selectedWeek, direction === "next" ? 7 : -7);
     setSelectedWeek(next);
-    if (format(next, "yyyy-MM") !== monthKey) setCurrentMonth(next);
+    if (format(next, "yyyy-MM") !== format(currentMonth, "yyyy-MM")) setCurrentMonth(next);
   };
 
   // ===== Sauvegarde =====
@@ -345,7 +337,12 @@ export function AdvancedAvailabilityManager({
       if (error) throw error;
 
       setLocalDays({});
-      await queryClient.invalidateQueries({ queryKey: ["availability"] });
+      // Invalide uniquement la fenêtre courante et purge les anciennes entrées du cache
+      await queryClient.invalidateQueries({ queryKey: ["availability", startKey, endKey] });
+      queryClient.removeQueries({
+        queryKey: ["availability"],
+        predicate: (q) => q.queryKey[1] !== startKey || q.queryKey[2] !== endKey,
+      });
 
       toast({
         title: "Sauvegarde réussie",
@@ -359,7 +356,7 @@ export function AdvancedAvailabilityManager({
     } finally {
       setIsSaving(false);
     }
-  }, [localDays, queryClient, toast]);
+  }, [localDays, queryClient, toast, startKey, endKey]);
 
   const saveRef = useRef(saveAvailability);
   saveRef.current = saveAvailability;
@@ -515,7 +512,7 @@ export function AdvancedAvailabilityManager({
                 Configurez rapidement les disponibilités pour une semaine entière
               </CardDescription>
               <p className="mt-1 text-sm text-muted-foreground">
-                Saison {seasonLabel(currentMonth)} : {seasonSummary.days} jours ouverts,{" "}
+                Saison {seasonLabel(today)} : {seasonSummary.days} jours ouverts,{" "}
                 {seasonSummary.openSlots} créneaux ouverts, {seasonSummary.reservedSlots} réservés
               </p>
             </div>
@@ -600,7 +597,7 @@ export function AdvancedAvailabilityManager({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const start = getSeasonRange(currentMonth).start;
+                  const start = season.start;
                   setSelectedWeek(start);
                   setCurrentMonth(start);
                 }}

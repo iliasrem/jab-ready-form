@@ -216,12 +216,14 @@ export default function AdminAvailabilityOverview() {
     if (viewMode === "day") setPeriodStart(addDays(periodStart, -1));
     else if (viewMode === "week") setPeriodStart(addDays(periodStart, -7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, -1));
+    else if (viewMode === "season") setPeriodStart(addMonths(periodStart, -12));
     else setPeriodStart(addMonths(periodStart, -3));
   };
   const goNext = () => {
     if (viewMode === "day") setPeriodStart(addDays(periodStart, 1));
     else if (viewMode === "week") setPeriodStart(addDays(periodStart, 7));
     else if (viewMode === "month") setPeriodStart(addMonths(periodStart, 1));
+    else if (viewMode === "season") setPeriodStart(addMonths(periodStart, 12));
     else setPeriodStart(addMonths(periodStart, 3));
   };
   const goToday = () => setPeriodStart(new Date());
