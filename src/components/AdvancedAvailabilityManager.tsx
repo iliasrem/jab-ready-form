@@ -306,25 +306,49 @@ export function AdvancedAvailabilityManager({
     });
   };
 
+  // ===== Propagation (avec confirmation) =====
+  const [pendingApply, setPendingApply] = useState<{ days: Date[]; description: string } | null>(
+    null
+  );
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customDate, setCustomDate] = useState<string>(() =>
+    format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
+  );
+
+  const requestApply = (days: Date[], description: string) => {
+    const target = days.filter((d) => d.getDay() !== 0 && !isBlockedDay(d));
+    if (target.length === 0) {
+      toast({
+        title: "Aucun jour concerné",
+        description: "La plage sélectionnée ne contient aucun jour modifiable.",
+      });
+      return;
+    }
+    setPendingApply({ days: target, description });
+  };
+
+  const confirmApply = () => {
+    if (!pendingApply) return;
+    copyWeekPattern(pendingApply.days, weekDays);
+    toast({ title: "Modèle appliqué", description: pendingApply.description });
+    setPendingApply(null);
+  };
+
   const applyToMonth = () => {
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 });
     const monthDays = eachDayOfInterval({
       start: startOfMonth(currentMonth),
       end: endOfMonth(currentMonth),
-    }).filter((d) => d.getDay() !== 0);
-    copyWeekPattern(monthDays, weekDays);
-    toast({
-      title: "Modèle appliqué",
-      description: `Les horaires ont été appliqués à ${format(currentMonth, "MMMM yyyy", { locale: fr })}.`,
-    });
+    }).filter((d) => d >= weekStart);
+    requestApply(
+      monthDays,
+      `Horaires appliqués au reste de ${format(currentMonth, "MMMM yyyy", { locale: fr })}.`
+    );
   };
 
-  // Préremplit avec le 31 janvier de la saison
-  const [rangeEnd, setRangeEnd] = useState<string>(() =>
-    format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
-  );
-  const applyToRange = () => {
-    if (!rangeEnd) return;
-    const end = parseISO(rangeEnd);
+  const applyToRange = (endValue: string) => {
+    if (!endValue) return;
+    const end = parseISO(endValue);
     const start = weekDays[0];
     if (end < start) {
       toast({
@@ -334,12 +358,10 @@ export function AdvancedAvailabilityManager({
       });
       return;
     }
-    const days = eachDayOfInterval({ start, end }).filter((d) => d.getDay() !== 0);
-    copyWeekPattern(days, weekDays);
-    toast({
-      title: "Modèle appliqué",
-      description: `Horaires appliqués jusqu'au ${format(end, "d MMMM yyyy", { locale: fr })}.`,
-    });
+    requestApply(
+      eachDayOfInterval({ start, end }),
+      `Horaires appliqués jusqu'au ${format(end, "d MMMM yyyy", { locale: fr })}.`
+    );
   };
 
   const navigateWeek = (direction: "prev" | "next") => {
