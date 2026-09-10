@@ -579,65 +579,71 @@ export function AdvancedAvailabilityManager({
               </Button>
             </div>
 
-            <div className="flex flex-nowrap items-center justify-center gap-2 p-2 bg-secondary/50 rounded-lg overflow-x-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  setSelectedWeek(today);
-                  setCurrentMonth(today);
-                }}
-                className="h-7 px-2 text-xs"
-              >
-                Semaine actuelle
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const start = season.start;
-                  setSelectedWeek(start);
-                  setCurrentMonth(start);
-                }}
-                className="h-7 px-2 text-xs"
-              >
-                Début de saison
-              </Button>
-
-              <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
-                Horaires par défaut
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={closeWeek} className="h-7 px-2 text-xs">
-                Fermer la semaine
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={copyPreviousWeek} className="h-7 px-2 text-xs">
-                Copier la semaine précédente
-              </Button>
-
-              <Button variant="secondary" size="sm" onClick={applyToMonth} className="h-7 px-2 text-xs">
-                Appliquer au mois
-              </Button>
-
-              <div className="flex items-center gap-1">
-                <input
-                  type="date"
-                  value={rangeEnd}
-                  onChange={(e) => setRangeEnd(e.target.value)}
-                  className="h-7 rounded-md border border-input bg-background px-2 text-xs"
-                />
+            <div className="space-y-2 p-2 bg-secondary/50 rounded-lg">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  onClick={applyToRange}
-                  disabled={!rangeEnd}
+                  onClick={() => {
+                    const today = new Date();
+                    setSelectedWeek(today);
+                    setCurrentMonth(today);
+                  }}
                   className="h-7 px-2 text-xs"
                 >
-                  Appliquer à une plage
+                  Semaine actuelle
                 </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const start = season.start;
+                    setSelectedWeek(start);
+                    setCurrentMonth(start);
+                  }}
+                  className="h-7 px-2 text-xs"
+                >
+                  Début de saison
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
+                  Horaires par défaut
+                </Button>
+
+                <Button variant="outline" size="sm" onClick={closeWeek} className="h-7 px-2 text-xs">
+                  Fermer la semaine
+                </Button>
+
+                <Button variant="outline" size="sm" onClick={copyPreviousWeek} className="h-7 px-2 text-xs">
+                  Copier la semaine précédente
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button variant="secondary" size="sm" onClick={applyToMonth} className="h-7 px-2 text-xs">
+                  Appliquer au mois
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  <input
+                    type="date"
+                    value={rangeEnd}
+                    onChange={(e) => setRangeEnd(e.target.value)}
+                    className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={applyToRange}
+                    disabled={!rangeEnd}
+                    className="h-7 px-2 text-xs"
+                  >
+                    Appliquer à une plage
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
