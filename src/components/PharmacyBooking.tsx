@@ -159,7 +159,7 @@ export function PharmacyBooking() {
     const { data, error } = await supabase
       .from("appointments")
       .select("appointment_date, appointment_time")
-      .eq("status", "pending");
+      .neq("status", "cancelled");
 
     if (error) {
       console.error("Erreur lors de la récupération des créneaux réservés:", error);
