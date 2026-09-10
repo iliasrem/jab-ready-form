@@ -296,7 +296,10 @@ export function AdvancedAvailabilityManager({
     });
   };
 
-  const [rangeEnd, setRangeEnd] = useState<string>("");
+  // Préremplit avec le 31 janvier de la saison
+  const [rangeEnd, setRangeEnd] = useState<string>(() =>
+    format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
+  );
   const applyToRange = () => {
     if (!rangeEnd) return;
     const end = parseISO(rangeEnd);
