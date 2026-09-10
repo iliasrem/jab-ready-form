@@ -35,6 +35,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -397,39 +405,89 @@ export function PharmacyBooking() {
                 </Button>
               </div>
             ) : (
-              <div className="max-h-64 overflow-y-auto rounded-md border divide-y">
+              <div className="rounded-md border">
                 {searching && (
-                  <p className="p-3 text-sm text-muted-foreground">Recherche en cours...</p>
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+                    Recherche en cours…
+                  </div>
                 )}
+
                 {!searching && searchTerm.trim().length < 2 && (
-                  <p className="p-3 text-sm text-muted-foreground">
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    <Search className="h-6 w-6 mx-auto mb-3 opacity-50" />
                     Saisissez au moins 2 caractères pour lancer la recherche.
-                  </p>
+                  </div>
                 )}
+
                 {!searching && searchTerm.trim().length >= 2 && results.length === 0 && (
-                  <p className="p-3 text-sm text-muted-foreground">Aucun patient trouvé.</p>
+                  <div className="p-8 text-center">
+                    <User className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                    <p className="font-medium">Aucun patient trouvé</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Aucun résultat pour « {searchTerm.trim()} ». Vérifiez l’orthographe ou essayez avec un autre critère (nom, prénom, date de naissance JJ/MM/AAAA ou téléphone).
+                    </p>
+                  </div>
                 )}
-                {!searching &&
-                  results.map((patient) => (
-                    <button
-                      key={patient.id}
-                      type="button"
-                      onClick={() => setSelectedPatient(patient)}
-                      className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/60"
-                    >
-                      <span className="font-medium">
-                        {capitalizeName(patient.last_name)} {capitalizeName(patient.first_name)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {patient.birth_date && (
-                          <Badge variant="secondary" className="mr-2">
-                            {format(new Date(patient.birth_date), "dd/MM/yyyy")}
-                          </Badge>
-                        )}
-                        {patient.phone || patient.email || ""}
-                      </span>
-                    </button>
-                  ))}
+
+                {!searching && searchTerm.trim().length >= 2 && results.length > 0 && (
+                  <div className="max-h-72 overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-background z-10">
+                        <TableRow>
+                          <TableHead className="w-[140px]">Nom</TableHead>
+                          <TableHead className="w-[140px]">Prénom</TableHead>
+                          <TableHead className="w-[120px]">Né(e) le</TableHead>
+                          <TableHead className="w-[140px]">Téléphone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead className="w-[100px] text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {results.map((patient) => (
+                          <TableRow
+                            key={patient.id}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedPatient(patient)}
+                          >
+                            <TableCell className="font-medium">
+                              {capitalizeName(patient.last_name)}
+                            </TableCell>
+                            <TableCell>{capitalizeName(patient.first_name)}</TableCell>
+                            <TableCell>
+                              {patient.birth_date ? (
+                                <Badge variant="secondary">
+                                  {format(new Date(patient.birth_date), "dd/MM/yyyy")}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {patient.phone || <span className="text-xs">—</span>}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground truncate max-w-[180px]">
+                              {patient.email || <span className="text-xs">—</span>}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedPatient(patient);
+                                }}
+                              >
+                                Choisir
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             )}
           </div>
