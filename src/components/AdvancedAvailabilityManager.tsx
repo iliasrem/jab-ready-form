@@ -981,6 +981,30 @@ export function AdvancedAvailabilityManager({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Abandonner les modifications de {dirtyKeys.length} jours ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Les créneaux non sauvegardés seront perdus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setLocalDays({});
+                setDiscardConfirmOpen(false);
+              }}
+            >
+              Abandonner
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
