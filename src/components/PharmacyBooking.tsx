@@ -362,6 +362,7 @@ export function PharmacyBooking() {
         notes: data.notes,
         emailSent,
       });
+    } catch (e) {
       console.error(e);
       toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
     }
