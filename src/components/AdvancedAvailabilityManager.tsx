@@ -357,7 +357,7 @@ export function AdvancedAvailabilityManager({
     } finally {
       setIsSaving(false);
     }
-  }, [localDays, queryClient, toast]);
+  }, [localDays, queryClient, toast, startKey, endKey]);
 
   const saveRef = useRef(saveAvailability);
   saveRef.current = saveAvailability;
@@ -513,7 +513,7 @@ export function AdvancedAvailabilityManager({
                 Configurez rapidement les disponibilités pour une semaine entière
               </CardDescription>
               <p className="mt-1 text-sm text-muted-foreground">
-                Saison {seasonLabel(currentMonth)} : {seasonSummary.days} jours ouverts,{" "}
+                Saison {seasonLabel(today)} : {seasonSummary.days} jours ouverts,{" "}
                 {seasonSummary.openSlots} créneaux ouverts, {seasonSummary.reservedSlots} réservés
               </p>
             </div>
