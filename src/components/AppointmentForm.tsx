@@ -176,50 +176,35 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const loadRealAvailability = async () => {
     try {
       setLoading(true);
-      console.log('=== CHARGEMENT DISPONIBILITÉS FORM ===');
-      
-      // Charger les prochains 6 mois pour permettre les réservations à l'avance
+
+      // Prochains 6 mois, agrégés côté serveur (pas de limite de 1000 lignes)
       const currentDate = new Date();
       const startDate = format(currentDate, 'yyyy-MM-dd');
       const endDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 6, 0), 'yyyy-MM-dd');
-      
-      console.log('Période form (6 mois):', startDate, 'à', endDate);
 
-      const { data, error } = await supabase
-        .from('public_available_slots')
-        .select('*')
-        .gte('specific_date', startDate)
-        .lte('specific_date', endDate)
-        .order('specific_date', { ascending: true });
+      const { data, error } = await supabase.rpc('get_public_open_slots', {
+        p_start: startDate,
+        p_end: endDate,
+      });
 
       if (error) {
-        console.error('Erreur chargement form:', error);
+        console.error('Erreur chargement des disponibilités:', error);
         setRealAvailability([]);
         return;
       }
 
-      console.log('Données disponibilités form:', data?.length || 0);
+      const formattedAvailability = (data ?? [])
+        .map((row) => ({
+          date: row.specific_date,
+          timeSlots: (row.open_times ?? []).map((t: string) => formatTimeForDisplay(t)).sort(),
+        }))
+        .filter((d) => d.timeSlots.length > 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
 
-      // Grouper par date
-      const groupedAvailability: { [key: string]: string[] } = {};
-      data?.forEach(item => {
-        if (!groupedAvailability[item.specific_date]) {
-          groupedAvailability[item.specific_date] = [];
-        }
-        groupedAvailability[item.specific_date].push(formatTimeForDisplay(item.start_time));
-      });
-
-      // Convertir en format final
-      const formattedAvailability = Object.entries(groupedAvailability).map(([date, timeSlots]) => ({
-        date,
-        timeSlots: timeSlots.sort() // Trier les créneaux
-      }));
-
-      console.log('Disponibilités formatées form:', formattedAvailability);
       setRealAvailability(formattedAvailability);
-      
+
     } catch (error) {
-      console.error('Erreur lors du chargement des disponibilités form:', error);
+      console.error('Erreur lors du chargement des disponibilités:', error);
       setRealAvailability([]);
     } finally {
       setLoading(false);
