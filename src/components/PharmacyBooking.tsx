@@ -296,7 +296,7 @@ export function PharmacyBooking() {
         .select("id")
         .eq("appointment_date", formatDateForDb(data.date))
         .eq("appointment_time", data.time)
-        .eq("status", "pending");
+        .neq("status", "cancelled");
 
       if (checkError) {
         toast({
@@ -309,8 +309,8 @@ export function PharmacyBooking() {
 
       if (existing && existing.length > 0) {
         toast({
-          title: "Créneau déjà pris",
-          description: "Veuillez choisir un autre horaire.",
+          title: "Créneau déjà réservé",
+          description: `Le ${format(data.date, "EEEE d MMMM yyyy", { locale: fr })} à ${data.time} est déjà pris. Veuillez choisir un autre horaire.`,
           variant: "destructive",
         });
         return;
