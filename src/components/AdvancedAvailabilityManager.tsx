@@ -230,6 +230,7 @@ export function AdvancedAvailabilityManager({
 
   // ===== Actions =====
   const toggleTimeSlot = (date: Date, time: string) => {
+    if (isBlockedDay(date)) return;
     const open = openTimesOf(date);
     const next = open.includes(time) ? open.filter((t) => t !== time) : [...open, time];
     patchDays({ [toKey(date)]: gridForDate(date).filter((t) => next.includes(t)) });
@@ -238,6 +239,7 @@ export function AdvancedAvailabilityManager({
   const applyDefaultToWeek = () => {
     const patch: Record<string, string[]> = {};
     weekDays.forEach((d) => {
+      if (isBlockedDay(d)) return;
       patch[toKey(d)] = gridForDate(d);
     });
     patchDays(patch);
@@ -247,6 +249,7 @@ export function AdvancedAvailabilityManager({
   const closeWeek = () => {
     const patch: Record<string, string[]> = {};
     weekDays.forEach((d) => {
+      if (isBlockedDay(d)) return;
       patch[toKey(d)] = [];
     });
     patchDays(patch);
@@ -260,6 +263,7 @@ export function AdvancedAvailabilityManager({
 
     const patch: Record<string, string[]> = {};
     targetDays.forEach((d) => {
+      if (isBlockedDay(d)) return;
       const template = byDow.get(d.getDay());
       if (!template) return;
       patch[toKey(d)] = gridForDate(d).filter((t) => template.includes(t));
