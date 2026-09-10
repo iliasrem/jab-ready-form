@@ -424,7 +424,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel>Nom *</FormLabel>
                     <FormControl>
                       <Input placeholder="Entrez votre nom" {...field} />
                     </FormControl>
@@ -438,7 +438,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom</FormLabel>
+                    <FormLabel>Prénom *</FormLabel>
                     <FormControl>
                       <Input placeholder="Entrez votre prénom" {...field} />
                     </FormControl>
