@@ -455,7 +455,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="birthDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date de naissance (optionnel)</FormLabel>
+                    <FormLabel>Date de naissance *</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
@@ -464,13 +464,13 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                         value={field.value ?? ""}
                         onChange={(e) => {
                           const formatted = formatDateInput(e.target.value);
-                          field.onChange(formatted || undefined);
+                          field.onChange(formatted);
                         }}
                         maxLength={10}
                       />
                     </FormControl>
                     <FormDescription>
-                      Optionnel : aide à vous retrouver dans notre fichier patient.
+                      Elle aide à vous retrouver dans notre fichier patient.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
