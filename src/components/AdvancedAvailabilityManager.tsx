@@ -316,7 +316,7 @@ export function AdvancedAvailabilityManager({
   const navigateWeek = (direction: "prev" | "next") => {
     const next = addDays(selectedWeek, direction === "next" ? 7 : -7);
     setSelectedWeek(next);
-    if (format(next, "yyyy-MM") !== monthKey) setCurrentMonth(next);
+    if (format(next, "yyyy-MM") !== format(currentMonth, "yyyy-MM")) setCurrentMonth(next);
   };
 
   // ===== Sauvegarde =====
