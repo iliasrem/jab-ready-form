@@ -368,6 +368,14 @@ export function PharmacyBooking() {
     }
   }
 
+  const closeConfirmation = () => {
+    setConfirmation(null);
+    form.reset({ services: [], notes: "" });
+    setSelectedPatient(null);
+    setSearchTerm("");
+    setResults([]);
+  };
+
   if (loading) {
     return (
       <Card className="w-full max-w-4xl mx-auto">
