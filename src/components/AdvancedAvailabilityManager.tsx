@@ -10,7 +10,6 @@ import {
   format,
   parseISO,
   addMonths,
-  subMonths,
   addDays,
   startOfMonth,
   endOfMonth,
@@ -598,7 +597,7 @@ export function AdvancedAvailabilityManager({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const start = getSeasonRange(currentMonth).start;
+                  const start = season.start;
                   setSelectedWeek(start);
                   setCurrentMonth(start);
                 }}
