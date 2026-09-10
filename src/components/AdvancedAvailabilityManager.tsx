@@ -808,11 +808,11 @@ export function AdvancedAvailabilityManager({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Popover open={customOpen} onOpenChange={setCustomOpen}>
-                <PopoverTrigger asChild>
-                  <span />
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto space-y-2 p-3">
+              <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Reproduire jusqu'à une date</DialogTitle>
+                  </DialogHeader>
                   <input
                     type="date"
                     aria-label="Reproduire jusqu'au"
@@ -820,19 +820,21 @@ export function AdvancedAvailabilityManager({
                     onChange={(e) => setCustomDate(e.target.value)}
                     className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                   />
-                  <Button
-                    size="sm"
-                    className="h-9 w-full"
-                    disabled={!customDate}
-                    onClick={() => {
-                      setCustomOpen(false);
-                      applyToRange(customDate);
-                    }}
-                  >
-                    Valider
-                  </Button>
-                </PopoverContent>
-              </Popover>
+                  <DialogFooter>
+                    <Button
+                      size="sm"
+                      className="h-9"
+                      disabled={!customDate}
+                      onClick={() => {
+                        setCustomOpen(false);
+                        applyToRange(customDate);
+                      }}
+                    >
+                      Continuer
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
