@@ -205,13 +205,13 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    // Vérifier créneau non pris
+    // Vérifier créneau non pris (tout rendez-vous non annulé bloque le créneau)
     const { data: existing, error: checkErr } = await supabase
       .from("appointments")
       .select("id")
       .eq("appointment_date", d.appointmentDate)
       .eq("appointment_time", d.appointmentTime)
-      .eq("status", "pending");
+      .neq("status", "cancelled");
     if (checkErr) {
       console.error("check err", checkErr);
       return new Response(JSON.stringify({ error: "Erreur de vérification" }), {
@@ -221,7 +221,9 @@ Deno.serve(async (req) => {
     }
     if (existing && existing.length > 0) {
       return new Response(
-        JSON.stringify({ error: "Créneau déjà réservé" }),
+        JSON.stringify({
+          error: `Le créneau du ${d.appointmentDate} à ${d.appointmentTime.slice(0, 5)} est déjà réservé. Veuillez choisir un autre horaire.`,
+        }),
         { status: 409, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
