@@ -689,7 +689,7 @@ export function AdvancedAvailabilityManager({
           <div className="space-y-3">
             {/* Navigation */}
             <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex w-full items-center justify-between gap-4 md:w-auto md:justify-start">
+              <div className="flex w-full items-center justify-between gap-8 md:w-auto md:justify-start">
                 <Button
                   variant="outline"
                   size="sm"
@@ -704,7 +704,7 @@ export function AdvancedAvailabilityManager({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
-                <div className="w-full shrink-0 text-center tabular-nums md:w-[21rem]">
+                <div className="w-full shrink-0 text-center tabular-nums md:w-[24rem]">
                   <p className="font-medium whitespace-nowrap">
                     Semaine du{" "}
                     {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "d MMMM", { locale: fr })} au{" "}
