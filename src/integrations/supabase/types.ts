@@ -864,9 +864,28 @@ export type Database = {
       }
     }
     Functions: {
+      day_grid_times: { Args: { p_date: string }; Returns: string[] }
+      get_availability_range: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          block_activity: string
+          is_blocked: boolean
+          open_times: string[]
+          reserved_times: string[]
+          specific_date: string
+        }[]
+      }
       get_current_user_role: { Args: never; Returns: string }
+      get_public_open_slots: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          open_times: string[]
+          specific_date: string
+        }[]
+      }
       is_valid_email: { Args: { email_address: string }; Returns: boolean }
       merge_duplicate_patients: { Args: never; Returns: Json }
+      save_availability: { Args: { p_days: Json }; Returns: number }
     }
     Enums: {
       appointment_status: "pending" | "confirmed" | "completed" | "cancelled"
