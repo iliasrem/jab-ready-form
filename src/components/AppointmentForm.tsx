@@ -137,6 +137,11 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
   const [loading, setLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [showPhoneDialog, setShowPhoneDialog] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState<{
+    data: AppointmentFormValues;
+    normalizedPhone: string;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [confirmationData, setConfirmationData] = useState<{
     firstName: string;
