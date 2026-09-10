@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,38 +125,47 @@ export function AdvancedAvailabilityManager({
     queryKey: ["availability", monthKey],
     queryFn: () => fetchRange(currentMonth),
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
-  // Préchargement du mois suivant
+  // Préchargement des mois adjacents
   useEffect(() => {
-    const next = addMonths(currentMonth, 1);
-    queryClient.prefetchQuery({
-      queryKey: ["availability", format(next, "yyyy-MM")],
-      queryFn: () => fetchRange(next),
-      staleTime: 30_000,
+    [addMonths(currentMonth, 1), subMonths(currentMonth, 1)].forEach((m) => {
+      queryClient.prefetchQuery({
+        queryKey: ["availability", format(m, "yyyy-MM")],
+        queryFn: () => fetchRange(m),
+        staleTime: 30_000,
+      });
     });
   }, [currentMonth, fetchRange, queryClient]);
 
-  // Temps réel : une seule souscription, créée au montage
+  // Temps réel : une seule souscription, invalidations débouncées et ignorées pendant la sauvegarde
+  const isSavingRef = useRef(false);
+  isSavingRef.current = isSaving;
+
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const invalidate = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (isSavingRef.current) return;
+        queryClient.invalidateQueries({ queryKey: ["availability"] });
+      }, 500);
+    };
+
     const channel = supabase
       .channel("availability-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "blocked_dates" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["availability"] });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["availability"] });
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "blocked_dates" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, invalidate)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "specific_date_availability" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["availability"] });
-        }
+        invalidate
       )
       .subscribe();
 
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
@@ -181,6 +190,12 @@ export function AdvancedAvailabilityManager({
       };
     },
     [serverDays, localDays]
+  );
+
+  /** Un jour bloqué ne peut jamais être modifié. */
+  const isBlockedDay = useCallback(
+    (date: Date) => !!serverDays?.[toKey(date)]?.blocked,
+    [serverDays]
   );
 
   const openTimesOf = useCallback(
