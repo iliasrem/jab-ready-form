@@ -482,6 +482,28 @@ export function AdvancedAvailabilityManager({
 
   const showSkeleton = isFetching && !serverDays;
 
+  // Résumé de la saison (1er octobre -> 31 janvier)
+  const seasonSummary = useMemo(() => {
+    let days = 0;
+    let openSlots = 0;
+    let reservedSlots = 0;
+    eachDayOfInterval({ start: season.start, end: season.end }).forEach((d) => {
+      const key = toKey(d);
+      const server = serverDays?.[key];
+      const grid = gridForDate(d);
+      if (grid.length === 0) return;
+      const open = new Set(localDays[key] ?? server?.open ?? []);
+      const reserved = new Set(server?.reserved ?? []);
+      if (server?.blocked) return;
+      const dayOpen = grid.filter((t) => open.has(t));
+      if (dayOpen.length === 0) return;
+      days++;
+      openSlots += dayOpen.length;
+      reservedSlots += dayOpen.filter((t) => reserved.has(t)).length;
+    });
+    return { days, openSlots, reservedSlots };
+  }, [season, serverDays, localDays]);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -492,6 +514,10 @@ export function AdvancedAvailabilityManager({
               <CardDescription>
                 Configurez rapidement les disponibilités pour une semaine entière
               </CardDescription>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Saison {seasonLabel(currentMonth)} : {seasonSummary.days} jours ouverts,{" "}
+                {seasonSummary.openSlots} créneaux ouverts, {seasonSummary.reservedSlots} réservés
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {isFetching && !showSkeleton && (
