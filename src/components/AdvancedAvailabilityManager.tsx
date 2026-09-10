@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { getSeasonRange, seasonLabel } from "@/lib/season";
 
 export interface SpecificDateAvailability {
   date: Date;
@@ -96,48 +97,51 @@ export function AdvancedAvailabilityManager({
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
-  // ===== Chargement (mois affiché ± 1 mois) =====
+  // ===== Chargement : toute la saison (1er oct -> 31 jan) en une seule requête =====
   const monthKey = format(currentMonth, "yyyy-MM");
 
-  const fetchRange = useCallback(async (month: Date): Promise<Record<string, ServerDay>> => {
-    const start = format(startOfMonth(subMonths(month, 1)), "yyyy-MM-dd");
-    const end = format(endOfMonth(addMonths(month, 1)), "yyyy-MM-dd");
+  const season = useMemo(() => getSeasonRange(currentMonth), [currentMonth]);
 
-    const { data, error } = await supabase.rpc("get_availability_range", {
-      p_start: start,
-      p_end: end,
-    });
-    if (error) throw error;
+  const windowRange = useMemo(() => {
+    const monthStart = startOfMonth(subMonths(currentMonth, 1));
+    const monthEnd = endOfMonth(addMonths(currentMonth, 1));
+    return {
+      start: monthStart < season.start ? monthStart : season.start,
+      end: monthEnd > season.end ? monthEnd : season.end,
+    };
+  }, [currentMonth, season]);
 
-    const map: Record<string, ServerDay> = {};
-    (data ?? []).forEach((row) => {
-      map[row.specific_date] = {
-        open: (row.open_times ?? []).map(hhmm),
-        reserved: (row.reserved_times ?? []).map(hhmm),
-        blocked: !!row.is_blocked,
-        blockActivity: row.block_activity ?? undefined,
-      };
-    });
-    return map;
-  }, []);
+  const startKey = format(windowRange.start, "yyyy-MM-dd");
+  const endKey = format(windowRange.end, "yyyy-MM-dd");
+
+  const fetchRange = useCallback(
+    async (start: string, end: string): Promise<Record<string, ServerDay>> => {
+      const { data, error } = await supabase.rpc("get_availability_range", {
+        p_start: start,
+        p_end: end,
+      });
+      if (error) throw error;
+
+      const map: Record<string, ServerDay> = {};
+      (data ?? []).forEach((row) => {
+        map[row.specific_date] = {
+          open: (row.open_times ?? []).map(hhmm),
+          reserved: (row.reserved_times ?? []).map(hhmm),
+          blocked: !!row.is_blocked,
+          blockActivity: row.block_activity ?? undefined,
+        };
+      });
+      return map;
+    },
+    []
+  );
 
   const { data: serverDays, isFetching } = useQuery({
-    queryKey: ["availability", monthKey],
-    queryFn: () => fetchRange(currentMonth),
+    queryKey: ["availability", startKey, endKey],
+    queryFn: () => fetchRange(startKey, endKey),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
-
-  // Préchargement des mois adjacents
-  useEffect(() => {
-    [addMonths(currentMonth, 1), subMonths(currentMonth, 1)].forEach((m) => {
-      queryClient.prefetchQuery({
-        queryKey: ["availability", format(m, "yyyy-MM")],
-        queryFn: () => fetchRange(m),
-        staleTime: 30_000,
-      });
-    });
-  }, [currentMonth, fetchRange, queryClient]);
 
   // Temps réel : une seule souscription, invalidations débouncées et ignorées pendant la sauvegarde
   const isSavingRef = useRef(false);
@@ -292,7 +296,10 @@ export function AdvancedAvailabilityManager({
     });
   };
 
-  const [rangeEnd, setRangeEnd] = useState<string>("");
+  // Préremplit avec le 31 janvier de la saison
+  const [rangeEnd, setRangeEnd] = useState<string>(() =>
+    format(getSeasonRange(new Date()).end, "yyyy-MM-dd")
+  );
   const applyToRange = () => {
     if (!rangeEnd) return;
     const end = parseISO(rangeEnd);
@@ -475,6 +482,28 @@ export function AdvancedAvailabilityManager({
 
   const showSkeleton = isFetching && !serverDays;
 
+  // Résumé de la saison (1er octobre -> 31 janvier)
+  const seasonSummary = useMemo(() => {
+    let days = 0;
+    let openSlots = 0;
+    let reservedSlots = 0;
+    eachDayOfInterval({ start: season.start, end: season.end }).forEach((d) => {
+      const key = toKey(d);
+      const server = serverDays?.[key];
+      const grid = gridForDate(d);
+      if (grid.length === 0) return;
+      const open = new Set(localDays[key] ?? server?.open ?? []);
+      const reserved = new Set(server?.reserved ?? []);
+      if (server?.blocked) return;
+      const dayOpen = grid.filter((t) => open.has(t));
+      if (dayOpen.length === 0) return;
+      days++;
+      openSlots += dayOpen.length;
+      reservedSlots += dayOpen.filter((t) => reserved.has(t)).length;
+    });
+    return { days, openSlots, reservedSlots };
+  }, [season, serverDays, localDays]);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -485,6 +514,10 @@ export function AdvancedAvailabilityManager({
               <CardDescription>
                 Configurez rapidement les disponibilités pour une semaine entière
               </CardDescription>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Saison {seasonLabel(currentMonth)} : {seasonSummary.days} jours ouverts,{" "}
+                {seasonSummary.openSlots} créneaux ouverts, {seasonSummary.reservedSlots} réservés
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {isFetching && !showSkeleton && (
@@ -562,6 +595,20 @@ export function AdvancedAvailabilityManager({
               >
                 Semaine actuelle
               </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const start = getSeasonRange(currentMonth).start;
+                  setSelectedWeek(start);
+                  setCurrentMonth(start);
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                Début de saison
+              </Button>
+
 
               <Button variant="default" size="sm" onClick={applyDefaultToWeek} className="h-7 px-2 text-xs">
                 Horaires par défaut

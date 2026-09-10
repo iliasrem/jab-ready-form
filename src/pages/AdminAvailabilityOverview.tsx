@@ -11,6 +11,7 @@ import { Star, UploadCloud, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { getSeasonRange } from "@/lib/season";
 
 // créneaux par défaut (doit refléter le gestionnaire avancé)
 const defaultTimeSlots = [
@@ -27,7 +28,7 @@ const saturdayTimeSlots = [
 
 // Page d'administration: vue Semaine / Mois / 3 mois des disponibilités avec édition
 export default function AdminAvailabilityOverview() {
-  type ViewMode = "day" | "week" | "month" | "quarter";
+  type ViewMode = "day" | "week" | "month" | "quarter" | "season";
 
   const [viewMode, setViewMode] = useState<ViewMode>("quarter");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
@@ -82,6 +83,10 @@ export default function AdminAvailabilityOverview() {
     } else if (viewMode === "month") {
       start = startOfMonth(start);
       end = endOfMonth(start);
+    } else if (viewMode === "season") {
+      const season = getSeasonRange(periodStart);
+      start = season.start;
+      end = season.end;
     } else {
       // 2 mois: du début du mois courant jusqu'à la fin dans 1 mois
       start = startOfMonth(start);
@@ -381,6 +386,7 @@ export default function AdminAvailabilityOverview() {
             <Button variant={viewMode === "week" ? "default" : "outline"} size="sm" onClick={() => setViewMode("week")}>Semaine</Button>
             <Button variant={viewMode === "month" ? "default" : "outline"} size="sm" onClick={() => setViewMode("month")}>Mois</Button>
             <Button variant={viewMode === "quarter" ? "default" : "outline"} size="sm" onClick={() => setViewMode("quarter")}>2 mois</Button>
+            <Button variant={viewMode === "season" ? "default" : "outline"} size="sm" onClick={() => setViewMode("season")}>Saison (oct → jan)</Button>
           </div>
           <div className="inline-flex gap-2">
             <Button variant="outline" size="sm" onClick={goPrev}>Précédent</Button>
