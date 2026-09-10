@@ -112,6 +112,7 @@ export function PharmacyBooking() {
   const [realAvailability, setRealAvailability] = useState<SpecificAvailability[]>([]);
   const [bookedSlots, setBookedSlots] = useState<{ [date: string]: string[] }>({});
   const [loading, setLoading] = useState(true);
+  const [confirmation, setConfirmation] = useState<ConfirmationSummary | null>(null);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
