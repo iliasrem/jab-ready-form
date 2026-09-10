@@ -653,6 +653,36 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
         </Form>
       </CardContent>
 
+      <AlertDialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmez votre numéro de téléphone</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nous avons converti votre numéro au format international. Est-il correct ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="text-center text-2xl font-semibold tracking-wide py-2">
+            {pendingBooking?.normalizedPhone}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Modifier</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingBooking) return;
+                const { data, normalizedPhone } = pendingBooking;
+                form.setValue("phone", normalizedPhone);
+                setShowPhoneDialog(false);
+                setPendingBooking(null);
+                void submitBooking(data, normalizedPhone);
+              }}
+            >
+              Confirmer et réserver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {confirmationData && (
         <AppointmentConfirmationDialog
           open={showConfirmationDialog}
