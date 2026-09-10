@@ -84,7 +84,7 @@ const appointmentSchema = z.object({
   birthDate: z
     .string()
     .refine((val) => !val || /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
-      message: "Format attendu : JJ/MM/AAAA",
+      message: "Format incorrect. Veuillez utiliser JJ/MM/AAAA (ex. 15/09/1985).",
     })
     .refine((val) => {
       if (!val) return true;
@@ -95,7 +95,7 @@ const appointmentSchema = z.object({
         date.getMonth() === month - 1 &&
         date.getDate() === day
       );
-    }, { message: "Date de naissance invalide" })
+    }, { message: "Cette date de naissance n'est pas valide." })
     .optional(),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
