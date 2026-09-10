@@ -378,7 +378,7 @@ export function AdvancedAvailabilityManager({
     const slots = flatSlotsRef.current;
     const a = Math.min(d.startIdx, d.currentIdx);
     const b = Math.max(d.startIdx, d.currentIdx);
-    const range = slots.slice(a, b + 1).filter((s) => !s.reserved);
+    const range = slots.slice(a, b + 1).filter((s) => !s.reserved && !isBlockedDay(s.day));
     if (range.length === 0) return;
 
     const byDay = new Map<string, { day: Date; times: Set<string> }>();
