@@ -110,12 +110,11 @@ const appointmentSchema = z.object({
       message: "Numéro de téléphone invalide. Ex. 0471 12 34 56 ou +33 6 12 34 56 78.",
     }),
   birthDate: z
-    .string()
-    .refine((val) => !val || /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
+    .string({ required_error: "La date de naissance est obligatoire." })
+    .refine((val) => /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
       message: "Format incorrect. Veuillez utiliser JJ/MM/AAAA (ex. 15/09/1985).",
     })
     .refine((val) => {
-      if (!val) return true;
       const [day, month, year] = val.split("/").map(Number);
       const date = new Date(year, month - 1, day);
       return (
@@ -123,8 +122,7 @@ const appointmentSchema = z.object({
         date.getMonth() === month - 1 &&
         date.getDate() === day
       );
-    }, { message: "Cette date de naissance n'est pas valide." })
-    .optional(),
+    }, { message: "Cette date de naissance n'est pas valide." }),
   date: z.date({
     required_error: "Veuillez sélectionner une date de rendez-vous.",
   }),
@@ -456,7 +454,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                 name="birthDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date de naissance (optionnel)</FormLabel>
+                    <FormLabel>Date de naissance *</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
@@ -465,13 +463,13 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                         value={field.value ?? ""}
                         onChange={(e) => {
                           const formatted = formatDateInput(e.target.value);
-                          field.onChange(formatted || undefined);
+                          field.onChange(formatted);
                         }}
                         maxLength={10}
                       />
                     </FormControl>
                     <FormDescription>
-                      Optionnel : aide à vous retrouver dans notre fichier patient.
+                      Elle aide à vous retrouver dans notre fichier patient.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
