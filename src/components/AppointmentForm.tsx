@@ -67,6 +67,21 @@ function parseDateInput(value: string): string | null {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// Normalise un numéro saisi librement vers le format international +XXXXXXXXXX
+export function normalizePhoneNumber(raw: string): string | null {
+  if (!raw) return null;
+  let s = raw.replace(/[^\d+]/g, "");
+  if (s.startsWith("00")) s = "+" + s.slice(2);
+  if (!s.startsWith("+")) {
+    if (s.startsWith("0")) s = "+32" + s.slice(1);
+    else if (s.startsWith("32")) s = "+" + s;
+    else s = "+32" + s;
+  }
+  const digits = s.slice(1).replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) return null;
+  return "+" + digits;
+}
+
 interface AppointmentFormProps {
   availability?: any[]; // Keeping for backward compatibility but not used
 }
@@ -78,9 +93,12 @@ const appointmentSchema = z.object({
   lastName: z.string().min(2, {
     message: "Le nom doit contenir au moins 2 caractères.",
   }),
-  phone: z.string().min(1, {
-    message: "Le numéro de téléphone est obligatoire.",
-  }),
+  phone: z
+    .string()
+    .min(1, { message: "Le numéro de téléphone est obligatoire." })
+    .refine((val) => normalizePhoneNumber(val) !== null, {
+      message: "Numéro de téléphone invalide. Ex. 0471 12 34 56 ou +33 6 12 34 56 78.",
+    }),
   birthDate: z
     .string()
     .refine((val) => !val || /^\d{2}\/\d{2}\/\d{4}$/.test(val), {
@@ -220,7 +238,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
     };
   }, []);
 
-  async function onSubmit(data: AppointmentFormValues) {
+  function onSubmit(data: AppointmentFormValues) {
     if (submitting) return;
     if (!data.date || isNaN(data.date.getTime())) {
       toast({
@@ -231,10 +249,22 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       return;
     }
 
+    const normalizedPhone = normalizePhoneNumber(data.phone);
+    if (!normalizedPhone) {
+      form.setError("phone", {
+        message: "Numéro de téléphone invalide. Ex. 0471 12 34 56 ou +33 6 12 34 56 78.",
+      });
+      return;
+    }
+
+    // Demander la confirmation du numéro au format international
+    setPendingBooking({ data, normalizedPhone });
+    setShowPhoneDialog(true);
+  }
+
+  async function submitBooking(data: AppointmentFormValues, normalizedPhone: string) {
     setSubmitting(true);
     try {
-      const phoneTrim = (data.phone ?? "").trim();
-      const normalizedPhone = phoneTrim && phoneTrim !== phonePrefix.trim() ? phoneTrim : "";
       const notesTrim = (data.notes ?? "").trim();
       const normalizedNotes = notesTrim.length ? notesTrim : null;
 
@@ -268,7 +298,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       setConfirmationData({
         firstName: data.firstName,
         lastName: data.lastName,
-        phone: normalizedPhone || data.phone,
+        phone: normalizedPhone,
         date: data.date,
         time: data.time,
         services: data.services,
@@ -347,7 +377,7 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
 
   const selectedDate = form.watch("date");
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
-  const [phonePrefix, setPhonePrefix] = useState<string>("+32 ");
+  
 
   if (loading) {
     return (
@@ -359,59 +389,6 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
       </Card>
     );
   }
-  const countryOptions = [
-    { code: "BE", label: "Belgique (+32)", prefix: "+32 " },
-    { code: "AL", label: "Albanie (+355)", prefix: "+355 " },
-    { code: "AD", label: "Andorre (+376)", prefix: "+376 " },
-    { code: "AT", label: "Autriche (+43)", prefix: "+43 " },
-    { code: "BA", label: "Bosnie-Herzégovine (+387)", prefix: "+387 " },
-    { code: "BG", label: "Bulgarie (+359)", prefix: "+359 " },
-    { code: "HR", label: "Croatie (+385)", prefix: "+385 " },
-    { code: "CY", label: "Chypre (+357)", prefix: "+357 " },
-    { code: "CZ", label: "Tchéquie (+420)", prefix: "+420 " },
-    { code: "DK", label: "Danemark (+45)", prefix: "+45 " },
-    { code: "EE", label: "Estonie (+372)", prefix: "+372 " },
-    { code: "FI", label: "Finlande (+358)", prefix: "+358 " },
-    { code: "FR", label: "France (+33)", prefix: "+33 " },
-    { code: "DE", label: "Allemagne (+49)", prefix: "+49 " },
-    { code: "GR", label: "Grèce (+30)", prefix: "+30 " },
-    { code: "HU", label: "Hongrie (+36)", prefix: "+36 " },
-    { code: "IS", label: "Islande (+354)", prefix: "+354 " },
-    { code: "IE", label: "Irlande (+353)", prefix: "+353 " },
-    { code: "IT", label: "Italie (+39)", prefix: "+39 " },
-    { code: "LV", label: "Lettonie (+371)", prefix: "+371 " },
-    { code: "LI", label: "Liechtenstein (+423)", prefix: "+423 " },
-    { code: "LT", label: "Lituanie (+370)", prefix: "+370 " },
-    { code: "LU", label: "Luxembourg (+352)", prefix: "+352 " },
-    { code: "MT", label: "Malte (+356)", prefix: "+356 " },
-    { code: "MD", label: "Moldavie (+373)", prefix: "+373 " },
-    { code: "MC", label: "Monaco (+377)", prefix: "+377 " },
-    { code: "ME", label: "Monténégro (+382)", prefix: "+382 " },
-    { code: "NL", label: "Pays-Bas (+31)", prefix: "+31 " },
-    { code: "MK", label: "Macédoine du Nord (+389)", prefix: "+389 " },
-    { code: "NO", label: "Norvège (+47)", prefix: "+47 " },
-    { code: "PL", label: "Pologne (+48)", prefix: "+48 " },
-    { code: "PT", label: "Portugal (+351)", prefix: "+351 " },
-    { code: "RO", label: "Roumanie (+40)", prefix: "+40 " },
-    { code: "SM", label: "Saint-Marin (+378)", prefix: "+378 " },
-    { code: "RS", label: "Serbie (+381)", prefix: "+381 " },
-    { code: "SK", label: "Slovaquie (+421)", prefix: "+421 " },
-    { code: "SI", label: "Slovénie (+386)", prefix: "+386 " },
-    { code: "ES", label: "Espagne (+34)", prefix: "+34 " },
-    { code: "SE", label: "Suède (+46)", prefix: "+46 " },
-    { code: "CH", label: "Suisse (+41)", prefix: "+41 " },
-    { code: "TR", label: "Turquie (+90)", prefix: "+90 " },
-    { code: "UA", label: "Ukraine (+380)", prefix: "+380 " },
-    { code: "GB", label: "Royaume-Uni (+44)", prefix: "+44 " },
-    { code: "VA", label: "Vatican (+379)", prefix: "+379 " },
-    { code: "GI", label: "Gibraltar (+350)", prefix: "+350 " },
-    { code: "FO", label: "Îles Féroé (+298)", prefix: "+298 " },
-    { code: "XK", label: "Kosovo (+383)", prefix: "+383 " },
-    { code: "BY", label: "Biélorussie (+375)", prefix: "+375 " },
-    { code: "AM", label: "Arménie (+374)", prefix: "+374 " },
-    { code: "AZ", label: "Azerbaïdjan (+994)", prefix: "+994 " },
-    { code: "GE", label: "Géorgie (+995)", prefix: "+995 " },
-  ];
   const services = [
     { id: "covid", label: "Vaccin 2026-2027 contre le COVID" },
     { id: "grippe", label: "Vaccin contre la grippe 2026-2027" }
@@ -493,77 +470,23 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                   <FormItem className="flex flex-col">
                     <FormLabel>Numéro de téléphone *</FormLabel>
                     <FormControl>
-                      <div className="flex gap-2">
-                        <Select
-                          onValueChange={(val) => {
-                            const newPrefix = val;
-                            const current = field.value ?? "";
-                            const rest = current.startsWith(phonePrefix)
-                              ? current.slice(phonePrefix.length)
-                              : current.replace(/^[+\d\s]*/, "");
-                            const next = newPrefix + rest.replace(/[^\d\s]/g, "");
-                            setPhonePrefix(newPrefix);
-                            field.onChange(next);
-                          }}
-                          defaultValue={phonePrefix}
-                          value={phonePrefix}
-                        >
-                          <SelectTrigger className="w-[110px] sm:w-[130px] shrink-0">
-                            <SelectValue placeholder="Indicatif" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {countryOptions.map((opt) => (
-                              <SelectItem key={opt.code} value={opt.prefix}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="tel"
-                          inputMode="tel"
-                          placeholder="4xx xx xx xx"
-                          {...field}
-                          value={field.value ?? ""}
-                          onFocus={(e) => {
-                            if (!field.value || !field.value.startsWith(phonePrefix)) {
-                              field.onChange(phonePrefix);
-                              requestAnimationFrame(() => {
-                                const el = e.target as HTMLInputElement;
-                                el.setSelectionRange(el.value.length, el.value.length);
-                              });
-                            }
-                          }}
-                          onChange={(e) => {
-                            const el = e.target as HTMLInputElement;
-                            let v = el.value || "";
-                            if (!v.startsWith(phonePrefix)) {
-                              v = v.replace(/^\+?\d*\s*/, "");
-                              v = phonePrefix + v;
-                            }
-                            v = phonePrefix + v.slice(phonePrefix.length).replace(/[^\d\s]/g, "");
-                            field.onChange(v);
-                          }}
-                          onKeyDown={(e) => {
-                            const el = e.currentTarget as HTMLInputElement;
-                            const prefixLen = phonePrefix.length;
-                            if (
-                              (e.key === "Backspace" && el.selectionStart !== null && el.selectionStart <= prefixLen) ||
-                              (e.key === "Delete" && el.selectionStart !== null && el.selectionStart < prefixLen)
-                            ) {
-                              e.preventDefault();
-                              if (!el.value.startsWith(phonePrefix)) {
-                                field.onChange(phonePrefix);
-                              }
-                            }
-                          }}
-                        />
-                      </div>
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="0471 12 34 56 ou +33 6 12 34 56 78"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      Saisissez votre numéro comme vous voulez (fixe, mobile ou étranger) : nous
+                      le convertirons au format international.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
-                 )}
-               />
+                )}
+              />
+
             </div>
 
 
