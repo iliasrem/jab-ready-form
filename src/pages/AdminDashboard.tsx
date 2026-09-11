@@ -39,7 +39,8 @@ import {
   Store,
   Syringe,
   Wrench,
-  ClipboardList
+  ClipboardList,
+  Copy
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
