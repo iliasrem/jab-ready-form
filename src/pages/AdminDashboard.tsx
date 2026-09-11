@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
