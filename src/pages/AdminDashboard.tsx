@@ -39,12 +39,15 @@ import {
   Store,
   Syringe,
   Wrench,
-  ClipboardList
+  ClipboardList,
+  Copy
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
+  const { toast } = useToast();
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -271,7 +274,23 @@ const AdminDashboard = () => {
                           <CardTitle>Inventaire</CardTitle>
                           <CardDescription>Gestion des stocks de vaccins</CardDescription>
                         </div>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">CNK 5871900 – COMIRNATY XFG (10 flacons)</span>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                          CNK
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto px-1 py-0 font-normal text-muted-foreground hover:text-foreground"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText("5871900");
+                              toast({ title: "Copié", description: "Code CNK copié dans le presse-papiers." });
+                            }}
+                            aria-label="Copier le code CNK 5871900"
+                          >
+                            5871900
+                            <Copy className="ml-1 h-3 w-3" />
+                          </Button>
+                          – COMIRNATY XFG (10 flacons)
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <VaccineInventory />
