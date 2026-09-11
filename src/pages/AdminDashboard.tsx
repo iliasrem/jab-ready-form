@@ -47,6 +47,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
+  const { toast } = useToast();
   const [specificAvailability, setSpecificAvailability] = useState<SpecificDateAvailability[]>([]);
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
