@@ -266,9 +266,12 @@ const AdminDashboard = () => {
 
                   {selectedUtility === 'inventory' && (
                     <Card>
-                      <CardHeader>
-                        <CardTitle>Inventaire</CardTitle>
-                        <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                      <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div>
+                          <CardTitle>Inventaire</CardTitle>
+                          <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                        </div>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">CNK 5871900 – COMIRNATY XFG (10 flacons)</span>
                       </CardHeader>
                       <CardContent>
                         <VaccineInventory />
