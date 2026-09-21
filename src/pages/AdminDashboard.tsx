@@ -223,7 +223,7 @@ const AdminDashboard = () => {
 
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-green-50 dark:bg-green-950/30" onClick={() => setSelectedUtility('inventory')}>
                     <CardHeader>
-                      <CardTitle>Inventaire</CardTitle>
+                      <CardTitle>Inventaire et gestion vaccins Covid19</CardTitle>
                       <CardDescription>Gestion des stocks de vaccins</CardDescription>
                     </CardHeader>
                   </Card>
@@ -279,7 +279,7 @@ const AdminDashboard = () => {
                     <Card>
                       <CardHeader className="flex flex-row items-start justify-between gap-4">
                         <div>
-                          <CardTitle>Inventaire</CardTitle>
+                          <CardTitle>Inventaire et gestion vaccins Covid19</CardTitle>
                           <CardDescription>Gestion des stocks de vaccins</CardDescription>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
