@@ -14,6 +14,7 @@ import { VaccineList } from "@/components/VaccineList";
 import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
 import { AgeGroupStats } from "@/components/AgeGroupStats";
+import { WhatsAppHistory } from "@/components/WhatsAppHistory";
 import { PatientImport } from "@/components/PatientImport";
 import { PharmacyBooking } from "@/components/PharmacyBooking";
 
@@ -199,6 +200,13 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-emerald-50 dark:bg-emerald-950/30" onClick={() => setSelectedUtility('whatsapp-history')}>
+                    <CardHeader>
+                      <CardTitle>Historique WhatsApp</CardTitle>
+                      <CardDescription>Messages de rappel envoyés aux patients</CardDescription>
+                    </CardHeader>
+                  </Card>
+
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-cyan-50 dark:bg-cyan-950/30" onClick={() => setSelectedUtility('age-groups')}>
                     <CardHeader>
                       <CardTitle>IA</CardTitle>
@@ -336,6 +344,10 @@ const AdminDashboard = () => {
 
                   {selectedUtility === 'archives' && (
                     <ArchiveSeasonTool />
+                  )}
+
+                  {selectedUtility === 'whatsapp-history' && (
+                    <WhatsAppHistory />
                   )}
 
                   {selectedUtility === 'age-groups' && (
