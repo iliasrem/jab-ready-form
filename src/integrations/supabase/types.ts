@@ -28,6 +28,7 @@ export type Database = {
           status: Database["public"]["Enums"]["appointment_status"] | null
           updated_at: string
           user_id: string | null
+          whatsapp_reminder_sent_at: string | null
         }
         Insert: {
           appointment_date: string
@@ -42,6 +43,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["appointment_status"] | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_reminder_sent_at?: string | null
         }
         Update: {
           appointment_date?: string
@@ -56,6 +58,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["appointment_status"] | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_reminder_sent_at?: string | null
         }
         Relationships: [
           {
