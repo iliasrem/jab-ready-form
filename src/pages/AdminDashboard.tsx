@@ -252,17 +252,17 @@ const AdminDashboard = () => {
                     </CardHeader>
                   </Card>
 
-                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-pink-50 dark:bg-pink-950/30" onClick={() => setSelectedUtility('patients')}>
-                    <CardHeader>
-                      <CardTitle>Patients</CardTitle>
-                      <CardDescription>Liste de tous les patients enregistrés</CardDescription>
-                    </CardHeader>
-                  </Card>
-
                   <Card className="cursor-pointer hover:brightness-95 transition-all bg-secondary/70" onClick={() => setSelectedUtility('settings')}>
                     <CardHeader>
                       <CardTitle>Paramètres</CardTitle>
                       <CardDescription>Personnaliser l’ordre des onglets d’administration</CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-pink-50 dark:bg-pink-950/30" onClick={() => setSelectedUtility('patients')}>
+                    <CardHeader>
+                      <CardTitle>Patients</CardTitle>
+                      <CardDescription>Liste de tous les patients enregistrés</CardDescription>
                     </CardHeader>
                   </Card>
 
