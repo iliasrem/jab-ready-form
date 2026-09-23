@@ -47,7 +47,17 @@ export function AdminSettings({ tabOrder, onTabOrderChange, hiddenTabs, onHidden
 
   const resetOrder = () => saveOrder([...DEFAULT_ADMIN_TAB_ORDER]);
 
+  const saveHidden = (hidden: AdminTabId[]) => {
+    onHiddenTabsChange(hidden);
+    localStorage.setItem(ADMIN_HIDDEN_TABS_STORAGE_KEY, JSON.stringify(hidden));
+  };
+
+  const toggleHidden = (tab: AdminTabId) => {
+    saveHidden(hiddenTabs.includes(tab) ? hiddenTabs.filter((t) => t !== tab) : [...hiddenTabs, tab]);
+  };
+
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div className="space-y-1">
