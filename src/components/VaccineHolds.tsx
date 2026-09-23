@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { capitalizeName, cleanPhone } from "@/lib/utils";
 import { normalizePhoneNumber } from "@/components/AppointmentForm";
 import { format } from "date-fns";
-import { PackageCheck, Plus, Search, Loader2, Trash2, CheckCircle2, Phone, Undo2 } from "lucide-react";
+import { PackageCheck, Plus, Search, Loader2, Trash2, Phone, Undo2 } from "lucide-react";
 
 interface PatientLite {
   id: string;
@@ -440,12 +440,6 @@ export const VaccineHolds = () => {
                 <Undo2 className="h-4 w-4 mr-1" />
                 Réactiver
               </Button>
-            ) : (
-              <Button size="sm" variant="outline" disabled={busyId === h.id} onClick={() => setCollected(h, true)}>
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Annuler réservation
-              </Button>
-            )}
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setToDelete(h)} aria-label="Supprimer">
               <Trash2 className="h-4 w-4" />
             </Button>
