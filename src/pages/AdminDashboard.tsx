@@ -63,6 +63,7 @@ const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
   calendar: CalendarIcon,
   appointments: Clock,
   "pharmacy-booking": Store,
+  inventory: Package,
   utilities: Wrench,
 };
 
