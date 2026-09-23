@@ -105,6 +105,7 @@ async function mergeDuplicatePatients(
       "makeup_appointments",
       "vaccinations",
       "vaccine_reservations",
+      "vaccine_holds",
     ]) {
       const { error: reassignErr } = await supabase
         .from(table)

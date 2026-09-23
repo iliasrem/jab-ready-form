@@ -248,7 +248,7 @@ export const PatientImport = () => {
         const keeper = group[0];
         const merged = { id: keeper.id, birth_date: keeper.birth_date, phone: keeper.phone, email: keeper.email };
         for (const dup of group.slice(1)) {
-          for (const table of ["appointments", "makeup_appointments", "vaccinations", "vaccine_reservations"] as const) {
+          for (const table of ["appointments", "makeup_appointments", "vaccinations", "vaccine_reservations", "vaccine_holds"] as const) {
             await supabase.from(table).update({ patient_id: keeper.id }).eq("patient_id", dup.id);
           }
           if (!merged.birth_date && dup.birth_date) merged.birth_date = dup.birth_date;

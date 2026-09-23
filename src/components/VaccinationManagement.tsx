@@ -5,7 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -47,6 +57,8 @@ export const VaccinationManagement = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [activeHolds, setActiveHolds] = useState<Record<string, string>>({});
+  const [holdAlert, setHoldAlert] = useState<{ name: string; date: string } | null>(null);
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
@@ -131,10 +143,26 @@ export const VaccinationManagement = () => {
     });
   };
 
+  const fetchHolds = async () => {
+    const map: Record<string, string> = {};
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from("vaccine_holds")
+        .select("patient_id, reservation_date")
+        .eq("status", "reserved")
+        .range(from, from + 999);
+      if (error || !data) break;
+      data.forEach((h) => (map[h.patient_id] = h.reservation_date));
+      if (data.length < 1000) break;
+    }
+    setActiveHolds(map);
+  };
+
   useEffect(() => {
     fetchVaccinations();
     fetchPatients();
     fetchInventory();
+    fetchHolds();
   }, []);
 
   // Applique le filtre quand les vaccinations ou les dates changent
@@ -257,6 +285,16 @@ export const VaccinationManagement = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
+      // Le vaccin réservé est remis : on clôture la réservation
+      if (activeHolds[selectedPatientId]) {
+        await supabase
+          .from("vaccine_holds")
+          .update({ status: "collected", collected_at: new Date().toISOString() })
+          .eq("patient_id", selectedPatientId)
+          .eq("status", "reserved");
+        fetchHolds();
+      }
+
       // Reset form
       setSelectedPatientId("");
       setSelectedLotNumber("");
@@ -289,6 +327,27 @@ export const VaccinationManagement = () => {
 
   return (
     <div className="space-y-6">
+      <AlertDialog open={!!holdAlert} onOpenChange={(o) => !o && setHoldAlert(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <PackageCheck className="h-5 w-5 text-primary" />
+              Vaccin réservé
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-foreground">
+              <strong className="capitalize">{holdAlert?.name}</strong> a réservé son vaccin
+              {holdAlert?.date ? ` le ${format(new Date(`${holdAlert.date}T00:00:00`), "dd/MM/yyyy")}` : ""}.
+              <br />
+              <br />
+              Allez le chercher dans le <strong>pack de vaccins réservés</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Compris</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -330,6 +389,12 @@ export const VaccinationManagement = () => {
                               onSelect={() => {
                                 setSelectedPatientId(patient.id);
                                 setOpenPatientCombobox(false);
+                                if (activeHolds[patient.id]) {
+                                  setHoldAlert({
+                                    name: `${patient.last_name} ${patient.first_name}`,
+                                    date: activeHolds[patient.id],
+                                  });
+                                }
                               }}
                             >
                               <Check
@@ -339,6 +404,12 @@ export const VaccinationManagement = () => {
                                 )}
                               />
                               {patient.last_name} {patient.first_name}
+                              {activeHolds[patient.id] && (
+                                <Badge variant="secondary" className="ml-auto gap-1">
+                                  <PackageCheck className="h-3 w-3" />
+                                  Réservé
+                                </Badge>
+                              )}
                             </CommandItem>
                           ))}
                         </CommandGroup>
