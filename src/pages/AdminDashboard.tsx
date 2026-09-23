@@ -9,7 +9,6 @@ import { VaccineInventory } from "@/components/VaccineInventory";
 import { VaccinationManagement } from "@/components/VaccinationManagement";
 import { ExistingPatientAppointment } from "@/components/ExistingPatientAppointment";
 import { Statistics } from "@/components/Statistics";
-import { VaccineReservationsTab } from "@/components/VaccineReservationsTab";
 import { VaccineList } from "@/components/VaccineList";
 import { ArchiveSeasonTool } from "@/components/archives/ArchiveSeasonTool";
 import { SeasonHistoryViewer } from "@/components/archives/SeasonHistoryViewer";
@@ -41,7 +40,6 @@ import {
   Store,
   Syringe,
   Wrench,
-  ClipboardList,
   Copy,
   PackageCheck
 } from "lucide-react";
@@ -150,10 +148,6 @@ const AdminDashboard = () => {
                   <Store className="h-3 w-3 shrink-0" />
                   RDV via pharmacie
                 </TabsTrigger>
-                <TabsTrigger value="reservations" className="flex-[1.5] min-w-0 text-[10px] leading-tight flex items-center justify-center gap-1 px-1 py-1.5">
-                  <ClipboardList className="h-3 w-3 shrink-0" />
-                  Réservation de vaccins manquants
-                </TabsTrigger>
 
                 <TabsTrigger value="utilities" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
                   <Wrench className="h-3 w-3 shrink-0" />
@@ -189,9 +183,6 @@ const AdminDashboard = () => {
               <VaccineHolds />
             </TabsContent>
 
-            <TabsContent value="reservations" className="mt-6">
-              <VaccineReservationsTab />
-            </TabsContent>
 
             <TabsContent value="utilities" className="mt-6">
               {!selectedUtility ? (
