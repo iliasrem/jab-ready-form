@@ -17,6 +17,7 @@ import { WhatsAppHistory } from "@/components/WhatsAppHistory";
 import { PatientImport } from "@/components/PatientImport";
 import { PharmacyBooking } from "@/components/PharmacyBooking";
 import { VaccineHolds } from "@/components/VaccineHolds";
+import { AdminSettings } from "@/components/AdminSettings";
 
 
 import Calendar from "./Calendar";
@@ -46,6 +47,22 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ADMIN_TAB_LABELS,
+  ADMIN_TAB_ORDER_STORAGE_KEY,
+  AdminTabId,
+  DEFAULT_ADMIN_TAB_ORDER,
+  normalizeAdminTabOrder,
+} from "@/lib/adminTabs";
+
+const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
+  vaccination: Syringe,
+  "vaccine-holds": PackageCheck,
+  calendar: CalendarIcon,
+  appointments: Clock,
+  "pharmacy-booking": Store,
+  utilities: Wrench,
+};
 
 const AdminDashboard = () => {
   const { toast } = useToast();
@@ -53,6 +70,14 @@ const AdminDashboard = () => {
   const [selectedUtility, setSelectedUtility] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "vaccination");
+  const [tabOrder, setTabOrder] = useState<AdminTabId[]>(() => {
+    try {
+      const storedOrder = localStorage.getItem(ADMIN_TAB_ORDER_STORAGE_KEY);
+      return normalizeAdminTabOrder(storedOrder ? JSON.parse(storedOrder) : DEFAULT_ADMIN_TAB_ORDER);
+    } catch {
+      return [...DEFAULT_ADMIN_TAB_ORDER];
+    }
+  });
 
   // Permet d'ouvrir un onglet précis via ?tab=... (bouton du header)
   useEffect(() => {
@@ -128,31 +153,15 @@ const AdminDashboard = () => {
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <TabsList className="flex w-full gap-1">
-                <TabsTrigger value="vaccination" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <Syringe className="h-3 w-3 shrink-0" />
-                  Vaccination
-                </TabsTrigger>
-                <TabsTrigger value="vaccine-holds" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <PackageCheck className="h-3 w-3 shrink-0" />
-                  Vaccins réservés
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <CalendarIcon className="h-3 w-3 shrink-0" />
-                  RDV du jour
-                </TabsTrigger>
-                <TabsTrigger value="appointments" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <Clock className="h-3 w-3 shrink-0" />
-                  Tous les RDV
-                </TabsTrigger>
-                <TabsTrigger value="pharmacy-booking" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <Store className="h-3 w-3 shrink-0" />
-                  RDV via pharmacie
-                </TabsTrigger>
-
-                <TabsTrigger value="utilities" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
-                  <Wrench className="h-3 w-3 shrink-0" />
-                  Utilitaires
-                </TabsTrigger>
+                {tabOrder.map((tab) => {
+                  const Icon = ADMIN_TAB_ICONS[tab];
+                  return (
+                    <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                      <Icon className="h-3 w-3 shrink-0" />
+                      {ADMIN_TAB_LABELS[tab]}
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
               <div className="pb-4"></div>
             </div>
@@ -240,6 +249,13 @@ const AdminDashboard = () => {
                     <CardHeader>
                       <CardTitle>Noms des vaccins grippe disponibles</CardTitle>
                       <CardDescription>Gérer la liste des vaccins disponibles</CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:brightness-95 transition-all bg-secondary/70" onClick={() => setSelectedUtility('settings')}>
+                    <CardHeader>
+                      <CardTitle>Paramètres</CardTitle>
+                      <CardDescription>Personnaliser l’ordre des onglets d’administration</CardDescription>
                     </CardHeader>
                   </Card>
 
@@ -333,6 +349,10 @@ const AdminDashboard = () => {
 
                   {selectedUtility === 'patients' && (
                     <PatientList />
+                  )}
+
+                  {selectedUtility === 'settings' && (
+                    <AdminSettings tabOrder={tabOrder} onTabOrderChange={setTabOrder} />
                   )}
 
                   {selectedUtility === 'vaccines' && (
