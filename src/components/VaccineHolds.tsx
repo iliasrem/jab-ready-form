@@ -435,11 +435,12 @@ export const VaccineHolds = () => {
         )}
         <TableCell className="text-right">
           <div className="flex justify-end gap-2">
-            {collected ? (
+            {collected && (
               <Button size="sm" variant="outline" disabled={busyId === h.id} onClick={() => setCollected(h, false)}>
                 <Undo2 className="h-4 w-4 mr-1" />
                 Réactiver
               </Button>
+            )}
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setToDelete(h)} aria-label="Supprimer">
               <Trash2 className="h-4 w-4" />
             </Button>
