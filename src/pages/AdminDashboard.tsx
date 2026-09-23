@@ -175,7 +175,7 @@ const AdminDashboard = () => {
                 {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
-                    <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-xs md:text-sm font-bold text-black data-[state=active]:text-foreground flex items-center justify-center gap-1.5 px-2 py-2">
+                    <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-xs md:text-sm text-black data-[state=active]:text-foreground flex items-center justify-center gap-1.5 px-2 py-2">
                       <Icon className="h-4 w-4 md:h-4 md:w-4 shrink-0" strokeWidth={2.5} />
                       {ADMIN_TAB_LABELS[tab]}
                     </TabsTrigger>
