@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, GripVertical, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  ADMIN_HIDDEN_TABS_STORAGE_KEY,
   ADMIN_TAB_LABELS,
   ADMIN_TAB_ORDER_STORAGE_KEY,
+  ALWAYS_VISIBLE_ADMIN_TAB,
   AdminTabId,
   DEFAULT_ADMIN_TAB_ORDER,
 } from "@/lib/adminTabs";
@@ -14,9 +16,11 @@ import {
 interface AdminSettingsProps {
   tabOrder: AdminTabId[];
   onTabOrderChange: (order: AdminTabId[]) => void;
+  hiddenTabs: AdminTabId[];
+  onHiddenTabsChange: (hidden: AdminTabId[]) => void;
 }
 
-export function AdminSettings({ tabOrder, onTabOrderChange }: AdminSettingsProps) {
+export function AdminSettings({ tabOrder, onTabOrderChange, hiddenTabs, onHiddenTabsChange }: AdminSettingsProps) {
   const [draggedTab, setDraggedTab] = useState<AdminTabId | null>(null);
   const [dragOverTab, setDragOverTab] = useState<AdminTabId | null>(null);
 
