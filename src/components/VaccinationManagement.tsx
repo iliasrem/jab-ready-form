@@ -58,7 +58,8 @@ export const VaccinationManagement = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [activeHolds, setActiveHolds] = useState<Record<string, string>>({});
-  const [holdAlert, setHoldAlert] = useState<{ name: string; date: string } | null>(null);
+  const [holdVaccines, setHoldVaccines] = useState<Record<string, string>>({});
+  const [holdAlert, setHoldAlert] = useState<{ name: string; date: string; vaccine?: string } | null>(null);
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
@@ -145,17 +146,23 @@ export const VaccinationManagement = () => {
 
   const fetchHolds = async () => {
     const map: Record<string, string> = {};
+    const vMap: Record<string, string> = {};
     for (let from = 0; ; from += 1000) {
       const { data, error } = await supabase
         .from("vaccine_holds")
-        .select("patient_id, reservation_date")
+        .select("patient_id, reservation_date, vaccines:vaccine_id (name)")
         .eq("status", "reserved")
         .range(from, from + 999);
       if (error || !data) break;
-      data.forEach((h) => (map[h.patient_id] = h.reservation_date));
+      data.forEach((h) => {
+        map[h.patient_id] = h.reservation_date;
+        const name = (h as unknown as { vaccines: { name: string } | null }).vaccines?.name;
+        if (name) vMap[h.patient_id] = name;
+      });
       if (data.length < 1000) break;
     }
     setActiveHolds(map);
+    setHoldVaccines(vMap);
   };
 
   useEffect(() => {
@@ -336,6 +343,12 @@ export const VaccinationManagement = () => {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base text-foreground">
               <strong className="capitalize">{holdAlert?.name}</strong> a réservé son vaccin
+              {holdAlert?.vaccine ? (
+                <>
+                  {" "}
+                  <strong>{holdAlert.vaccine}</strong>
+                </>
+              ) : null}
               {holdAlert?.date ? ` le ${format(new Date(`${holdAlert.date}T00:00:00`), "dd/MM/yyyy")}` : ""}.
               <br />
               <br />
@@ -393,6 +406,7 @@ export const VaccinationManagement = () => {
                                   setHoldAlert({
                                     name: `${patient.last_name} ${patient.first_name}`,
                                     date: activeHolds[patient.id],
+                                    vaccine: holdVaccines[patient.id],
                                   });
                                 }
                               }}

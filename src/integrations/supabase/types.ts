@@ -618,6 +618,7 @@ export type Database = {
           reservation_date: string
           status: string
           updated_at: string
+          vaccine_id: string | null
         }
         Insert: {
           collected_at?: string | null
@@ -628,6 +629,7 @@ export type Database = {
           reservation_date?: string
           status?: string
           updated_at?: string
+          vaccine_id?: string | null
         }
         Update: {
           collected_at?: string | null
@@ -638,6 +640,7 @@ export type Database = {
           reservation_date?: string
           status?: string
           updated_at?: string
+          vaccine_id?: string | null
         }
         Relationships: [
           {
@@ -645,6 +648,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaccine_holds_vaccine_id_fkey"
+            columns: ["vaccine_id"]
+            isOneToOne: false
+            referencedRelation: "vaccines"
             referencedColumns: ["id"]
           },
         ]

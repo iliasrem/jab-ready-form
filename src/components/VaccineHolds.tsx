@@ -39,14 +39,21 @@ interface PatientLite {
   birth_date: string | null;
 }
 
+interface VaccineLite {
+  id: string;
+  name: string;
+}
+
 interface Hold {
   id: string;
   patient_id: string;
+  vaccine_id: string | null;
   reservation_date: string;
   status: "reserved" | "collected";
   collected_at: string | null;
   notes: string | null;
   patients: PatientLite | null;
+  vaccines: { name: string } | null;
 }
 
 const PATIENT_FIELDS = "id, first_name, last_name, phone, birth_date";
@@ -83,6 +90,7 @@ export const VaccineHolds = () => {
   const { user } = useAuth();
 
   const [holds, setHolds] = useState<Hold[]>([]);
+  const [vaccines, setVaccines] = useState<VaccineLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCollected, setShowCollected] = useState(false);
 
@@ -103,7 +111,9 @@ export const VaccineHolds = () => {
     for (let from = 0; ; from += pageSize) {
       const { data, error } = await supabase
         .from("vaccine_holds")
-        .select(`id, patient_id, reservation_date, status, collected_at, notes, patients:patient_id (${PATIENT_FIELDS})`)
+        .select(
+          `id, patient_id, vaccine_id, reservation_date, status, collected_at, notes, patients:patient_id (${PATIENT_FIELDS}), vaccines:vaccine_id (name)`
+        )
         .order("created_at", { ascending: true })
         .range(from, from + pageSize - 1);
       if (error) {
@@ -116,11 +126,25 @@ export const VaccineHolds = () => {
     }
     setHolds(all);
     setLoading(false);
-  }, [toast]);
+  }, []);
+
+  const fetchVaccines = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("vaccines")
+      .select("id, name")
+      .eq("is_available", true)
+      .order("name");
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setVaccines((data as VaccineLite[]) || []);
+  }, []);
 
   useEffect(() => {
     fetchHolds();
-  }, [fetchHolds]);
+    fetchVaccines();
+  }, [fetchHolds, fetchVaccines]);
 
   const activeHolds = useMemo(
     () => holds.filter((h) => h.status === "reserved").sort((a, b) => byName(a.patients, b.patients)),
@@ -131,6 +155,14 @@ export const VaccineHolds = () => {
     [holds]
   );
   const reservedPatientIds = useMemo(() => new Set(activeHolds.map((h) => h.patient_id)), [activeHolds]);
+  const countsByVaccine = useMemo(() => {
+    const m = new Map<string, number>();
+    activeHolds.forEach((h) => {
+      const name = h.vaccines?.name ?? "Non précisé";
+      m.set(name, (m.get(name) ?? 0) + 1);
+    });
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0], "fr"));
+  }, [activeHolds]);
 
   // Recherche côté serveur (nom, prénom, date de naissance, téléphone)
   useEffect(() => {
@@ -174,13 +206,13 @@ export const VaccineHolds = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const reserveFor = async (patient: PatientLite) => {
+  const reserveFor = async (patient: PatientLite, vaccine: VaccineLite) => {
     if (reservedPatientIds.has(patient.id)) {
       toast({ title: "Déjà réservé", description: `${capitalizeName(patient.last_name)} ${capitalizeName(patient.first_name)} a déjà un vaccin réservé.` });
       return;
     }
     setBusyId(patient.id);
-    const { error } = await supabase.from("vaccine_holds").insert({ patient_id: patient.id });
+    const { error } = await supabase.from("vaccine_holds").insert({ patient_id: patient.id, vaccine_id: vaccine.id });
     setBusyId(null);
     if (error) {
       console.error(error);
@@ -191,7 +223,7 @@ export const VaccineHolds = () => {
       });
       return;
     }
-    toast({ title: "Vaccin réservé", description: `${capitalizeName(patient.last_name)} ${capitalizeName(patient.first_name)}` });
+    toast({ title: `${vaccine.name} réservé`, description: `${capitalizeName(patient.last_name)} ${capitalizeName(patient.first_name)}` });
     setSearchTerm("");
     setResults([]);
     fetchHolds();
@@ -217,7 +249,7 @@ export const VaccineHolds = () => {
       ? "Format attendu : JJ/MM/AAAA"
       : "";
 
-  const createPatientAndReserve = async () => {
+  const createPatientAndReserve = async (vaccine: VaccineLite) => {
     const last = capitalizeName(newForm.last_name);
     const first = capitalizeName(newForm.first_name);
     if (!last || !first) {
@@ -245,10 +277,12 @@ export const VaccineHolds = () => {
         .single();
       if (error || !patient) throw error;
 
-      const { error: holdErr } = await supabase.from("vaccine_holds").insert({ patient_id: patient.id });
+      const { error: holdErr } = await supabase
+        .from("vaccine_holds")
+        .insert({ patient_id: patient.id, vaccine_id: vaccine.id });
       if (holdErr) throw holdErr;
 
-      toast({ title: "Patient ajouté et vaccin réservé", description: `${last} ${first}` });
+      toast({ title: `Patient ajouté – ${vaccine.name} réservé`, description: `${last} ${first}` });
       setNewOpen(false);
       setSearchTerm("");
       setResults([]);
@@ -308,6 +342,9 @@ export const VaccineHolds = () => {
             <span className="text-muted-foreground">—</span>
           )}
         </TableCell>
+        <TableCell>
+          {h.vaccines?.name ? <Badge variant="outline">{h.vaccines.name}</Badge> : <span className="text-muted-foreground">—</span>}
+        </TableCell>
         <TableCell className="tabular-nums">{fmtDate(h.reservation_date)}</TableCell>
         {collected && (
           <TableCell className="tabular-nums">
@@ -349,13 +386,24 @@ export const VaccineHolds = () => {
           </p>
         </div>
         <Card className="bg-primary/10 border-primary/30 sm:min-w-[16rem]">
-          <CardContent className="py-3 px-5 flex items-center justify-between gap-4">
-            <div className="text-sm font-medium leading-tight">
-              Vaccins à mettre
-              <br />
-              de côté
+          <CardContent className="py-3 px-5 space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-sm font-medium leading-tight">
+                Vaccins à mettre
+                <br />
+                de côté
+              </div>
+              <div className="text-4xl font-bold text-primary tabular-nums">{loading ? "…" : activeHolds.length}</div>
             </div>
-            <div className="text-4xl font-bold text-primary tabular-nums">{loading ? "…" : activeHolds.length}</div>
+            {!loading && countsByVaccine.length > 0 && (
+              <div className="flex flex-wrap gap-2 border-t border-primary/20 pt-2">
+                {countsByVaccine.map(([name, n]) => (
+                  <Badge key={name} variant="secondary" className="tabular-nums">
+                    {name} : {n}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -423,10 +471,18 @@ export const VaccineHolds = () => {
                           <TableCell className="text-right">
                             {already ? (
                               <Badge variant="secondary">Déjà réservé</Badge>
+                            ) : busyId === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                            ) : vaccines.length === 0 ? (
+                              <span className="text-xs text-muted-foreground">Aucun vaccin disponible</span>
                             ) : (
-                              <Button size="sm" disabled={busyId === p.id} onClick={() => reserveFor(p)}>
-                                {busyId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Réserver"}
-                              </Button>
+                              <div className="flex justify-end gap-2">
+                                {vaccines.map((v) => (
+                                  <Button key={v.id} size="sm" disabled={!!busyId} onClick={() => reserveFor(p, v)}>
+                                    {v.name}
+                                  </Button>
+                                ))}
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
@@ -466,6 +522,7 @@ export const VaccineHolds = () => {
                   <TableHead>Prénom</TableHead>
                   <TableHead>Date de naissance</TableHead>
                   <TableHead>Téléphone</TableHead>
+                  <TableHead>Vaccin</TableHead>
                   <TableHead>Réservé le</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -487,6 +544,7 @@ export const VaccineHolds = () => {
                       <TableHead>Prénom</TableHead>
                       <TableHead>Date de naissance</TableHead>
                       <TableHead>Téléphone</TableHead>
+                      <TableHead>Vaccin</TableHead>
                       <TableHead>Réservé le</TableHead>
                       <TableHead>Remis le</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -532,14 +590,25 @@ export const VaccineHolds = () => {
               <Input id="hold-phone" type="tel" value={newForm.phone} onChange={(e) => setNewForm({ ...newForm, phone: e.target.value })} />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:items-center">
             <Button variant="outline" onClick={() => setNewOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={createPatientAndReserve} disabled={creating || !newForm.last_name.trim() || !newForm.first_name.trim() || !!birthError}>
-              {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Ajouter et réserver
-            </Button>
+            <span className="text-sm text-muted-foreground sm:ml-auto">Ajouter et réserver :</span>
+            {vaccines.length === 0 ? (
+              <span className="text-sm text-destructive">Aucun vaccin disponible</span>
+            ) : (
+              vaccines.map((v) => (
+                <Button
+                  key={v.id}
+                  onClick={() => createPatientAndReserve(v)}
+                  disabled={creating || !newForm.last_name.trim() || !newForm.first_name.trim() || !!birthError}
+                >
+                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {v.name}
+                </Button>
+              ))
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
