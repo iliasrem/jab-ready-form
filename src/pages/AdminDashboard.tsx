@@ -17,6 +17,7 @@ import { AgeGroupStats } from "@/components/AgeGroupStats";
 import { WhatsAppHistory } from "@/components/WhatsAppHistory";
 import { PatientImport } from "@/components/PatientImport";
 import { PharmacyBooking } from "@/components/PharmacyBooking";
+import { VaccineHolds } from "@/components/VaccineHolds";
 
 
 import Calendar from "./Calendar";
@@ -41,7 +42,8 @@ import {
   Syringe,
   Wrench,
   ClipboardList,
-  Copy
+  Copy,
+  PackageCheck
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,6 +134,10 @@ const AdminDashboard = () => {
                   <Syringe className="h-3 w-3 shrink-0" />
                   Vaccination
                 </TabsTrigger>
+                <TabsTrigger value="vaccine-holds" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
+                  <PackageCheck className="h-3 w-3 shrink-0" />
+                  Vaccins réservés
+                </TabsTrigger>
                 <TabsTrigger value="calendar" className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
                   <CalendarIcon className="h-3 w-3 shrink-0" />
                   RDV du jour
@@ -177,6 +183,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="vaccination" className="mt-6">
               <VaccinationManagement />
+            </TabsContent>
+
+            <TabsContent value="vaccine-holds" className="mt-6">
+              <VaccineHolds />
             </TabsContent>
 
             <TabsContent value="reservations" className="mt-6">
