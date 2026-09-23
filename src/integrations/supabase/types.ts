@@ -608,6 +608,47 @@ export type Database = {
         }
         Relationships: []
       }
+      vaccine_holds: {
+        Row: {
+          collected_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string
+          reservation_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          reservation_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          reservation_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaccine_holds_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vaccine_inventory: {
         Row: {
           created_at: string
