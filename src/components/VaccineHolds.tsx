@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { capitalizeName, cleanPhone } from "@/lib/utils";
+import { normalizePhoneNumber } from "@/components/AppointmentForm";
 import { format } from "date-fns";
 import { PackageCheck, Plus, Search, Loader2, Trash2, CheckCircle2, Phone, Undo2 } from "lucide-react";
 
@@ -84,6 +85,52 @@ const byName = (a: PatientLite | null, b: PatientLite | null) =>
   `${a?.last_name ?? ""} ${a?.first_name ?? ""}`.localeCompare(`${b?.last_name ?? ""} ${b?.first_name ?? ""}`, "fr", {
     sensitivity: "base",
   });
+
+// Champ téléphone éditable directement dans la liste (Entrée = enregistrer, Échap = vider)
+const InlinePhoneInput = ({
+  patientId,
+  onSaved,
+}: {
+  patientId: string;
+  onSaved: (patientId: string, raw: string) => Promise<boolean>;
+}) => {
+  const [value, setValue] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!value.trim() || saving) return;
+    setSaving(true);
+    const ok = await onSaved(patientId, value);
+    setSaving(false);
+    if (ok) setValue("");
+  };
+
+  return (
+    <div className="relative w-40">
+      <Phone className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+      <Input
+        type="tel"
+        inputMode="tel"
+        value={value}
+        disabled={saving}
+        placeholder="Ajouter un n°"
+        aria-label="Ajouter un numéro de téléphone"
+        className="h-8 pl-6 pr-7 text-sm border-dashed"
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          } else if (e.key === "Escape") {
+            setValue("");
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+      />
+      {saving && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin text-muted-foreground" />}
+    </div>
+  );
+};
 
 export const VaccineHolds = () => {
   const { toast } = useToast();
@@ -326,6 +373,31 @@ export const VaccineHolds = () => {
     fetchHolds();
   };
 
+  // Enregistre le téléphone dans la fiche patient et met à jour la liste localement
+  const savePatientPhone = async (patientId: string, raw: string): Promise<boolean> => {
+    const phone = normalizePhoneNumber(raw);
+    if (!phone) {
+      toast({
+        title: "Numéro invalide",
+        description: "Ex. 0471 12 34 56 ou +33 6 12 34 56 78.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    const { error } = await supabase.from("patients").update({ phone }).eq("id", patientId);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erreur", description: "Impossible d'enregistrer le numéro", variant: "destructive" });
+      return false;
+    }
+    setHolds((prev) =>
+      prev.map((x) => (x.patient_id === patientId && x.patients ? { ...x, patients: { ...x.patients, phone } } : x))
+    );
+    toast({ title: "Téléphone enregistré", description: phone });
+    return true;
+  };
+
+
   const renderRows = (list: Hold[], collected: boolean) =>
     list.map((h) => (
       <TableRow key={h.id}>
@@ -339,7 +411,7 @@ export const VaccineHolds = () => {
               {h.patients.phone}
             </a>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <InlinePhoneInput patientId={h.patient_id} onSaved={savePatientPhone} />
           )}
         </TableCell>
         <TableCell>
