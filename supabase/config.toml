@@ -13,7 +13,8 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.google-calendar-sync]
-verify_jwt = true
+verify_jwt = false
 
-[functions.google-calendar-auth]
-verify_jwt = true
+[functions.send-daily-appointments-email]
+verify_jwt = false
+
