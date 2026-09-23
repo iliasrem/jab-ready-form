@@ -80,6 +80,22 @@ const AdminDashboard = () => {
       return [...DEFAULT_ADMIN_TAB_ORDER];
     }
   });
+  const [hiddenTabs, setHiddenTabs] = useState<AdminTabId[]>(() => {
+    try {
+      const stored = localStorage.getItem(ADMIN_HIDDEN_TABS_STORAGE_KEY);
+      return normalizeHiddenAdminTabs(stored ? JSON.parse(stored) : []);
+    } catch {
+      return [];
+    }
+  });
+  const visibleTabs = tabOrder.filter((tab) => !hiddenTabs.includes(tab));
+
+  // Si l'onglet actif est masqué, bascule sur le premier onglet visible
+  useEffect(() => {
+    if (hiddenTabs.includes(activeTab as AdminTabId) && visibleTabs.length > 0) {
+      setActiveTab(visibleTabs[0]);
+    }
+  }, [hiddenTabs]);
 
   // Permet d'ouvrir un onglet précis via ?tab=... (bouton du header)
   useEffect(() => {
