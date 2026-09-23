@@ -117,9 +117,10 @@ const InlinePhoneInput = ({
         aria-label="Ajouter un numéro de téléphone"
         className="h-8 pl-6 pr-7 text-sm border-dashed"
         onChange={(e) => setValue(e.target.value)}
+        onBlur={() => submit()}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
+          if (e.key === "Enter" || e.key === "Tab") {
+            if (e.key === "Enter") e.preventDefault();
             submit();
           } else if (e.key === "Escape") {
             setValue("");
@@ -128,6 +129,7 @@ const InlinePhoneInput = ({
         }}
       />
       {saving && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin text-muted-foreground" />}
+
     </div>
   );
 };
@@ -384,10 +386,18 @@ export const VaccineHolds = () => {
       });
       return false;
     }
-    const { error } = await supabase.from("patients").update({ phone }).eq("id", patientId);
-    if (error) {
-      console.error(error);
-      toast({ title: "Erreur", description: "Impossible d'enregistrer le numéro", variant: "destructive" });
+    const { data, error } = await supabase
+      .from("patients")
+      .update({ phone })
+      .eq("id", patientId)
+      .select("id, phone");
+    if (error || !data || data.length === 0) {
+      console.error("phone update failed", error);
+      toast({
+        title: "Erreur",
+        description: error?.message ?? "Le numéro n'a pas pu être enregistré (fiche patient introuvable ou accès refusé).",
+        variant: "destructive",
+      });
       return false;
     }
     setHolds((prev) =>
