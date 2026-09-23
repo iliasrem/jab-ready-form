@@ -48,11 +48,13 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
+  ADMIN_HIDDEN_TABS_STORAGE_KEY,
   ADMIN_TAB_LABELS,
   ADMIN_TAB_ORDER_STORAGE_KEY,
   AdminTabId,
   DEFAULT_ADMIN_TAB_ORDER,
   normalizeAdminTabOrder,
+  normalizeHiddenAdminTabs,
 } from "@/lib/adminTabs";
 
 const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
@@ -78,6 +80,22 @@ const AdminDashboard = () => {
       return [...DEFAULT_ADMIN_TAB_ORDER];
     }
   });
+  const [hiddenTabs, setHiddenTabs] = useState<AdminTabId[]>(() => {
+    try {
+      const stored = localStorage.getItem(ADMIN_HIDDEN_TABS_STORAGE_KEY);
+      return normalizeHiddenAdminTabs(stored ? JSON.parse(stored) : []);
+    } catch {
+      return [];
+    }
+  });
+  const visibleTabs = tabOrder.filter((tab) => !hiddenTabs.includes(tab));
+
+  // Si l'onglet actif est masqué, bascule sur le premier onglet visible
+  useEffect(() => {
+    if (hiddenTabs.includes(activeTab as AdminTabId) && visibleTabs.length > 0) {
+      setActiveTab(visibleTabs[0]);
+    }
+  }, [hiddenTabs]);
 
   // Permet d'ouvrir un onglet précis via ?tab=... (bouton du header)
   useEffect(() => {
@@ -153,7 +171,7 @@ const AdminDashboard = () => {
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <TabsList className="flex w-full gap-1">
-                {tabOrder.map((tab) => {
+                {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
                     <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
@@ -352,7 +370,12 @@ const AdminDashboard = () => {
                   )}
 
                   {selectedUtility === 'settings' && (
-                    <AdminSettings tabOrder={tabOrder} onTabOrderChange={setTabOrder} />
+                    <AdminSettings
+                      tabOrder={tabOrder}
+                      onTabOrderChange={setTabOrder}
+                      hiddenTabs={hiddenTabs}
+                      onHiddenTabsChange={setHiddenTabs}
+                    />
                   )}
 
                   {selectedUtility === 'vaccines' && (

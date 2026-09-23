@@ -19,6 +19,21 @@ export const ADMIN_TAB_LABELS: Record<AdminTabId, string> = {
 };
 
 export const ADMIN_TAB_ORDER_STORAGE_KEY = "admin-tab-order";
+export const ADMIN_HIDDEN_TABS_STORAGE_KEY = "admin-hidden-tabs";
+
+/** Onglet toujours visible : il contient les paramètres. */
+export const ALWAYS_VISIBLE_ADMIN_TAB: AdminTabId = "utilities";
+
+export function normalizeHiddenAdminTabs(value: unknown): AdminTabId[] {
+  const validTabs = new Set<AdminTabId>(DEFAULT_ADMIN_TAB_ORDER);
+  const hidden = Array.isArray(value)
+    ? value.filter(
+        (tab): tab is AdminTabId =>
+          typeof tab === "string" && validTabs.has(tab as AdminTabId) && tab !== ALWAYS_VISIBLE_ADMIN_TAB,
+      )
+    : [];
+  return [...new Set(hidden)];
+}
 
 export function normalizeAdminTabOrder(value: unknown): AdminTabId[] {
   const validTabs = new Set<AdminTabId>(DEFAULT_ADMIN_TAB_ORDER);
