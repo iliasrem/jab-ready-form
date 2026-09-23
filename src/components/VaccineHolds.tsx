@@ -361,7 +361,7 @@ export const VaccineHolds = () => {
             ) : (
               <Button size="sm" variant="outline" disabled={busyId === h.id} onClick={() => setCollected(h, true)}>
                 <CheckCircle2 className="h-4 w-4 mr-1" />
-                Remis
+                Annuler réservation
               </Button>
             )}
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setToDelete(h)} aria-label="Supprimer">
