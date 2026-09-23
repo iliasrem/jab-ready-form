@@ -63,6 +63,7 @@ const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
   calendar: CalendarIcon,
   appointments: Clock,
   "pharmacy-booking": Store,
+  inventory: Package,
   utilities: Wrench,
 };
 
@@ -209,6 +210,39 @@ const AdminDashboard = () => {
             <TabsContent value="vaccine-holds" className="mt-6">
               <VaccineHolds />
             </TabsContent>
+
+            <TabsContent value="inventory" className="mt-6">
+              <Card>
+                <CardHeader className="flex flex-row items-start justify-between gap-4">
+                  <div>
+                    <CardTitle>Inventaire et gestion vaccins Covid19</CardTitle>
+                    <CardDescription>Gestion des stocks de vaccins</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                    CNK
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-1 py-0 font-normal text-muted-foreground hover:text-foreground"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText("5871900");
+                        toast({ title: "Copié", description: "Code CNK copié dans le presse-papiers." });
+                      }}
+                      aria-label="Copier le code CNK 5871900"
+                    >
+                      5871900
+                      <Copy className="ml-1 h-3 w-3" />
+                    </Button>
+                    – COMIRNATY XFG (10 flacons)
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <VaccineInventory />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+
 
 
             <TabsContent value="utilities" className="mt-6">
