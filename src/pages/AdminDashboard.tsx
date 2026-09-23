@@ -40,7 +40,6 @@ import {
   Store,
   Syringe,
   Wrench,
-  ClipboardList,
   Copy,
   PackageCheck
 } from "lucide-react";
