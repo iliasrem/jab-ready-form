@@ -133,5 +133,50 @@ export function AdminSettings({ tabOrder, onTabOrderChange, hiddenTabs, onHidden
         </TooltipProvider>
       </CardContent>
     </Card>
+
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div className="space-y-1">
+          <CardTitle>Visibilité des onglets</CardTitle>
+          <CardDescription>Masquez les onglets que vous n’utilisez pas. L’onglet Utilitaires reste toujours visible.</CardDescription>
+        </div>
+        {hiddenTabs.length > 0 && (
+          <Button variant="outline" size="sm" onClick={() => saveHidden([])}>
+            <RotateCcw className="h-4 w-4" />
+            Tout afficher
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="mx-auto max-w-2xl space-y-2">
+          {tabOrder.map((tab) => {
+            const hidden = hiddenTabs.includes(tab);
+            const locked = tab === ALWAYS_VISIBLE_ADMIN_TAB;
+            return (
+              <div
+                key={tab}
+                className={`flex min-h-14 items-center gap-3 rounded-md border bg-background px-3 ${hidden ? "opacity-60" : ""}`}
+              >
+                {hidden ? (
+                  <EyeOff className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                )}
+                <span className="min-w-0 flex-1 font-medium">{ADMIN_TAB_LABELS[tab]}</span>
+                <Button
+                  variant={hidden ? "default" : "outline"}
+                  size="sm"
+                  disabled={locked}
+                  onClick={() => toggleHidden(tab)}
+                >
+                  {locked ? "Toujours visible" : hidden ? "Afficher" : "Masquer"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+    </div>
   );
 }
