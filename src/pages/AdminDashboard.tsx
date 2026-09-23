@@ -370,7 +370,12 @@ const AdminDashboard = () => {
                   )}
 
                   {selectedUtility === 'settings' && (
-                    <AdminSettings tabOrder={tabOrder} onTabOrderChange={setTabOrder} />
+                    <AdminSettings
+                      tabOrder={tabOrder}
+                      onTabOrderChange={setTabOrder}
+                      hiddenTabs={hiddenTabs}
+                      onHiddenTabsChange={setHiddenTabs}
+                    />
                   )}
 
                   {selectedUtility === 'vaccines' && (
