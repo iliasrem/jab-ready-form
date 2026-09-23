@@ -48,11 +48,13 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
+  ADMIN_HIDDEN_TABS_STORAGE_KEY,
   ADMIN_TAB_LABELS,
   ADMIN_TAB_ORDER_STORAGE_KEY,
   AdminTabId,
   DEFAULT_ADMIN_TAB_ORDER,
   normalizeAdminTabOrder,
+  normalizeHiddenAdminTabs,
 } from "@/lib/adminTabs";
 
 const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
