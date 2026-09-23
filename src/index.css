@@ -119,3 +119,34 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+/* iOS / installed-app comfort: safe areas, no rubber-band zoom, tap feedback */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100svh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Avoid iOS Safari auto-zoom when focusing a field */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+}
