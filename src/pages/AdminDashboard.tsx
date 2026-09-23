@@ -171,7 +171,7 @@ const AdminDashboard = () => {
           <div className="py-6 px-4">
             <div className="container mx-auto">
               <TabsList className="flex w-full gap-1">
-                {tabOrder.map((tab) => {
+                {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
                     <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-xs flex items-center justify-center gap-1 px-2 py-1.5">
