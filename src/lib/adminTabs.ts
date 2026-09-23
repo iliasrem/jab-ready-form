@@ -4,6 +4,7 @@ export const DEFAULT_ADMIN_TAB_ORDER = [
   "calendar",
   "appointments",
   "pharmacy-booking",
+  "inventory",
   "utilities",
 ] as const;
 
@@ -15,8 +16,10 @@ export const ADMIN_TAB_LABELS: Record<AdminTabId, string> = {
   calendar: "RDV du jour",
   appointments: "Tous les RDV",
   "pharmacy-booking": "RDV via pharmacie",
+  inventory: "Inventaire",
   utilities: "Utilitaires",
 };
+
 
 export const ADMIN_TAB_ORDER_STORAGE_KEY = "admin-tab-order";
 export const ADMIN_HIDDEN_TABS_STORAGE_KEY = "admin-hidden-tabs";
