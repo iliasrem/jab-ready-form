@@ -702,7 +702,7 @@ export function AppointmentsList() {
                                     </>
                                   ) : (
                                     <>
-                                      {!editingId && appointment.phone && sendingWhatsAppId !== undefined && (
+                                      {appointment.phone && (
                                         <Button
                                           size="sm"
                                           variant="outline"
