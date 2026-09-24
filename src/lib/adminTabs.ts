@@ -12,7 +12,7 @@ export type AdminTabId = (typeof DEFAULT_ADMIN_TAB_ORDER)[number];
 
 export const ADMIN_TAB_LABELS: Record<AdminTabId, string> = {
   vaccination: "Vaccination",
-  "vaccine-holds": "Vaccins réservés",
+  "vaccine-holds": "Réservation de vaccin",
   calendar: "RDV du jour",
   appointments: "Tous les RDV",
   "pharmacy-booking": "RDV via pharmacie",
