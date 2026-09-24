@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MessageCircle, Loader2, MessageSquareText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -18,6 +19,23 @@ interface ReminderRow {
     phone: string | null;
   } | null;
 }
+
+/** Date au format du modèle WhatsApp : "mardi 22 septembre 2026" */
+const formatTemplateDate = (iso: string) =>
+  new Intl.DateTimeFormat("fr-BE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${iso}T00:00:00Z`));
+
+const buildMessage = (r: ReminderRow) => {
+  const fullName = r.patients
+    ? `${r.patients.first_name ?? ""} ${r.patients.last_name ?? ""}`.trim()
+    : "";
+  return `Bonjour ${fullName || "Madame, Monsieur"}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili prévu demain ${formatTemplateDate(r.appointment_date)} à ${r.appointment_time.slice(0, 5)}. Merci de vous présenter quelques minutes à l'avance avec votre carte d'identité. Si vous ne pouvez pas venir, répondez à ce message pour annuler ou déplacer votre rendez-vous.`;
+};
 
 export const WhatsAppHistory = () => {
   const { data: reminders, isLoading } = useQuery({
@@ -69,6 +87,7 @@ export const WhatsAppHistory = () => {
                     <TableHead>Rendez-vous</TableHead>
                     <TableHead>Envoyé le</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead className="w-10"><span className="sr-only">Message</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -88,6 +107,29 @@ export const WhatsAppHistory = () => {
                         <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300">
                           Envoyé
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Voir le message envoyé"
+                              title="Voir le message envoyé"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-green-600 transition-colors hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950"
+                            >
+                              <MessageSquareText className="h-4 w-4" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="end" className="w-80 p-3">
+                            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400">
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              Message envoyé
+                            </div>
+                            <div className="rounded-2xl rounded-br-sm bg-green-100 px-3 py-2 text-sm leading-relaxed text-foreground dark:bg-green-950">
+                              {buildMessage(r)}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </TableCell>
                     </TableRow>
                   ))}
