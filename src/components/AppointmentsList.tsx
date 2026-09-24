@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, compareAsc, isBefore, startOfToday } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, FileText, Edit, Trash2, Save, X, History, ChevronDown, ChevronUp, MessageCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTimeForDisplay } from "@/lib/utils";
 
@@ -206,6 +206,41 @@ export function AppointmentsList() {
   const updateEditedField = (field: keyof Appointment, value: any) => {
     if (!editedAppointment) return;
     setEditedAppointment({ ...editedAppointment, [field]: value });
+  };
+
+  const [sendingWhatsAppId, setSendingWhatsAppId] = useState<string | null>(null);
+
+  const sendWhatsAppReminder = async (appointment: Appointment) => {
+    if (!appointment.phone) return;
+    setSendingWhatsAppId(appointment.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp-reminders", {
+        body: { appointment_id: appointment.id },
+      });
+      if (error) throw error;
+      const first = data?.results?.[0];
+      if (data?.sent > 0) {
+        toast({
+          title: "Rappel WhatsApp envoyé",
+          description: `Rappel envoyé à ${appointment.firstName} ${appointment.lastName} pour le ${format(parseISO(appointment.date), "d MMMM", { locale: fr })} à ${formatTimeForDisplay(appointment.time)}.`,
+        });
+      } else {
+        toast({
+          title: "Envoi impossible",
+          description: first?.details || first?.reason || "Numéro invalide ou erreur d'envoi.",
+          variant: "destructive",
+        });
+      }
+    } catch (e: any) {
+      console.error("Erreur envoi WhatsApp:", e);
+      toast({
+        title: "Erreur",
+        description: e?.message || "Impossible d'envoyer le rappel WhatsApp.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingWhatsAppId(null);
+    }
   };
 
   // Séparer les rendez-vous passés et futurs
@@ -667,6 +702,22 @@ export function AppointmentsList() {
                                     </>
                                   ) : (
                                     <>
+                                      {appointment.phone && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => sendWhatsAppReminder(appointment)}
+                                          disabled={sendingWhatsAppId === appointment.id}
+                                          className="h-8 w-8 p-0 text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-950"
+                                          title="Envoyer un rappel WhatsApp"
+                                        >
+                                          {sendingWhatsAppId === appointment.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                          ) : (
+                                            <MessageCircle className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      )}
                                       <Button
                                         size="sm"
                                         variant="outline"
