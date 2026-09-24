@@ -171,16 +171,16 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-5 px-4">
             <div className="container mx-auto">
-              <TabsList className="no-scrollbar flex h-auto w-full items-center gap-1 overflow-x-auto rounded-2xl bg-background/90 p-1.5 shadow-inner backdrop-blur-sm">
+              <TabsList className="no-scrollbar flex h-auto w-full items-center justify-between gap-0.5 overflow-x-auto rounded-2xl bg-background/90 p-1.5 shadow-inner backdrop-blur-sm lg:gap-1">
                 {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
                     <TabsTrigger
                       key={tab}
                       value={tab}
-                      className="group flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-medium tracking-tight text-muted-foreground transition-all duration-200 hover:bg-background/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      className="group flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-medium tracking-tight text-muted-foreground transition-all duration-200 hover:bg-background/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm lg:gap-2 lg:px-3 xl:px-4 xl:text-[13px]"
                     >
-                      <Icon className="h-4 w-4 shrink-0 group-data-[state=active]:text-brand" strokeWidth={2.5} />
+                      <Icon className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:text-brand lg:h-4 lg:w-4" strokeWidth={2.5} />
                       {ADMIN_TAB_LABELS[tab]}
                     </TabsTrigger>
                   );
