@@ -23,33 +23,39 @@ function corsHeaders(req: Request) {
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/whatsapp";
 const TEMPLATE_NAME = "rappel_rdv_vaccination";
 const TEMPLATE_NAME_V2 = "rappel_rdv_vaccination_v2";
+const TEMPLATE_NAME_V3 = "rappel_rdv_vaccination_v3";
 const TEMPLATE_LANG = "fr";
 const TZ = "Europe/Brussels";
 
-/** Utilise la version 2 (site web + itinéraire) uniquement une fois approuvée par Meta. */
+/**
+ * Utilise la v3 (site web + itinéraire + téléphone) dès son approbation par Meta,
+ * puis la v2, puis la v1 en dernier recours.
+ */
 let activeTemplateName: string | null = null;
 async function resolveTemplateName(lovableKey: string, whatsappKey: string): Promise<string> {
   if (activeTemplateName) return activeTemplateName;
-  try {
-    const res = await fetch(
-      `${GATEWAY_URL}/message_templates?name=${encodeURIComponent(TEMPLATE_NAME_V2)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": whatsappKey,
+  for (const name of [TEMPLATE_NAME_V3, TEMPLATE_NAME_V2]) {
+    try {
+      const res = await fetch(
+        `${GATEWAY_URL}/message_templates?name=${encodeURIComponent(name)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${lovableKey}`,
+            "X-Connection-Api-Key": whatsappKey,
+          },
         },
-      },
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const tpl = (data?.data ?? []).find((t: any) => t.name === TEMPLATE_NAME_V2);
-      if (tpl?.status === "APPROVED") {
-        activeTemplateName = TEMPLATE_NAME_V2;
-        return activeTemplateName;
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const tpl = (data?.data ?? []).find((t: any) => t.name === name);
+        if (tpl?.status === "APPROVED") {
+          activeTemplateName = name;
+          return activeTemplateName;
+        }
       }
+    } catch (e) {
+      console.error(`Lecture du statut du modèle ${name} impossible:`, e);
     }
-  } catch (e) {
-    console.error("Lecture du statut du modèle v2 impossible:", e);
   }
   return TEMPLATE_NAME;
 }
