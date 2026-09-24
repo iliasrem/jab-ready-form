@@ -30,8 +30,8 @@ const formatTemplateDate = (iso: string) =>
     timeZone: "UTC",
   }).format(new Date(`${iso}T00:00:00Z`));
 
-/** Modèle v2 : site web + itinéraire Waze à la fin du message. */
-const MESSAGE_SUFFIX = `\n\n🌐 Site web : www.remili.be\n📍 Itinéraire : https://waze.com/ul?ll=50.4708576,4.2808433&navigate=yes`;
+/** Modèle v3 : site web, itinéraire Waze et téléphone à la fin du message. */
+const MESSAGE_SUFFIX = `\n\n🌐 Site web : www.remili.be\n📍 Itinéraire : https://waze.com/ul?ll=50.4708576,4.2808433&navigate=yes\n📞 Téléphone : +3264442253`;
 
 const buildMessage = (r: ReminderRow) => {
   const fullName = r.patients
