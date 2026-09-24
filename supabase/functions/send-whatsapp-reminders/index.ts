@@ -53,7 +53,6 @@ async function resolveTemplateName(lovableKey: string, whatsappKey: string): Pro
   }
   return TEMPLATE_NAME;
 }
-const TZ = "Europe/Brussels";
 
 /** Date du jour (Bruxelles) + n jours, au format YYYY-MM-DD */
 function dateInBrussels(offsetDays: number): string {
