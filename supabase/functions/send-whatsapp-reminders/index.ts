@@ -105,16 +105,36 @@ serve(async (req) => {
       });
     }
 
+    const body = await req.json().catch(() => ({}));
+    const singleId = typeof body?.appointment_id === "string" ? body.appointment_id : null;
+
     const targetDate = dateInBrussels(1);
 
-    const { data: appointments, error } = await supabase
-      .from("appointments")
-      .select(
-        "id, appointment_date, appointment_time, status, whatsapp_reminder_sent_at, patients:patient_id (first_name, last_name, phone)",
-      )
-      .eq("appointment_date", targetDate)
-      .neq("status", "cancelled")
-      .is("whatsapp_reminder_sent_at", null);
+    const APPOINTMENT_SELECT =
+      "id, appointment_date, appointment_time, status, whatsapp_reminder_sent_at, patients:patient_id (first_name, last_name, phone)";
+
+    let appointments;
+    let error;
+    if (singleId) {
+      // Envoi manuel individuel depuis la liste des rendez-vous
+      const res = await supabase
+        .from("appointments")
+        .select(APPOINTMENT_SELECT)
+        .eq("id", singleId)
+        .neq("status", "cancelled")
+        .maybeSingle();
+      appointments = res.data ? [res.data] : [];
+      error = res.error;
+    } else {
+      const res = await supabase
+        .from("appointments")
+        .select(APPOINTMENT_SELECT)
+        .eq("appointment_date", targetDate)
+        .neq("status", "cancelled")
+        .is("whatsapp_reminder_sent_at", null);
+      appointments = res.data;
+      error = res.error;
+    }
 
     if (error) {
       console.error("Erreur lecture rendez-vous:", error.message);
