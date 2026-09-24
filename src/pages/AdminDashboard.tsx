@@ -178,9 +178,9 @@ const AdminDashboard = () => {
                     <TabsTrigger
                       key={tab}
                       value={tab}
-                      className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-medium tracking-tight text-muted-foreground transition-all duration-200 hover:bg-background/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      className="group flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-medium tracking-tight text-muted-foreground transition-all duration-200 hover:bg-background/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                     >
-                      <Icon className="h-4 w-4 shrink-0 data-[state=active]:text-brand" strokeWidth={2.5} />
+                      <Icon className="h-4 w-4 shrink-0 group-data-[state=active]:text-brand" strokeWidth={2.5} />
                       {ADMIN_TAB_LABELS[tab]}
                     </TabsTrigger>
                   );
