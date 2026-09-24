@@ -190,6 +190,7 @@ serve(async (req) => {
       const fullName = `${patient.first_name ?? ""} ${patient.last_name ?? ""}`.trim();
       const timeLabel = String(appt.appointment_time).slice(0, 5);
 
+      const templateName = await resolveTemplateName(lovableKey, whatsappKey);
       const response = await fetch(`${GATEWAY_URL}/messages`, {
         method: "POST",
         headers: {
@@ -202,7 +203,7 @@ serve(async (req) => {
           to: phone,
           type: "template",
           template: {
-            name: TEMPLATE_NAME,
+            name: templateName,
             language: { code: TEMPLATE_LANG },
             components: [
               {
