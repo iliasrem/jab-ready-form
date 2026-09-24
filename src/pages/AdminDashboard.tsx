@@ -171,11 +171,11 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="flex w-full gap-2 md:gap-3 md:px-2">
+              <TabsList className="flex w-full items-center gap-3 md:gap-4 px-2">
                 {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
-                    <TabsTrigger key={tab} value={tab} className="flex-1 min-w-0 text-[11px] md:text-xs text-black data-[state=active]:text-foreground flex items-center justify-center gap-1.5 px-2 md:px-3 py-2 leading-tight">
+                    <TabsTrigger key={tab} value={tab} className="shrink-0 text-[11px] md:text-xs text-black data-[state=active]:text-foreground flex items-center justify-center gap-1.5 px-2 md:px-3 py-2 leading-tight">
                       <Icon className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                       {ADMIN_TAB_LABELS[tab]}
                     </TabsTrigger>
