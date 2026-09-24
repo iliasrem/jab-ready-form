@@ -22,8 +22,37 @@ function corsHeaders(req: Request) {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/whatsapp";
 const TEMPLATE_NAME = "rappel_rdv_vaccination";
+const TEMPLATE_NAME_V2 = "rappel_rdv_vaccination_v2";
 const TEMPLATE_LANG = "fr";
 const TZ = "Europe/Brussels";
+
+/** Utilise la version 2 (site web + itinéraire) uniquement une fois approuvée par Meta. */
+let activeTemplateName: string | null = null;
+async function resolveTemplateName(lovableKey: string, whatsappKey: string): Promise<string> {
+  if (activeTemplateName) return activeTemplateName;
+  try {
+    const res = await fetch(
+      `${GATEWAY_URL}/message_templates?name=${encodeURIComponent(TEMPLATE_NAME_V2)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": whatsappKey,
+        },
+      },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const tpl = (data?.data ?? []).find((t: any) => t.name === TEMPLATE_NAME_V2);
+      if (tpl?.status === "APPROVED") {
+        activeTemplateName = TEMPLATE_NAME_V2;
+        return activeTemplateName;
+      }
+    }
+  } catch (e) {
+    console.error("Lecture du statut du modèle v2 impossible:", e);
+  }
+  return TEMPLATE_NAME;
+}
 
 /** Date du jour (Bruxelles) + n jours, au format YYYY-MM-DD */
 function dateInBrussels(offsetDays: number): string {
@@ -161,6 +190,7 @@ serve(async (req) => {
       const fullName = `${patient.first_name ?? ""} ${patient.last_name ?? ""}`.trim();
       const timeLabel = String(appt.appointment_time).slice(0, 5);
 
+      const templateName = await resolveTemplateName(lovableKey, whatsappKey);
       const response = await fetch(`${GATEWAY_URL}/messages`, {
         method: "POST",
         headers: {
@@ -173,7 +203,7 @@ serve(async (req) => {
           to: phone,
           type: "template",
           template: {
-            name: TEMPLATE_NAME,
+            name: templateName,
             language: { code: TEMPLATE_LANG },
             components: [
               {
