@@ -128,7 +128,7 @@ export const WhatsAppHistory = () => {
                               <MessageCircle className="h-3.5 w-3.5" />
                               Message envoyé
                             </div>
-                            <div className="rounded-2xl rounded-br-sm bg-green-100 px-3 py-2 text-sm leading-relaxed text-foreground dark:bg-green-950">
+                            <div className="whitespace-pre-line rounded-2xl rounded-br-sm bg-green-100 px-3 py-2 text-sm leading-relaxed text-foreground dark:bg-green-950">
                               {buildMessage(r)}
                             </div>
                           </PopoverContent>
