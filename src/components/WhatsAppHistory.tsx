@@ -30,11 +30,14 @@ const formatTemplateDate = (iso: string) =>
     timeZone: "UTC",
   }).format(new Date(`${iso}T00:00:00Z`));
 
+/** Modèle v2 : site web + itinéraire Waze à la fin du message. */
+const MESSAGE_SUFFIX = `\n\n🌐 Site web : www.remili.be\n📍 Itinéraire : https://waze.com/ul?ll=50.4708576,4.2808433&navigate=yes`;
+
 const buildMessage = (r: ReminderRow) => {
   const fullName = r.patients
     ? `${r.patients.first_name ?? ""} ${r.patients.last_name ?? ""}`.trim()
     : "";
-  return `Bonjour ${fullName || "Madame, Monsieur"}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili prévu demain ${formatTemplateDate(r.appointment_date)} à ${r.appointment_time.slice(0, 5)}. Merci de vous présenter quelques minutes à l'avance avec votre carte d'identité. Si vous ne pouvez pas venir, répondez à ce message pour annuler ou déplacer votre rendez-vous.`;
+  return `Bonjour ${fullName || "Madame, Monsieur"}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili prévu demain ${formatTemplateDate(r.appointment_date)} à ${r.appointment_time.slice(0, 5)}. Merci de vous présenter quelques minutes à l'avance avec votre carte d'identité. Si vous ne pouvez pas venir, répondez à ce message pour annuler ou déplacer votre rendez-vous.${MESSAGE_SUFFIX}`;
 };
 
 export const WhatsAppHistory = () => {
