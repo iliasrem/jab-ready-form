@@ -441,6 +441,20 @@ export const VaccineHolds = () => {
                 Réactiver
               </Button>
             )}
+            {!collected && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-primary hover:bg-primary/10"
+                disabled={busyId === h.id}
+                onClick={() => setCollected(h, true)}
+                aria-label="Vaccin remis au patient"
+                title="Vaccin remis au patient"
+              >
+                <PackageCheck className="h-4 w-4 mr-1" />
+                Remis
+              </Button>
+            )}
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setToDelete(h)} aria-label="Supprimer">
               <Trash2 className="h-4 w-4" />
             </Button>
