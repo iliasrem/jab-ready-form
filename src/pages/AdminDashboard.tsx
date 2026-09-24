@@ -171,7 +171,7 @@ const AdminDashboard = () => {
         <div className="bg-brand text-brand-foreground">
           <div className="py-6 px-4">
             <div className="container mx-auto">
-              <TabsList className="flex w-full items-center gap-3 md:gap-4 px-2">
+              <TabsList className="flex h-auto w-full items-center gap-3 md:gap-4 px-2 py-3 md:py-3.5">
                 {visibleTabs.map((tab) => {
                   const Icon = ADMIN_TAB_ICONS[tab];
                   return (
