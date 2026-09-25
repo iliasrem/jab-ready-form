@@ -98,12 +98,15 @@ async function mergeDuplicatePatients(
       return;
     }
 
+    const canonical0 = (candidates ?? []).find((p) => p.id === canonicalId);
+    if (!canonical0) return;
     const duplicates = (candidates ?? []).filter((p) => {
       if (p.id === canonicalId) return false;
       const sameEmail =
         emailNorm && p.email && p.email.trim().toLowerCase() === emailNorm;
       const samePhone = p.phone && normalizePhone(p.phone) === phoneNorm;
-      return sameEmail || samePhone;
+      return (sameEmail || samePhone) &&
+        isSamePerson(p, canonical0.first_name, canonical0.last_name, canonical0.birth_date);
     });
 
     if (duplicates.length === 0) return;
@@ -251,18 +254,19 @@ Deno.serve(async (req) => {
       .limit(10);
     if (searchErr) console.error("search err", searchErr);
 
+    // Un même téléphone/email peut être partagé par plusieurs membres d'un foyer :
+    // on ne rattache que si nom + prénom identiques et date de naissance compatible.
     const match = (candidates ?? []).find((p) => {
-      if (emailNorm && p.email && p.email.trim().toLowerCase() === emailNorm) return true;
-      if (p.phone && normalizePhone(p.phone) === phoneNorm) return true;
-      return false;
+      const sameContact =
+        (emailNorm && p.email && p.email.trim().toLowerCase() === emailNorm) ||
+        (p.phone && normalizePhone(p.phone) === phoneNorm);
+      return sameContact && isSamePerson(p, d.firstName, d.lastName, d.birthDate ?? null);
     });
 
     let patientId: string;
     if (match) {
       patientId = match.id;
       const updates: Record<string, unknown> = {};
-      if (match.first_name !== d.firstName) updates.first_name = d.firstName;
-      if (match.last_name !== d.lastName) updates.last_name = d.lastName;
       if (emailNorm && (match.email ?? "").trim().toLowerCase() !== emailNorm) {
         updates.email = emailNorm;
       }
