@@ -68,6 +68,21 @@ const normalizePhone = (p: string) => p.replace(/[\s\-\.\(\)]/g, "");
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
+const normName = (s: string | null | undefined) =>
+  (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, " ");
+
+function isSamePerson(
+  p: { first_name: string | null; last_name: string | null; birth_date: string | null },
+  firstName: string,
+  lastName: string,
+  birthDate: string | null,
+) {
+  if (normName(p.first_name) !== normName(firstName)) return false;
+  if (normName(p.last_name) !== normName(lastName)) return false;
+  if (p.birth_date && birthDate && p.birth_date !== birthDate) return false;
+  return true;
+}
+
 // Fusionne en arrière-plan les fiches patients en doublon
 // (même email ou même téléphone normalisé) vers la fiche canonique.
 async function mergeDuplicatePatients(
