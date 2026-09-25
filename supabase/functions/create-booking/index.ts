@@ -4,16 +4,26 @@ import { z } from "npm:zod@3.23.8";
 
 const ALLOWED_ORIGINS = new Set([
   "https://rdv.lovable.app",
+  "https://vaccination.remili.be",
+  "https://www.vaccination.remili.be",
   "https://id-preview--24a7b43c-f319-4774-b66d-a7256415de33.lovable.app",
   "https://24a7b43c-f319-4774-b66d-a7256415de33.lovableproject.com",
 ]);
 
 function buildCors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : "https://rdv.lovable.app";
+  const ok =
+    ALLOWED_ORIGINS.has(origin) ||
+    /^https:\/\/[a-z0-9-]+--24a7b43c-f319-4774-b66d-a7256415de33\.lovable\.app$/.test(origin) ||
+    /^http:\/\/localhost(:\d+)?$/.test(origin);
+  const allow = ok ? origin : "https://rdv.lovable.app";
+  const requested = req.headers.get("access-control-request-headers");
   return {
     ...corsHeaders,
     "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers":
+      requested ||
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
     Vary: "Origin",
   };
 }
