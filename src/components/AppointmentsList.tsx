@@ -210,6 +210,20 @@ export function AppointmentsList() {
 
   const [sendingWhatsAppId, setSendingWhatsAppId] = useState<string | null>(null);
 
+  // Le modèle WhatsApp indique « demain » : le rappel manuel n'est proposé
+  // que pour les rendez-vous de demain (heure de Bruxelles), sinon le texte
+  // serait faux et le rappel automatique de la veille serait annulé.
+  const brusselsToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Brussels",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [by, bm, bd] = brusselsToday.split("-").map(Number);
+  const brusselsTomorrow = new Date(Date.UTC(by, bm - 1, bd + 1)).toISOString().slice(0, 10);
+  const canSendWhatsAppReminder = (appointment: Appointment) =>
+    Boolean(appointment.phone) && appointment.date === brusselsTomorrow;
+
   const sendWhatsAppReminder = async (appointment: Appointment) => {
     if (!appointment.phone) return;
     setSendingWhatsAppId(appointment.id);
@@ -702,7 +716,7 @@ export function AppointmentsList() {
                                     </>
                                   ) : (
                                     <>
-                                      {appointment.phone && (
+                                      {canSendWhatsAppReminder(appointment) && (
                                         <Button
                                           size="sm"
                                           variant="outline"

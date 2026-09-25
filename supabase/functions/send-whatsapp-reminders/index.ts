@@ -151,15 +151,26 @@ serve(async (req) => {
     let appointments;
     let error;
     if (singleId) {
-      // Envoi manuel individuel depuis la liste des rendez-vous
+      // Envoi manuel individuel depuis la liste des rendez-vous.
+      // Le modèle WhatsApp dit « demain » : l'envoi manuel n'est autorisé
+      // que la veille du rendez-vous, sinon le texte serait faux et le
+      // marquage empêcherait le rappel automatique de la veille.
       const res = await supabase
         .from("appointments")
         .select(APPOINTMENT_SELECT)
         .eq("id", singleId)
         .neq("status", "cancelled")
         .maybeSingle();
-      appointments = res.data ? [res.data] : [];
       error = res.error;
+      if (!error && res.data && res.data.appointment_date !== targetDate) {
+        return new Response(
+          JSON.stringify({
+            error: "Le rappel manuel n'est possible que la veille du rendez-vous (le message indique « demain »).",
+          }),
+          { status: 400, headers },
+        );
+      }
+      appointments = res.data ? [res.data] : [];
     } else {
       const res = await supabase
         .from("appointments")
