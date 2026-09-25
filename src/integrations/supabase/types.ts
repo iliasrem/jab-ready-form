@@ -613,6 +613,7 @@ export type Database = {
           collected_at: string | null
           created_at: string
           id: string
+          is_paid: boolean
           notes: string | null
           patient_id: string
           reservation_date: string
@@ -624,6 +625,7 @@ export type Database = {
           collected_at?: string | null
           created_at?: string
           id?: string
+          is_paid?: boolean
           notes?: string | null
           patient_id: string
           reservation_date?: string
@@ -635,6 +637,7 @@ export type Database = {
           collected_at?: string | null
           created_at?: string
           id?: string
+          is_paid?: boolean
           notes?: string | null
           patient_id?: string
           reservation_date?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.vaccine_holds ADD COLUMN is_paid boolean NOT NULL DEFAULT false;
