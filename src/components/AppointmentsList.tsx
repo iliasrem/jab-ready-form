@@ -716,7 +716,7 @@ export function AppointmentsList() {
                                     </>
                                   ) : (
                                     <>
-                                      {appointment.phone && (
+                                      {canSendWhatsAppReminder(appointment) && (
                                         <Button
                                           size="sm"
                                           variant="outline"
