@@ -52,6 +52,7 @@ interface Hold {
   reservation_date: string;
   status: "reserved" | "collected";
   collected_at: string | null;
+  is_paid: boolean;
   notes: string | null;
   patients: PatientLite | null;
   vaccines: { name: string } | null;
@@ -161,7 +162,7 @@ export const VaccineHolds = () => {
       const { data, error } = await supabase
         .from("vaccine_holds")
         .select(
-          `id, patient_id, vaccine_id, reservation_date, status, collected_at, notes, patients:patient_id (${PATIENT_FIELDS}), vaccines:vaccine_id (name)`
+          `id, patient_id, vaccine_id, reservation_date, status, collected_at, is_paid, notes, patients:patient_id (${PATIENT_FIELDS}), vaccines:vaccine_id (name)`
         )
         .order("created_at", { ascending: true })
         .range(from, from + pageSize - 1);
@@ -363,6 +364,19 @@ export const VaccineHolds = () => {
     fetchHolds();
   };
 
+  // Bascule Payé / Non payé (mémorisé en base)
+  const togglePaid = async (hold: Hold) => {
+    const next = !hold.is_paid;
+    setBusyId(hold.id);
+    const { error } = await supabase.from("vaccine_holds").update({ is_paid: next }).eq("id", hold.id);
+    setBusyId(null);
+    if (error) {
+      toast({ title: "Erreur", description: "Mise à jour du paiement impossible", variant: "destructive" });
+      return;
+    }
+    setHolds((prev) => prev.map((x) => (x.id === hold.id ? { ...x, is_paid: next } : x)));
+  };
+
   const confirmDelete = async () => {
     if (!toDelete) return;
     const { error } = await supabase.from("vaccine_holds").delete().eq("id", toDelete.id);
@@ -455,6 +469,21 @@ export const VaccineHolds = () => {
                 Remis au patient
               </Button>
             )}
+            <Button
+              size="sm"
+              variant={h.is_paid ? "default" : "outline"}
+              className={
+                h.is_paid
+                  ? "h-8 w-10 px-0 font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "h-8 w-10 px-0 font-bold text-muted-foreground"
+              }
+              disabled={busyId === h.id}
+              onClick={() => togglePaid(h)}
+              aria-label={h.is_paid ? "Payé" : "Non payé"}
+              title={h.is_paid ? "Payé" : "Non payé"}
+            >
+              {h.is_paid ? "P" : "NP"}
+            </Button>
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setToDelete(h)} aria-label="Supprimer">
               <Trash2 className="h-4 w-4" />
             </Button>
