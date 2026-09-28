@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -486,10 +486,55 @@ export const VaccinationManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Nouvelle Vaccination
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Nouvelle Vaccination
+            </CardTitle>
+            {(() => {
+              const item =
+                inventory.find((i) => i.lot_number === selectedLotNumber) || inventory[0];
+              if (!item) return null;
+              const total = item.vials_count || 10;
+              const opened = item.opened_vials || [];
+              const discarded = item.discarded_vials || [];
+              return (
+                <div className="flex items-center gap-1.5" title={`Flacons du lot ${item.lot_number} — 1 clic : ouvrir, 2e clic : éliminer`}>
+                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}</span>
+                  {Array.from({ length: total }, (_, idx) => {
+                    const n = idx + 1;
+                    const isDiscarded = discarded.includes(n);
+                    const isOpen = opened.includes(n);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={isDiscarded}
+                        onClick={() => handleVialClick(item, n)}
+                        title={
+                          isDiscarded
+                            ? `Flacon ${n} éliminé`
+                            : isOpen
+                              ? `Flacon ${n} ouvert — cliquer pour éliminer`
+                              : `Flacon ${n} fermé — cliquer pour ouvrir`
+                        }
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-md border transition-colors",
+                          isDiscarded
+                            ? "border-destructive/40 bg-destructive/10 text-destructive line-through opacity-60"
+                            : isOpen
+                              ? "border-green-600 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+                              : "border-border bg-muted text-muted-foreground hover:bg-accent"
+                        )}
+                      >
+                        <TestTube className="h-4 w-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
