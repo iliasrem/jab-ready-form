@@ -58,6 +58,7 @@ export const VaccinationManagement = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [activeHolds, setActiveHolds] = useState<Record<string, string>>({});
+  const [todayAppointments, setTodayAppointments] = useState<{ time: string; patient: Patient }[]>([]);
   const [holdVaccines, setHoldVaccines] = useState<Record<string, string>>({});
   const [holdAlert, setHoldAlert] = useState<{ name: string; date: string; vaccine?: string } | null>(null);
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -165,11 +166,55 @@ export const VaccinationManagement = () => {
     setHoldVaccines(vMap);
   };
 
+  const fetchTodayAppointments = async () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const { data } = await supabase
+      .from("appointments")
+      .select("appointment_time, patients:patient_id (id, first_name, last_name, email)")
+      .eq("appointment_date", today)
+      .neq("status", "cancelled")
+      .order("appointment_time", { ascending: true });
+    const list = (data || [])
+      .map((a) => {
+        const p = (a as unknown as { patients: Patient | null }).patients;
+        return p ? { time: a.appointment_time as string, patient: p } : null;
+      })
+      .filter(Boolean) as { time: string; patient: Patient }[];
+    setTodayAppointments(list);
+  };
+
+  // Choisit le lot : premier flacon ouvert, en évitant ceux entamés il y a plus de 6h aujourd'hui
+  const pickLot = () => {
+    if (inventory.length === 0) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const now = new Date();
+    const firstUse: Record<string, Date> = {};
+    vaccinations
+      .filter((v) => v.vaccination_date === today)
+      .forEach((v) => {
+        const d = new Date(`${today}T${v.vaccination_time.slice(0, 5)}:00`);
+        if (!firstUse[v.lot_number] || d < firstUse[v.lot_number]) firstUse[v.lot_number] = d;
+      });
+    const expired = (lot: string) =>
+      firstUse[lot] && now.getTime() - firstUse[lot].getTime() > 6 * 3600 * 1000;
+    const started = inventory.find((i) => firstUse[i.lot_number] && !expired(i.lot_number));
+    const fresh = inventory.find((i) => !firstUse[i.lot_number]);
+    const chosen = started || fresh || inventory[0];
+    setSelectedLotNumber(chosen.lot_number);
+    if (!started && Object.keys(firstUse).some(expired)) {
+      toast({
+        title: "Flacon entamé depuis plus de 6h",
+        description: "Éliminez le flacon entamé et utilisez un nouveau flacon.",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchVaccinations();
     fetchPatients();
     fetchInventory();
     fetchHolds();
+    fetchTodayAppointments();
   }, []);
 
   // Applique le filtre quand les vaccinations ou les dates changent
