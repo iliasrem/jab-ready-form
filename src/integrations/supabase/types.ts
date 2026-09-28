@@ -677,6 +677,7 @@ export type Database = {
           reception_date: string
           status: string
           updated_at: string
+          vial_opened_at: Json
           vials_count: number
           vials_used: number
         }
@@ -694,6 +695,7 @@ export type Database = {
           reception_date?: string
           status?: string
           updated_at?: string
+          vial_opened_at?: Json
           vials_count?: number
           vials_used?: number
         }
@@ -711,6 +713,7 @@ export type Database = {
           reception_date?: string
           status?: string
           updated_at?: string
+          vial_opened_at?: Json
           vials_count?: number
           vials_used?: number
         }
