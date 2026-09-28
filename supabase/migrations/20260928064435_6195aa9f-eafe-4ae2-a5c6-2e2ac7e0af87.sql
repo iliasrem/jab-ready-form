@@ -1,0 +1,1 @@
+ALTER TABLE public.vaccine_inventory ADD COLUMN IF NOT EXISTS vial_opened_at jsonb NOT NULL DEFAULT '{}'::jsonb;
