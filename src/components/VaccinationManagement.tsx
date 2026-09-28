@@ -572,7 +572,11 @@ export const VaccinationManagement = () => {
                           isDiscarded
                             ? `Flacon ${n} éliminé`
                             : isOpen
-                              ? `Flacon ${n} ouvert — cliquer pour éliminer`
+                             ? `Flacon ${n} ouvert${
+                                (item.vial_opened_at || {})[String(n)]
+                                  ? ` à ${format(new Date((item.vial_opened_at || {})[String(n)]), "HH:mm")} — jeté automatiquement 6h après`
+                                  : ""
+                              } — cliquer pour éliminer`
                               : `Flacon ${n} fermé — cliquer pour ouvrir`
                         }
                         className={cn(
