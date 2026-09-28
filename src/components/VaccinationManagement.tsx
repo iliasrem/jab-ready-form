@@ -432,7 +432,10 @@ export const VaccinationManagement = () => {
       if (!discarded.includes(n)) {
         await supabase
           .from("vaccine_inventory")
-          .update({ opened_vials: [n] })
+          .update({
+            opened_vials: [n],
+            vial_opened_at: { ...(item.vial_opened_at || {}), [String(n)]: new Date().toISOString() },
+          })
           .eq("id", item.id);
         return;
       }
