@@ -406,6 +406,11 @@ export const VaccinationManagement = () => {
         .update({
           opened_vials: opened.filter((v) => v !== vialNumber),
           discarded_vials: [...discarded, vialNumber],
+          vial_opened_at: (() => {
+            const m = { ...(item.vial_opened_at || {}) };
+            delete m[String(vialNumber)];
+            return m;
+          })(),
         })
         .eq("id", item.id);
       if (error) {
