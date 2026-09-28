@@ -334,6 +334,57 @@ export const VaccinationManagement = () => {
     }
   };
 
+  // Gestion des flacons : 1 clic = ouvrir, 2e clic = éliminer
+  const handleVialClick = async (item: VaccineInventoryItem, vialNumber: number) => {
+    const opened = item.opened_vials || [];
+    const discarded = item.discarded_vials || [];
+    if (discarded.includes(vialNumber)) return;
+
+    if (!opened.includes(vialNumber)) {
+      const { error } = await supabase
+        .from("vaccine_inventory")
+        .update({ opened_vials: [...opened, vialNumber] })
+        .eq("id", item.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Impossible d'ouvrir le flacon", variant: "destructive" });
+      } else {
+        toast({ title: `Flacon n°${vialNumber} ouvert`, description: `Lot ${item.lot_number}` });
+        fetchInventory();
+      }
+    } else {
+      const { error } = await supabase
+        .from("vaccine_inventory")
+        .update({
+          opened_vials: opened.filter((v) => v !== vialNumber),
+          discarded_vials: [...discarded, vialNumber],
+        })
+        .eq("id", item.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Impossible d'éliminer le flacon", variant: "destructive" });
+      } else {
+        toast({ title: `Flacon n°${vialNumber} éliminé`, description: `Lot ${item.lot_number} — déplacé dans le cadre des flacons éliminés` });
+        fetchInventory();
+      }
+    }
+  };
+
+  // Ouvre automatiquement un flacon du lot si aucun n'est ouvert (première vaccination du jour)
+  const autoOpenVial = async (item: VaccineInventoryItem) => {
+    const opened = item.opened_vials || [];
+    if (opened.length > 0) return;
+    const discarded = item.discarded_vials || [];
+    const total = item.vials_count || 10;
+    for (let n = 1; n <= total; n++) {
+      if (!discarded.includes(n)) {
+        await supabase
+          .from("vaccine_inventory")
+          .update({ opened_vials: [n] })
+          .eq("id", item.id);
+        return;
+      }
+    }
+  };
+
   const handleAddVaccination = async () => {
     if (!selectedPatientId || !selectedLotNumber) {
       toast({ title: "Erreur", description: "Veuillez sélectionner un patient et un lot de vaccin" });
