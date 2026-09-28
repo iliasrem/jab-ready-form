@@ -42,6 +42,7 @@ interface VaccineInventoryItem {
   vials_count?: number;
   opened_vials?: number[];
   discarded_vials?: number[];
+  vial_opened_at?: Record<string, string>;
 }
 
 interface Vaccination {
@@ -249,6 +250,7 @@ export const VaccinationManagement = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setVaccinationTime(format(new Date(), "HH:mm"));
+      fetchInventory();
     }, 60000); // Mise à jour toutes les 60 secondes
 
     return () => clearInterval(interval);
