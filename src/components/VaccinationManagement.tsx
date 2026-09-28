@@ -425,12 +425,12 @@ export const VaccinationManagement = () => {
                       role="combobox"
                       aria-expanded={openPatientCombobox}
                       className="flex-1 justify-between"
-                    >
-                      {selectedPatientId
-                        ? patients.find((patient) => patient.id === selectedPatientId)
-                            ? `${patients.find((patient) => patient.id === selectedPatientId)?.last_name} ${patients.find((patient) => patient.id === selectedPatientId)?.first_name}`
-                            : "Sélectionner un patient"
-                        : "Sélectionner un patient"}
+                      {(() => {
+                        const sel =
+                          patients.find((p) => p.id === selectedPatientId) ||
+                          todayAppointments.find((a) => a.patient.id === selectedPatientId)?.patient;
+                        return sel ? `${sel.last_name} ${sel.first_name}` : "Sélectionner un patient";
+                      })()}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -439,22 +439,37 @@ export const VaccinationManagement = () => {
                       <CommandInput placeholder="Rechercher un patient..." />
                       <CommandList>
                         <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
-                        <CommandGroup>
+                        {todayAppointments.length > 0 && (
+                          <>
+                            <CommandGroup heading="Patients du jour">
+                              {todayAppointments.map(({ time, patient }) => (
+                                <CommandItem
+                                  key={`today-${patient.id}-${time}`}
+                                  value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
+                                  onSelect={() => handleSelectPatient(patient)}
+                                >
+                                  <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
+                                    {time.slice(0, 5)}
+                                  </span>
+                                  {patient.last_name} {patient.first_name}
+                                  {activeHolds[patient.id] && (
+                                    <Badge variant="secondary" className="ml-auto gap-1">
+                                      <PackageCheck className="h-3 w-3" />
+                                      Réservé
+                                    </Badge>
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandSeparator />
+                          </>
+                        )}
+                        <CommandGroup heading={todayAppointments.length > 0 ? "Tous les patients" : undefined}>
                           {patients.map((patient) => (
                             <CommandItem
                               key={patient.id}
-                              value={`${patient.last_name} ${patient.first_name}`}
-                              onSelect={() => {
-                                setSelectedPatientId(patient.id);
-                                setOpenPatientCombobox(false);
-                                if (activeHolds[patient.id]) {
-                                  setHoldAlert({
-                                    name: `${patient.last_name} ${patient.first_name}`,
-                                    date: activeHolds[patient.id],
-                                    vaccine: holdVaccines[patient.id],
-                                  });
-                                }
-                              }}
+                              value={`${patient.last_name} ${patient.first_name} ${patient.id}`}
+                              onSelect={() => handleSelectPatient(patient)}
                             >
                               <Check
                                 className={cn(
