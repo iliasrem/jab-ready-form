@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +58,7 @@ export const VaccinationManagement = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [activeHolds, setActiveHolds] = useState<Record<string, string>>({});
+  const [todayAppointments, setTodayAppointments] = useState<{ time: string; patient: Patient }[]>([]);
   const [holdVaccines, setHoldVaccines] = useState<Record<string, string>>({});
   const [holdAlert, setHoldAlert] = useState<{ name: string; date: string; vaccine?: string } | null>(null);
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -165,11 +166,70 @@ export const VaccinationManagement = () => {
     setHoldVaccines(vMap);
   };
 
+  const fetchTodayAppointments = async () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const { data } = await supabase
+      .from("appointments")
+      .select("appointment_time, patients:patient_id (id, first_name, last_name, email)")
+      .eq("appointment_date", today)
+      .neq("status", "cancelled")
+      .order("appointment_time", { ascending: true });
+    const list = (data || [])
+      .map((a) => {
+        const p = (a as unknown as { patients: Patient | null }).patients;
+        return p ? { time: a.appointment_time as string, patient: p } : null;
+      })
+      .filter(Boolean) as { time: string; patient: Patient }[];
+    setTodayAppointments(list);
+  };
+
+  // Choisit le lot : premier flacon ouvert, en évitant ceux entamés il y a plus de 6h aujourd'hui
+  const pickLot = () => {
+    if (inventory.length === 0) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const now = new Date();
+    const firstUse: Record<string, Date> = {};
+    vaccinations
+      .filter((v) => v.vaccination_date === today)
+      .forEach((v) => {
+        const d = new Date(`${today}T${v.vaccination_time.slice(0, 5)}:00`);
+        if (!firstUse[v.lot_number] || d < firstUse[v.lot_number]) firstUse[v.lot_number] = d;
+      });
+    const expired = (lot: string) =>
+      firstUse[lot] && now.getTime() - firstUse[lot].getTime() > 6 * 3600 * 1000;
+    const started = inventory.find((i) => firstUse[i.lot_number] && !expired(i.lot_number));
+    const fresh = inventory.find((i) => !firstUse[i.lot_number]);
+    const chosen = started || fresh || inventory[0];
+    setSelectedLotNumber(chosen.lot_number);
+    if (!started && Object.keys(firstUse).some(expired)) {
+      toast({
+        title: "Flacon entamé depuis plus de 6h",
+        description: "Éliminez le flacon entamé et utilisez un nouveau flacon.",
+      });
+    }
+  };
+
+  const handleSelectPatient = (patient: Patient) => {
+    setSelectedPatientId(patient.id);
+    setOpenPatientCombobox(false);
+    setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+    setVaccinationTime(format(new Date(), "HH:mm"));
+    pickLot();
+    if (activeHolds[patient.id]) {
+      setHoldAlert({
+        name: `${patient.last_name} ${patient.first_name}`,
+        date: activeHolds[patient.id],
+        vaccine: holdVaccines[patient.id],
+      });
+    }
+  };
+
   useEffect(() => {
     fetchVaccinations();
     fetchPatients();
     fetchInventory();
     fetchHolds();
+    fetchTodayAppointments();
   }, []);
 
   // Applique le filtre quand les vaccinations ou les dates changent
@@ -312,6 +372,7 @@ export const VaccinationManagement = () => {
       // Refresh data
       fetchVaccinations();
       fetchInventory();
+      fetchTodayAppointments();
       fetchPatients(); // Refresh patients list to remove vaccinated patient
       
       toast({ title: "Succès", description: "Vaccination enregistrée avec succès" });
@@ -381,11 +442,12 @@ export const VaccinationManagement = () => {
                       aria-expanded={openPatientCombobox}
                       className="flex-1 justify-between"
                     >
-                      {selectedPatientId
-                        ? patients.find((patient) => patient.id === selectedPatientId)
-                            ? `${patients.find((patient) => patient.id === selectedPatientId)?.last_name} ${patients.find((patient) => patient.id === selectedPatientId)?.first_name}`
-                            : "Sélectionner un patient"
-                        : "Sélectionner un patient"}
+                      {(() => {
+                        const sel =
+                          patients.find((p) => p.id === selectedPatientId) ||
+                          todayAppointments.find((a) => a.patient.id === selectedPatientId)?.patient;
+                        return sel ? `${sel.last_name} ${sel.first_name}` : "Sélectionner un patient";
+                      })()}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -394,22 +456,37 @@ export const VaccinationManagement = () => {
                       <CommandInput placeholder="Rechercher un patient..." />
                       <CommandList>
                         <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
-                        <CommandGroup>
+                        {todayAppointments.length > 0 && (
+                          <>
+                            <CommandGroup heading="Patients du jour">
+                              {todayAppointments.map(({ time, patient }) => (
+                                <CommandItem
+                                  key={`today-${patient.id}-${time}`}
+                                  value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
+                                  onSelect={() => handleSelectPatient(patient)}
+                                >
+                                  <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
+                                    {time.slice(0, 5)}
+                                  </span>
+                                  {patient.last_name} {patient.first_name}
+                                  {activeHolds[patient.id] && (
+                                    <Badge variant="secondary" className="ml-auto gap-1">
+                                      <PackageCheck className="h-3 w-3" />
+                                      Réservé
+                                    </Badge>
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandSeparator />
+                          </>
+                        )}
+                        <CommandGroup heading={todayAppointments.length > 0 ? "Tous les patients" : undefined}>
                           {patients.map((patient) => (
                             <CommandItem
                               key={patient.id}
-                              value={`${patient.last_name} ${patient.first_name}`}
-                              onSelect={() => {
-                                setSelectedPatientId(patient.id);
-                                setOpenPatientCombobox(false);
-                                if (activeHolds[patient.id]) {
-                                  setHoldAlert({
-                                    name: `${patient.last_name} ${patient.first_name}`,
-                                    date: activeHolds[patient.id],
-                                    vaccine: holdVaccines[patient.id],
-                                  });
-                                }
-                              }}
+                              value={`${patient.last_name} ${patient.first_name} ${patient.id}`}
+                              onSelect={() => handleSelectPatient(patient)}
                             >
                               <Check
                                 className={cn(
