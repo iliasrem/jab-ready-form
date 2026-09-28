@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -209,6 +209,21 @@ export const VaccinationManagement = () => {
     }
   };
 
+  const handleSelectPatient = (patient: Patient) => {
+    setSelectedPatientId(patient.id);
+    setOpenPatientCombobox(false);
+    setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+    setVaccinationTime(format(new Date(), "HH:mm"));
+    pickLot();
+    if (activeHolds[patient.id]) {
+      setHoldAlert({
+        name: `${patient.last_name} ${patient.first_name}`,
+        date: activeHolds[patient.id],
+        vaccine: holdVaccines[patient.id],
+      });
+    }
+  };
+
   useEffect(() => {
     fetchVaccinations();
     fetchPatients();
@@ -357,6 +372,7 @@ export const VaccinationManagement = () => {
       // Refresh data
       fetchVaccinations();
       fetchInventory();
+      fetchTodayAppointments();
       fetchPatients(); // Refresh patients list to remove vaccinated patient
       
       toast({ title: "Succès", description: "Vaccination enregistrée avec succès" });
