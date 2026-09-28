@@ -411,6 +411,9 @@ export const VaccinationManagement = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
+      // Ouvre automatiquement un flacon du lot si aucun n'est ouvert
+      await autoOpenVial(selectedInventoryItem);
+
       // Le vaccin réservé est remis : on clôture la réservation
       if (activeHolds[selectedPatientId]) {
         await supabase
