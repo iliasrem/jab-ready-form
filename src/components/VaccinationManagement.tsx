@@ -39,6 +39,9 @@ interface VaccineInventoryItem {
   expiry_date: string;
   status: string;
   order_number?: number;
+  vials_count?: number;
+  opened_vials?: number[];
+  discarded_vials?: number[];
 }
 
 interface Vaccination {
@@ -288,7 +291,7 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status, order_number")
+      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials")
       .eq("status", "open")
       .order("order_number", { ascending: true });
 
