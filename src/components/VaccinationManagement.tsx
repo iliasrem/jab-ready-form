@@ -425,6 +425,7 @@ export const VaccinationManagement = () => {
                       role="combobox"
                       aria-expanded={openPatientCombobox}
                       className="flex-1 justify-between"
+                    >
                       {(() => {
                         const sel =
                           patients.find((p) => p.id === selectedPatientId) ||
