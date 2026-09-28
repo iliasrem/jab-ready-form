@@ -189,6 +189,11 @@ export const VaccinationManagement = () => {
   // Choisit le lot : premier flacon ouvert, en évitant ceux entamés il y a plus de 6h aujourd'hui
   const pickLot = () => {
     if (inventory.length === 0) return;
+    const withOpenVial = inventory.find((i) => (i.opened_vials || []).length > 0);
+    if (withOpenVial) {
+      setSelectedLotNumber(withOpenVial.lot_number);
+      return;
+    }
     const today = format(new Date(), "yyyy-MM-dd");
     const now = new Date();
     const firstUse: Record<string, Date> = {};
