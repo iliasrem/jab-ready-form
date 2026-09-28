@@ -665,12 +665,14 @@ export type Database = {
       vaccine_inventory: {
         Row: {
           created_at: string
+          discarded_vials: number[]
           doses_lost: number
           doses_per_vial: number
           doses_used: number
           expiry_date: string
           id: string
           lot_number: string
+          opened_vials: number[]
           order_number: number | null
           reception_date: string
           status: string
@@ -680,12 +682,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discarded_vials?: number[]
           doses_lost?: number
           doses_per_vial?: number
           doses_used?: number
           expiry_date: string
           id?: string
           lot_number: string
+          opened_vials?: number[]
           order_number?: number | null
           reception_date?: string
           status?: string
@@ -695,12 +699,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discarded_vials?: number[]
           doses_lost?: number
           doses_per_vial?: number
           doses_used?: number
           expiry_date?: string
           id?: string
           lot_number?: string
+          opened_vials?: number[]
           order_number?: number | null
           reception_date?: string
           status?: string

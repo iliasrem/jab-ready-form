@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -39,6 +39,9 @@ interface VaccineInventoryItem {
   expiry_date: string;
   status: string;
   order_number?: number;
+  vials_count?: number;
+  opened_vials?: number[];
+  discarded_vials?: number[];
 }
 
 interface Vaccination {
@@ -186,6 +189,11 @@ export const VaccinationManagement = () => {
   // Choisit le lot : premier flacon ouvert, en évitant ceux entamés il y a plus de 6h aujourd'hui
   const pickLot = () => {
     if (inventory.length === 0) return;
+    const withOpenVial = inventory.find((i) => (i.opened_vials || []).length > 0);
+    if (withOpenVial) {
+      setSelectedLotNumber(withOpenVial.lot_number);
+      return;
+    }
     const today = format(new Date(), "yyyy-MM-dd");
     const now = new Date();
     const firstUse: Record<string, Date> = {};
@@ -288,7 +296,7 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status, order_number")
+      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials")
       .eq("status", "open")
       .order("order_number", { ascending: true });
 
@@ -326,6 +334,57 @@ export const VaccinationManagement = () => {
     }
   };
 
+  // Gestion des flacons : 1 clic = ouvrir, 2e clic = éliminer
+  const handleVialClick = async (item: VaccineInventoryItem, vialNumber: number) => {
+    const opened = item.opened_vials || [];
+    const discarded = item.discarded_vials || [];
+    if (discarded.includes(vialNumber)) return;
+
+    if (!opened.includes(vialNumber)) {
+      const { error } = await supabase
+        .from("vaccine_inventory")
+        .update({ opened_vials: [...opened, vialNumber] })
+        .eq("id", item.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Impossible d'ouvrir le flacon", variant: "destructive" });
+      } else {
+        toast({ title: `Flacon n°${vialNumber} ouvert`, description: `Lot ${item.lot_number}` });
+        fetchInventory();
+      }
+    } else {
+      const { error } = await supabase
+        .from("vaccine_inventory")
+        .update({
+          opened_vials: opened.filter((v) => v !== vialNumber),
+          discarded_vials: [...discarded, vialNumber],
+        })
+        .eq("id", item.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Impossible d'éliminer le flacon", variant: "destructive" });
+      } else {
+        toast({ title: `Flacon n°${vialNumber} éliminé`, description: `Lot ${item.lot_number} — déplacé dans le cadre des flacons éliminés` });
+        fetchInventory();
+      }
+    }
+  };
+
+  // Ouvre automatiquement un flacon du lot si aucun n'est ouvert (première vaccination du jour)
+  const autoOpenVial = async (item: VaccineInventoryItem) => {
+    const opened = item.opened_vials || [];
+    if (opened.length > 0) return;
+    const discarded = item.discarded_vials || [];
+    const total = item.vials_count || 10;
+    for (let n = 1; n <= total; n++) {
+      if (!discarded.includes(n)) {
+        await supabase
+          .from("vaccine_inventory")
+          .update({ opened_vials: [n] })
+          .eq("id", item.id);
+        return;
+      }
+    }
+  };
+
   const handleAddVaccination = async () => {
     if (!selectedPatientId || !selectedLotNumber) {
       toast({ title: "Erreur", description: "Veuillez sélectionner un patient et un lot de vaccin" });
@@ -352,6 +411,9 @@ export const VaccinationManagement = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
+      // Ouvre automatiquement un flacon du lot si aucun n'est ouvert
+      await autoOpenVial(selectedInventoryItem);
+
       // Le vaccin réservé est remis : on clôture la réservation
       if (activeHolds[selectedPatientId]) {
         await supabase
@@ -424,10 +486,55 @@ export const VaccinationManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Nouvelle Vaccination
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Nouvelle Vaccination
+            </CardTitle>
+            {(() => {
+              const item =
+                inventory.find((i) => i.lot_number === selectedLotNumber) || inventory[0];
+              if (!item) return null;
+              const total = item.vials_count || 10;
+              const opened = item.opened_vials || [];
+              const discarded = item.discarded_vials || [];
+              return (
+                <div className="flex items-center gap-1.5" title={`Flacons du lot ${item.lot_number} — 1 clic : ouvrir, 2e clic : éliminer`}>
+                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}</span>
+                  {Array.from({ length: total }, (_, idx) => {
+                    const n = idx + 1;
+                    const isDiscarded = discarded.includes(n);
+                    const isOpen = opened.includes(n);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={isDiscarded}
+                        onClick={() => handleVialClick(item, n)}
+                        title={
+                          isDiscarded
+                            ? `Flacon ${n} éliminé`
+                            : isOpen
+                              ? `Flacon ${n} ouvert — cliquer pour éliminer`
+                              : `Flacon ${n} fermé — cliquer pour ouvrir`
+                        }
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-md border transition-colors",
+                          isDiscarded
+                            ? "border-destructive/40 bg-destructive/10 text-destructive line-through opacity-60"
+                            : isOpen
+                              ? "border-green-600 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+                              : "border-border bg-muted text-muted-foreground hover:bg-accent"
+                        )}
+                      >
+                        <TestTube className="h-4 w-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
