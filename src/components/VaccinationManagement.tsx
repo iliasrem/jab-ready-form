@@ -389,7 +389,10 @@ export const VaccinationManagement = () => {
     if (!opened.includes(vialNumber)) {
       const { error } = await supabase
         .from("vaccine_inventory")
-        .update({ opened_vials: [...opened, vialNumber] })
+        .update({
+          opened_vials: [...opened, vialNumber],
+          vial_opened_at: { ...(item.vial_opened_at || {}), [String(vialNumber)]: new Date().toISOString() },
+        })
         .eq("id", item.id);
       if (error) {
         toast({ title: "Erreur", description: "Impossible d'ouvrir le flacon", variant: "destructive" });
