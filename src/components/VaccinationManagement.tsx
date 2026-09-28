@@ -295,17 +295,61 @@ export const VaccinationManagement = () => {
     setPatients(allPatients || []);
   };
 
+  const SIX_HOURS_MS = 6 * 3600 * 1000;
+
+  // Jette automatiquement tout flacon ouvert depuis plus de 6 heures
+  const discardExpiredVials = async (items: VaccineInventoryItem[]) => {
+    const now = Date.now();
+    let changed = false;
+
+    for (const item of items) {
+      const opened = item.opened_vials || [];
+      const openedAt = (item.vial_opened_at || {}) as Record<string, string>;
+      const expired = opened.filter((n) => {
+        const t = openedAt[String(n)];
+        return t && now - new Date(t).getTime() > SIX_HOURS_MS;
+      });
+      if (expired.length === 0) continue;
+
+      const nextOpenedAt = { ...openedAt };
+      expired.forEach((n) => delete nextOpenedAt[String(n)]);
+
+      const { error } = await supabase
+        .from("vaccine_inventory")
+        .update({
+          opened_vials: opened.filter((n) => !expired.includes(n)),
+          discarded_vials: [...(item.discarded_vials || []), ...expired],
+          vial_opened_at: nextOpenedAt,
+        })
+        .eq("id", item.id);
+
+      if (!error) {
+        changed = true;
+        item.opened_vials = opened.filter((n) => !expired.includes(n));
+        item.discarded_vials = [...(item.discarded_vials || []), ...expired];
+        item.vial_opened_at = nextOpenedAt;
+        toast({
+          title: expired.length > 1 ? "Flacons jetés (plus de 6h)" : `Flacon n°${expired[0]} jeté (plus de 6h)`,
+          description: `Lot ${item.lot_number} — déplacé dans les flacons éliminés`,
+        });
+      }
+    }
+    return changed;
+  };
+
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials")
+      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
       .eq("status", "open")
       .order("order_number", { ascending: true });
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger l'inventaire" });
     } else {
-      setInventory(data || []);
+      const items = (data || []) as unknown as VaccineInventoryItem[];
+      await discardExpiredVials(items);
+      setInventory([...items]);
     }
   };
 
