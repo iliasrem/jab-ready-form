@@ -620,7 +620,6 @@ export const VaccineInventory = () => {
       {(() => {
         const discarded = [...inventory, ...closedInventory, ...emptyInventory]
           .filter((item) => (item.discarded_vials || []).length > 0);
-        if (discarded.length === 0) return null;
         return (
           <Card>
             <CardHeader>
@@ -630,37 +629,41 @@ export const VaccineInventory = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Numéro de lot</TableHead>
-                    <TableHead>Date d'expiration</TableHead>
-                    <TableHead>Flacons éliminés</TableHead>
-                    <TableHead>Nombre</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {discarded.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.lot_number}</TableCell>
-                      <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {(item.discarded_vials || []).sort((a, b) => a - b).map((n) => (
-                            <span
-                              key={n}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 text-xs font-medium text-destructive"
-                            >
-                              {n}
-                            </span>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{(item.discarded_vials || []).length} / {item.vials_count}</TableCell>
+              {discarded.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun flacon éliminé pour le moment.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Numéro de lot</TableHead>
+                      <TableHead>Date d'expiration</TableHead>
+                      <TableHead>Flacons éliminés</TableHead>
+                      <TableHead>Nombre</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {discarded.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.lot_number}</TableCell>
+                        <TableCell>{formatExpiryDate(item.expiry_date)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {(item.discarded_vials || []).sort((a, b) => a - b).map((n) => (
+                              <span
+                                key={n}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 text-xs font-medium text-destructive"
+                              >
+                                {n}
+                              </span>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{(item.discarded_vials || []).length} / {item.vials_count}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         );
