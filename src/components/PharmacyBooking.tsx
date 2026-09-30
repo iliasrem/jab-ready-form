@@ -638,12 +638,19 @@ export function PharmacyBooking() {
                           components={{
                             DayContent: ({ date }) => {
                               const dateStr = format(date, "yyyy-MM-dd");
-                              const hasAppointments = (bookedSlots[dateStr] || []).length > 0;
+                              const count = (bookedSlots[dateStr] || []).length;
                               return (
                                 <div
+                                  title={
+                                    count > 0
+                                      ? count === 1
+                                        ? "1 vaccin prévu ce jour"
+                                        : `${count} vaccins prévus ce jour`
+                                      : "Aucun vaccin prévu ce jour"
+                                  }
                                   className={cn(
                                     "flex h-full w-full items-center justify-center",
-                                    hasAppointments && "text-purple-600 font-semibold"
+                                    count > 0 && "text-purple-600 font-semibold"
                                   )}
                                 >
                                   {format(date, "d")}
