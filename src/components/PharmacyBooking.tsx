@@ -263,6 +263,9 @@ export function PharmacyBooking() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [pendingDate, setPendingDate] = useState<Date | undefined>(undefined);
+
   const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, "yyyy-MM-dd");
