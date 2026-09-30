@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Check, Clock, Mail, MapPin, Search, User } from "lucide-react";
+import { CalendarIcon, Check, Clock, Mail, MapPin, Printer, Search, User } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -831,7 +831,11 @@ export function PharmacyBooking() {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button variant="outline" onClick={handlePrint} className="w-full sm:w-auto">
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimer
+            </Button>
             <Button onClick={closeConfirmation} className="w-full sm:w-auto">
               Fermer et nouveau rendez-vous
             </Button>
