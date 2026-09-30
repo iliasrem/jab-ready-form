@@ -578,6 +578,10 @@ export function AppointmentForm({ availability }: AppointmentFormProps) {
                           }}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
+                          classNames={{
+                            day_selected:
+                              "bg-green-100 text-green-900 border border-green-300 hover:bg-green-100 hover:text-green-900 focus:bg-green-100 focus:text-green-900 font-semibold",
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
