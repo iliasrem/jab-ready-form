@@ -218,12 +218,15 @@ export const VaccinationManagement = () => {
     }
   };
 
-  const handleSelectPatient = (patient: Patient) => {
+  // Remplit date/heure/lot uniquement pour les patients ayant un rendez-vous aujourd'hui
+  const handleSelectPatient = (patient: Patient, appointmentTime?: string) => {
     setSelectedPatientId(patient.id);
     setOpenPatientCombobox(false);
-    setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
-    setVaccinationTime(format(new Date(), "HH:mm"));
-    pickLot();
+    if (appointmentTime) {
+      setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+      setVaccinationTime(appointmentTime.slice(0, 5));
+      pickLot();
+    }
     if (activeHolds[patient.id]) {
       setHoldAlert({
         name: `${patient.last_name} ${patient.first_name}`,
@@ -631,7 +634,7 @@ export const VaccinationManagement = () => {
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
-                                  onSelect={() => handleSelectPatient(patient)}
+                                  onSelect={() => handleSelectPatient(patient, time)}
                                 >
                                   <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
                                     {time.slice(0, 5)}
