@@ -628,6 +628,12 @@ export function PharmacyBooking() {
                           disabled={(date) => date < new Date() || !isDateAvailable(date)}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
+                          classNames={{
+                            cell: "h-9 w-9 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                            day_selected:
+                              "bg-green-100 text-green-900 border border-green-300 hover:bg-green-100 hover:text-green-900 focus:bg-green-100 focus:text-green-900 font-semibold",
+                          }}
+
                           components={{
                             DayContent: ({ date }) => {
                               const dateStr = format(date, "yyyy-MM-dd");
