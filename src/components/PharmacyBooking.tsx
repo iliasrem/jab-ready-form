@@ -554,6 +554,22 @@ export function PharmacyBooking() {
                           disabled={(date) => date < new Date() || !isDateAvailable(date)}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
+                          components={{
+                            DayContent: ({ date }) => {
+                              const dateStr = format(date, "yyyy-MM-dd");
+                              const hasAppointments = (bookedSlots[dateStr] || []).length > 0;
+                              return (
+                                <div
+                                  className={cn(
+                                    "flex h-full w-full items-center justify-center",
+                                    hasAppointments && "text-purple-600 font-semibold"
+                                  )}
+                                >
+                                  {format(date, "d")}
+                                </div>
+                              );
+                            },
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
