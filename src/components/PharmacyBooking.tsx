@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Check, Clock, Mail, MapPin, Search, User } from "lucide-react";
+import { CalendarIcon, Check, Clock, Mail, MapPin, Printer, Search, User } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -374,6 +374,77 @@ export function PharmacyBooking() {
     setSelectedPatient(null);
     setSearchTerm("");
     setResults([]);
+  };
+
+  const handlePrint = () => {
+    if (!confirmation) return;
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const patientName = `${capitalizeName(confirmation.patient.last_name)} ${capitalizeName(confirmation.patient.first_name)}`;
+    const dateStr = format(confirmation.date, "EEEE d MMMM yyyy", { locale: fr });
+    const servicesStr = confirmation.services
+      .map((id) => services.find((s) => s.id === id)?.label || id)
+      .join("<br/>");
+
+    const win = window.open("", "_blank", "width=420,height=600");
+    if (!win) {
+      toast({
+        title: "Impression impossible",
+        description: "Veuillez autoriser les fenêtres surgissantes pour imprimer.",
+        variant: "destructive",
+      });
+      return;
+    }
+    win.document.write(`<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Rendez-vous - ${esc(patientName)}</title>
+<style>
+  @page { size: 80mm auto; margin: 4mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: #000; padding: 8px 4px; width: 80mm; }
+  h1 { font-size: 15px; text-align: center; letter-spacing: 0.5px; }
+  .sub { font-size: 10px; text-align: center; margin-bottom: 10px; }
+  .sep { border-top: 1px dashed #000; margin: 10px 0; }
+  .row { margin-bottom: 8px; }
+  .label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #444; }
+  .value { font-size: 13px; font-weight: 700; }
+  .value.big { font-size: 16px; }
+  .notes { font-size: 10px; margin-top: 4px; }
+  .footer { font-size: 9px; text-align: center; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <h1>PHARMACIE REMILI</h1>
+  <p class="sub">Rue Solvay 64, 7160 Chapelle-lez-Herlaimont<br/>Tél. : +32 64 44 22 53 — www.remili.be</p>
+  <div class="sep"></div>
+  <p class="sub" style="font-weight:700;">CONFIRMATION DE RENDEZ-VOUS<br/>VACCINATION</p>
+  <div class="row">
+    <p class="label">Patient</p>
+    <p class="value">${esc(patientName)}</p>
+    ${confirmation.patient.birth_date ? `<p class="notes">Né(e) le ${format(new Date(confirmation.patient.birth_date), "dd/MM/yyyy")}</p>` : ""}
+  </div>
+  <div class="row">
+    <p class="label">Date</p>
+    <p class="value big">${esc(dateStr)}</p>
+  </div>
+  <div class="row">
+    <p class="label">Heure</p>
+    <p class="value big">${esc(confirmation.time)}</p>
+  </div>
+  <div class="row">
+    <p class="label">Vaccin(s)</p>
+    <p class="value">${servicesStr}</p>
+  </div>
+  ${confirmation.notes ? `<div class="sep"></div><p class="label">Notes</p><p class="notes">${esc(confirmation.notes)}</p>` : ""}
+  <div class="sep"></div>
+  <p class="footer">Merci de vous présenter quelques minutes à l'avance<br/>avec votre carte d'identité.</p>
+</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    win.print();
   };
 
   if (loading) {
@@ -760,7 +831,11 @@ export function PharmacyBooking() {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button variant="outline" onClick={handlePrint} className="w-full sm:w-auto">
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimer
+            </Button>
             <Button onClick={closeConfirmation} className="w-full sm:w-auto">
               Fermer et nouveau rendez-vous
             </Button>
