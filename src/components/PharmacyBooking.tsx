@@ -263,6 +263,9 @@ export function PharmacyBooking() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [pendingDate, setPendingDate] = useState<Date | undefined>(undefined);
+
   const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, "yyyy-MM-dd");
@@ -598,7 +601,7 @@ export function PharmacyBooking() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date de rendez-vous</FormLabel>
-                    <Popover>
+                    <Popover open={datePickerOpen} onOpenChange={(open) => { setDatePickerOpen(open); if (!open) setPendingDate(undefined); }}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -620,8 +623,8 @@ export function PharmacyBooking() {
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
+                          selected={pendingDate ?? field.value}
+                          onSelect={(date) => setPendingDate(date)}
                           disabled={(date) => date < new Date() || !isDateAvailable(date)}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
@@ -642,6 +645,26 @@ export function PharmacyBooking() {
                             },
                           }}
                         />
+                        <div className="border-t p-2">
+                          <Button
+                            type="button"
+                            className="w-full"
+                            size="sm"
+                            disabled={!pendingDate}
+                            onClick={() => {
+                              if (!pendingDate) return;
+                              field.onChange(pendingDate);
+                              if (field.value && format(field.value, "yyyy-MM-dd") !== format(pendingDate, "yyyy-MM-dd")) {
+                                form.setValue("time", "");
+                              }
+                              setPendingDate(undefined);
+                              setDatePickerOpen(false);
+                              setTimeout(() => form.setFocus("time"), 100);
+                            }}
+                          >
+                            Valider
+                          </Button>
+                        </div>
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
