@@ -631,7 +631,8 @@ export function PharmacyBooking() {
                           classNames={{
                             cell: "h-9 w-9 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                             day_selected:
-                              "bg-green-100 text-green-900 border border-green-300 hover:bg-green-100 hover:text-green-900 focus:bg-green-100 focus:text-green-900 font-semibold",
+                              "!bg-green-100 !text-green-900 !border !border-green-300 hover:!bg-green-100 hover:!text-green-900 focus:!bg-green-100 focus:!text-green-900 !font-semibold !opacity-100 aria-selected:!bg-green-100 aria-selected:!text-green-900 aria-selected:!opacity-100",
+                            day_today: "!bg-green-50 !text-green-900 aria-selected:!bg-green-100",
                           }}
 
                           components={{
