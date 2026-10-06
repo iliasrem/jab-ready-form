@@ -1067,6 +1067,16 @@ export const VaccinationManagement = () => {
             <Badge variant="secondary" className="ml-auto tabular-nums">
               {todayPanelEntries.length}
             </Badge>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              title="Imprimer la liste (A4)"
+              aria-label="Imprimer la liste du jour"
+              onClick={handlePrintTodayList}
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
