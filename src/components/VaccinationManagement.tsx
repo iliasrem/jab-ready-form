@@ -541,7 +541,9 @@ export const VaccinationManagement = () => {
       .filter((v) => v.vaccination_date === todayStr && !appointmentPatientIds.has(v.patient_id))
       .forEach((v) => {
         if (byPatient.has(v.patient_id)) return;
-        const patient = patients.find((p) => p.id === v.patient_id);
+        const patient =
+          ((v as unknown as { patients: Patient | null }).patients) ||
+          patients.find((p) => p.id === v.patient_id);
         if (patient) byPatient.set(v.patient_id, { time: v.vaccination_time, patient });
       });
     return Array.from(byPatient.values()).sort((a, b) => a.time.localeCompare(b.time));
