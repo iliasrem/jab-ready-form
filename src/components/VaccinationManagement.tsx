@@ -816,10 +816,10 @@ export const VaccinationManagement = () => {
                         {filteredPatients.length === 0 && filteredToday.length === 0 && (
                           <div className="py-6 text-center text-sm">Aucun patient trouvé.</div>
                         )}
-                        {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
+                        {filteredToday.length > 0 && (
                           <>
                             <CommandGroup heading="Patients du jour">
-                              {todayAppointments.map(({ time, patient, services }) => (
+                              {todayAppointments.filter((e) => matchesQuery(e.patient)).map(({ time, patient, services }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
@@ -840,7 +840,7 @@ export const VaccinationManagement = () => {
                                   )}
                                 </CommandItem>
                               ))}
-                              {todayWalkIns.map(({ time, patient }) => (
+                              {todayWalkIns.filter((e) => matchesQuery(e.patient)).map(({ time, patient }) => (
                                 <CommandItem
                                   key={`walkin-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
