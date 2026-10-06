@@ -710,7 +710,7 @@ export const VaccinationManagement = () => {
                         {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
                           <>
                             <CommandGroup heading="Patients du jour">
-                              {todayAppointments.map(({ time, patient }) => (
+                              {todayAppointments.map(({ time, patient, services }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
@@ -722,6 +722,7 @@ export const VaccinationManagement = () => {
                                   <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                     {patient.last_name} {patient.first_name}
                                   </span>
+                                  <VaccineTypeIcons types={vaccineTypesFor(patient.id, services)} />
                                   {activeHolds[patient.id] && (
                                     <Badge variant="secondary" className="ml-auto gap-1">
                                       <PackageCheck className="h-3 w-3" />
@@ -742,6 +743,7 @@ export const VaccinationManagement = () => {
                                   <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                     {patient.last_name} {patient.first_name}
                                   </span>
+                                  <VaccineTypeIcons types={vaccineTypesFor(patient.id)} />
                                   {activeHolds[patient.id] && (
                                     <Badge variant="secondary" className="ml-auto gap-1">
                                       <PackageCheck className="h-3 w-3" />
@@ -770,6 +772,7 @@ export const VaccinationManagement = () => {
                               <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                 {patient.last_name} {patient.first_name}
                               </span>
+                              <VaccineTypeIcons types={vaccineTypesFor(patient.id)} />
                               {activeHolds[patient.id] && (
                                 <Badge variant="secondary" className="ml-auto gap-1">
                                   <PackageCheck className="h-3 w-3" />
@@ -983,7 +986,7 @@ export const VaccinationManagement = () => {
               Aucun rendez-vous aujourd'hui
             </p>
           ) : (
-            todayPanelEntries.map(({ time, patient }) => {
+            todayPanelEntries.map(({ time, patient, services }) => {
               const isSelected = selectedPatientId === patient.id;
               return (
                 <button
@@ -1001,6 +1004,7 @@ export const VaccinationManagement = () => {
                   <span className={cn("truncate capitalize", vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                     {patient.last_name} {patient.first_name}
                   </span>
+                  <VaccineTypeIcons types={vaccineTypesFor(patient.id, services)} />
                   {activeHolds[patient.id] && (
                     <Badge variant="secondary" className="ml-auto shrink-0 gap-1">
                       <PackageCheck className="h-3 w-3" />
