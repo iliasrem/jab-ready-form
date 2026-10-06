@@ -684,6 +684,23 @@ export const VaccinationManagement = () => {
   };
 
 
+  const normalizeSearch = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const queryWords = normalizeSearch(patientQuery).split(/\s+/).filter(Boolean);
+  const matchesQuery = (p: Patient) => {
+    if (queryWords.length === 0) return true;
+    const hay = normalizeSearch(`${p.last_name} ${p.first_name}`);
+    return queryWords.every((w) => hay.includes(w));
+  };
+  const filteredToday = todayPanelEntries.filter((e) => matchesQuery(e.patient));
+  const filteredPatients: Patient[] = [];
+  for (const p of patients) {
+    if (matchesQuery(p)) {
+      filteredPatients.push(p);
+      if (filteredPatients.length >= 50) break;
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
