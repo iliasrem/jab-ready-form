@@ -230,6 +230,12 @@ export const VaccinationManagement = () => {
       setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
       setVaccinationTime(appointmentTime.slice(0, 5));
       pickLot();
+    } else {
+      // Patient "comptoir" sans RDV aujourd'hui : on pré-remplit à maintenant
+      // uniquement si l'utilisateur n'a pas déjà modifié les champs lui-même
+      if (!dateTouchedRef.current) setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+      if (!timeTouchedRef.current) setVaccinationTime(format(new Date(), "HH:mm"));
+      if (!lotTouchedRef.current) pickLot();
     }
     if (activeHolds[patient.id]) {
       setHoldAlert({
