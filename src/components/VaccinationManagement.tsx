@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube, Biohazard, Thermometer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -62,7 +62,7 @@ export const VaccinationManagement = () => {
   const [inventory, setInventory] = useState<VaccineInventoryItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [activeHolds, setActiveHolds] = useState<Record<string, string>>({});
-  const [todayAppointments, setTodayAppointments] = useState<{ time: string; patient: Patient }[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<{ time: string; patient: Patient; services?: string[] }[]>([]);
   const [holdVaccines, setHoldVaccines] = useState<Record<string, string>>({});
   const [holdAlert, setHoldAlert] = useState<{ name: string; date: string; vaccine?: string } | null>(null);
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -178,16 +178,22 @@ export const VaccinationManagement = () => {
     const today = format(new Date(), "yyyy-MM-dd");
     const { data } = await supabase
       .from("appointments")
-      .select("appointment_time, patients:patient_id (id, first_name, last_name, email)")
+      .select("appointment_time, services, patients:patient_id (id, first_name, last_name, email)")
       .eq("appointment_date", today)
       .neq("status", "cancelled")
       .order("appointment_time", { ascending: true });
     const list = (data || [])
       .map((a) => {
         const p = (a as unknown as { patients: Patient | null }).patients;
-        return p ? { time: a.appointment_time as string, patient: p } : null;
+        return p
+          ? {
+              time: a.appointment_time as string,
+              patient: p,
+              services: ((a as unknown as { services?: string[] }).services) || [],
+            }
+          : null;
       })
-      .filter(Boolean) as { time: string; patient: Patient }[];
+      .filter(Boolean) as { time: string; patient: Patient; services?: string[] }[];
     setTodayAppointments(list);
   };
 
@@ -555,6 +561,37 @@ export const VaccinationManagement = () => {
   })();
   const todayPanelEntries = [...todayAppointments, ...todayWalkIns].sort((a, b) =>
     a.time.localeCompare(b.time)
+  ) as { time: string; patient: Patient; services?: string[] }[];
+
+  // Icônes covid / grippe à droite des noms : type du rendez-vous, sinon nom du vaccin réservé
+  const GRIPPE_NAME_RE = /grippe|eflueida|vaxigrip|fluarix|influvac|fluad|afluria/i;
+  const COVID_NAME_RE = /covid|comirnaty|spikevax|nuvaxovid|vidprevutiv/i;
+  const vaccineTypesFor = (patientId: string, services?: string[]): ("covid" | "grippe")[] => {
+    const types = new Set<"covid" | "grippe">();
+    (services || []).forEach((s) => {
+      if (s === "covid" || s === "grippe") types.add(s);
+    });
+    if (types.size === 0) {
+      const holdName = holdVaccines[patientId];
+      if (holdName) {
+        if (GRIPPE_NAME_RE.test(holdName)) types.add("grippe");
+        if (COVID_NAME_RE.test(holdName)) types.add("covid");
+      }
+    }
+    return Array.from(types);
+  };
+  const VaccineTypeIcons = ({ types }: { types: ("covid" | "grippe")[] }) => (
+    <span
+      className="ml-1 inline-flex shrink-0 items-center gap-0.5"
+      title={types.map((t) => (t === "covid" ? "Vaccin Covid" : "Vaccin Grippe")).join(" + ")}
+    >
+      {types.includes("covid") && (
+        <Biohazard className="h-3.5 w-3.5 text-sky-600" aria-label="Vaccin Covid" />
+      )}
+      {types.includes("grippe") && (
+        <Thermometer className="h-3.5 w-3.5 text-orange-500" aria-label="Vaccin Grippe" />
+      )}
+    </span>
   );
 
   return (
@@ -673,7 +710,7 @@ export const VaccinationManagement = () => {
                         {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
                           <>
                             <CommandGroup heading="Patients du jour">
-                              {todayAppointments.map(({ time, patient }) => (
+                              {todayAppointments.map(({ time, patient, services }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
@@ -685,6 +722,7 @@ export const VaccinationManagement = () => {
                                   <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                     {patient.last_name} {patient.first_name}
                                   </span>
+                                  <VaccineTypeIcons types={vaccineTypesFor(patient.id, services)} />
                                   {activeHolds[patient.id] && (
                                     <Badge variant="secondary" className="ml-auto gap-1">
                                       <PackageCheck className="h-3 w-3" />
@@ -705,6 +743,7 @@ export const VaccinationManagement = () => {
                                   <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                     {patient.last_name} {patient.first_name}
                                   </span>
+                                  <VaccineTypeIcons types={vaccineTypesFor(patient.id)} />
                                   {activeHolds[patient.id] && (
                                     <Badge variant="secondary" className="ml-auto gap-1">
                                       <PackageCheck className="h-3 w-3" />
@@ -733,6 +772,7 @@ export const VaccinationManagement = () => {
                               <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                                 {patient.last_name} {patient.first_name}
                               </span>
+                              <VaccineTypeIcons types={vaccineTypesFor(patient.id)} />
                               {activeHolds[patient.id] && (
                                 <Badge variant="secondary" className="ml-auto gap-1">
                                   <PackageCheck className="h-3 w-3" />
@@ -946,7 +986,7 @@ export const VaccinationManagement = () => {
               Aucun rendez-vous aujourd'hui
             </p>
           ) : (
-            todayPanelEntries.map(({ time, patient }) => {
+            todayPanelEntries.map(({ time, patient, services }) => {
               const isSelected = selectedPatientId === patient.id;
               return (
                 <button
@@ -964,6 +1004,7 @@ export const VaccinationManagement = () => {
                   <span className={cn("truncate capitalize", vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                     {patient.last_name} {patient.first_name}
                   </span>
+                  <VaccineTypeIcons types={vaccineTypesFor(patient.id, services)} />
                   {activeHolds[patient.id] && (
                     <Badge variant="secondary" className="ml-auto shrink-0 gap-1">
                       <PackageCheck className="h-3 w-3" />
