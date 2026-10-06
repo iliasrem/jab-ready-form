@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,10 @@ export const VaccinationManagement = () => {
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
+  // Saisies modifiées manuellement par l'utilisateur (non écrasées par la sélection d'un patient sans RDV)
+  const dateTouchedRef = useRef(false);
+  const timeTouchedRef = useRef(false);
+  const lotTouchedRef = useRef(false);
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
   const [filteredVaccinations, setFilteredVaccinations] = useState<Vaccination[]>([]);
