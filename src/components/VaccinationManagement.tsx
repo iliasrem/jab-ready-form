@@ -1015,6 +1015,22 @@ export const VaccinationManagement = () => {
               );
             })
           )}
+          {todayPanelEntries.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Biohazard className="h-3 w-3 text-sky-600" />
+                Covid
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Thermometer className="h-3 w-3 text-orange-500" />
+                Grippe
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <PackageCheck className="h-3 w-3" />
+                Vaccin réservé
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
