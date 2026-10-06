@@ -497,7 +497,9 @@ export const VaccinationManagement = () => {
       // Reset form
       setSelectedPatientId("");
       setSelectedLotNumber("");
-      
+      dateTouchedRef.current = false;
+      timeTouchedRef.current = false;
+      lotTouchedRef.current = false;
       setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
       setVaccinationTime(format(new Date(), "HH:mm"));
       
