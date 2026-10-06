@@ -527,6 +527,12 @@ export const VaccinationManagement = () => {
     }
   };
 
+  // Patients déjà vaccinés aujourd'hui : affichés mais barrés
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const vaccinatedToday = new Set(
+    vaccinations.filter((v) => v.vaccination_date === todayStr).map((v) => v.patient_id)
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
@@ -652,7 +658,9 @@ export const VaccinationManagement = () => {
                                   <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
                                     {time.slice(0, 5)}
                                   </span>
-                                  {patient.last_name} {patient.first_name}
+                                  <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
+                                    {patient.last_name} {patient.first_name}
+                                  </span>
                                   {activeHolds[patient.id] && (
                                     <Badge variant="secondary" className="ml-auto gap-1">
                                       <PackageCheck className="h-3 w-3" />
@@ -678,7 +686,9 @@ export const VaccinationManagement = () => {
                                   selectedPatientId === patient.id ? "opacity-100" : "opacity-0"
                                 )}
                               />
-                              {patient.last_name} {patient.first_name}
+                              <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
+                                {patient.last_name} {patient.first_name}
+                              </span>
                               {activeHolds[patient.id] && (
                                 <Badge variant="secondary" className="ml-auto gap-1">
                                   <PackageCheck className="h-3 w-3" />
@@ -907,7 +917,7 @@ export const VaccinationManagement = () => {
                   <span className="w-12 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                     {time.slice(0, 5)}
                   </span>
-                  <span className="truncate capitalize">
+                  <span className={cn("truncate capitalize", vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
                     {patient.last_name} {patient.first_name}
                   </span>
                   {activeHolds[patient.id] && (
