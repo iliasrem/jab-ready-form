@@ -951,6 +951,7 @@ export type Database = {
       }
       is_valid_email: { Args: { email_address: string }; Returns: boolean }
       merge_duplicate_patients: { Args: never; Returns: Json }
+      merge_selected_patients: { Args: { p_ids: string[] }; Returns: Json }
       save_availability: { Args: { p_days: Json }; Returns: number }
     }
     Enums: {
