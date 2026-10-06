@@ -95,10 +95,11 @@ export function PatientList() {
         .select('id, first_name, last_name, email, phone, birth_date, status, notes', { count: 'exact' });
 
       if (debouncedSearch) {
-        const s = debouncedSearch.replace(/[%_]/g, '');
-        if (s) {
+        // Chaque mot doit correspondre (nom, prénom, email ou téléphone) : "vanu vero"
+        const words = debouncedSearch.replace(/[%_,()]/g, ' ').split(/\s+/).filter(Boolean);
+        for (const w of words) {
           query = query.or(
-            `last_name.ilike.%${s}%,first_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`
+            `last_name.ilike.%${w}%,first_name.ilike.%${w}%,email.ilike.%${w}%,phone.ilike.%${w}%`
           );
         }
       }
@@ -282,6 +283,33 @@ export function PatientList() {
     setEditingPatient({ ...editingPatient, [field]: value });
   };
 
+  const mergeSearchResults = async () => {
+    if (patients.length < 2) return;
+    if (!confirm(
+      `Fusionner les ${patients.length} patients affichés en une seule fiche ?\n\n` +
+      patients.map(p => `• ${p.last_name} ${p.first_name}`).join('\n') +
+      "\n\nLa fiche la plus ancienne est conservée et complétée (date de naissance, téléphone, email). " +
+      "Rendez-vous, vaccinations et réservations y seront rattachés.\n\nCette action est irréversible."
+    )) return;
+    setMerging(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('merge_selected_patients', {
+        p_ids: patients.map(p => p.id),
+      });
+      if (error) throw error;
+      toast({
+        title: "Fusion terminée",
+        description: `${(data as any)?.patients_deleted ?? 0} fiche(s) fusionnée(s).`,
+      });
+      await loadPatients();
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erreur", description: "Impossible de fusionner ces patients.", variant: "destructive" });
+    } finally {
+      setMerging(false);
+    }
+  };
+
   const mergeDuplicates = async () => {
     if (!confirm(
       "Fusionner les patients en double ayant exactement le même nom, prénom et date de naissance ?\n\n" +
@@ -456,6 +484,17 @@ export function PatientList() {
             <Badge variant="secondary" className="text-sm px-3 py-1">
               {totalCount} patient{totalCount > 1 ? 's' : ''}
             </Badge>
+            {debouncedSearch && patients.length >= 2 && patients.length === totalCount && (
+              <Button
+                size="sm"
+                onClick={mergeSearchResults}
+                disabled={merging}
+                className="flex items-center gap-2"
+              >
+                {merging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Merge className="h-4 w-4" />}
+                Fusionner les {patients.length} résultats
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
