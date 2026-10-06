@@ -516,7 +516,8 @@ export const VaccinationManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
+      <div className="space-y-6 min-w-0">
       <AlertDialog open={!!holdAlert} onOpenChange={(o) => !o && setHoldAlert(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -859,6 +860,54 @@ export const VaccinationManagement = () => {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+      </div>
+
+      <Card className="hidden lg:flex lg:flex-col lg:sticky lg:top-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4" />
+            RDV du jour
+            <Badge variant="secondary" className="ml-auto tabular-nums">
+              {todayAppointments.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {todayAppointments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Aucun rendez-vous aujourd'hui
+            </p>
+          ) : (
+            todayAppointments.map(({ time, patient }) => {
+              const isSelected = selectedPatientId === patient.id;
+              return (
+                <button
+                  key={`today-panel-${patient.id}-${time}`}
+                  type="button"
+                  onClick={() => handleSelectPatient(patient, time)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                    isSelected && "bg-accent"
+                  )}
+                >
+                  <span className="w-12 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                    {time.slice(0, 5)}
+                  </span>
+                  <span className="truncate capitalize">
+                    {patient.last_name} {patient.first_name}
+                  </span>
+                  {activeHolds[patient.id] && (
+                    <Badge variant="secondary" className="ml-auto shrink-0 gap-1">
+                      <PackageCheck className="h-3 w-3" />
+                      Réservé
+                    </Badge>
+                  )}
+                </button>
+              );
+            })
+          )}
         </CardContent>
       </Card>
     </div>
