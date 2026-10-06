@@ -909,17 +909,17 @@ export const VaccinationManagement = () => {
             <Clock className="h-4 w-4" />
             RDV du jour
             <Badge variant="secondary" className="ml-auto tabular-nums">
-              {todayAppointments.length}
+              {todayPanelEntries.length}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
-          {todayAppointments.length === 0 ? (
+          {todayPanelEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               Aucun rendez-vous aujourd'hui
             </p>
           ) : (
-            todayAppointments.map(({ time, patient }) => {
+            todayPanelEntries.map(({ time, patient }) => {
               const isSelected = selectedPatientId === patient.id;
               return (
                 <button
