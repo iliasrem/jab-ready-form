@@ -663,12 +663,32 @@ export const VaccinationManagement = () => {
                       <CommandInput placeholder="Rechercher un patient..." />
                       <CommandList>
                         <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
-                        {todayAppointments.length > 0 && (
+                        {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
                           <>
                             <CommandGroup heading="Patients du jour">
                               {todayAppointments.map(({ time, patient }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
+                                  value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
+                                  onSelect={() => handleSelectPatient(patient, time)}
+                                >
+                                  <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
+                                    {time.slice(0, 5)}
+                                  </span>
+                                  <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
+                                    {patient.last_name} {patient.first_name}
+                                  </span>
+                                  {activeHolds[patient.id] && (
+                                    <Badge variant="secondary" className="ml-auto gap-1">
+                                      <PackageCheck className="h-3 w-3" />
+                                      Réservé
+                                    </Badge>
+                                  )}
+                                </CommandItem>
+                              ))}
+                              {todayWalkIns.map(({ time, patient }) => (
+                                <CommandItem
+                                  key={`walkin-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
                                   onSelect={() => handleSelectPatient(patient, time)}
                                 >
