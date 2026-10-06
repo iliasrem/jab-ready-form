@@ -533,6 +533,23 @@ export const VaccinationManagement = () => {
     vaccinations.filter((v) => v.vaccination_date === todayStr).map((v) => v.patient_id)
   );
 
+  // Passages du jour sans rendez-vous : patients vaccinés aujourd'hui mais absents des RDV
+  const appointmentPatientIds = new Set(todayAppointments.map((a) => a.patient.id));
+  const todayWalkIns = (() => {
+    const byPatient = new Map<string, { time: string; patient: Patient }>();
+    vaccinations
+      .filter((v) => v.vaccination_date === todayStr && !appointmentPatientIds.has(v.patient_id))
+      .forEach((v) => {
+        if (byPatient.has(v.patient_id)) return;
+        const patient = patients.find((p) => p.id === v.patient_id);
+        if (patient) byPatient.set(v.patient_id, { time: v.vaccination_time, patient });
+      });
+    return Array.from(byPatient.values()).sort((a, b) => a.time.localeCompare(b.time));
+  })();
+  const todayPanelEntries = [...todayAppointments, ...todayWalkIns].sort((a, b) =>
+    a.time.localeCompare(b.time)
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
