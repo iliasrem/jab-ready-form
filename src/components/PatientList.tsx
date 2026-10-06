@@ -287,7 +287,7 @@ export function PatientList() {
     if (patients.length < 2) return;
     if (!confirm(
       `Fusionner les ${patients.length} patients affichés en une seule fiche ?\n\n` +
-      patients.map(p => `• ${p.last_name} ${p.first_name}`).join('\n') +
+      patients.map(p => `• ${p.lastName} ${p.firstName}`).join('\n') +
       "\n\nLa fiche la plus ancienne est conservée et complétée (date de naissance, téléphone, email). " +
       "Rendez-vous, vaccinations et réservations y seront rattachés.\n\nCette action est irréversible."
     )) return;
