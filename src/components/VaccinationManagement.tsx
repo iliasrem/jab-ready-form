@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,10 @@ export const VaccinationManagement = () => {
   const [vaccinationDate, setVaccinationDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [vaccinationTime, setVaccinationTime] = useState<string>(format(new Date(), "HH:mm"));
   const [selectedLotNumber, setSelectedLotNumber] = useState<string>("");
+  // Saisies modifiées manuellement par l'utilisateur (non écrasées par la sélection d'un patient sans RDV)
+  const dateTouchedRef = useRef(false);
+  const timeTouchedRef = useRef(false);
+  const lotTouchedRef = useRef(false);
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
   const [filteredVaccinations, setFilteredVaccinations] = useState<Vaccination[]>([]);
@@ -226,6 +230,12 @@ export const VaccinationManagement = () => {
       setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
       setVaccinationTime(appointmentTime.slice(0, 5));
       pickLot();
+    } else {
+      // Patient "comptoir" sans RDV aujourd'hui : on pré-remplit à maintenant
+      // uniquement si l'utilisateur n'a pas déjà modifié les champs lui-même
+      if (!dateTouchedRef.current) setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
+      if (!timeTouchedRef.current) setVaccinationTime(format(new Date(), "HH:mm"));
+      if (!lotTouchedRef.current) pickLot();
     }
     if (activeHolds[patient.id]) {
       setHoldAlert({
@@ -487,7 +497,9 @@ export const VaccinationManagement = () => {
       // Reset form
       setSelectedPatientId("");
       setSelectedLotNumber("");
-      
+      dateTouchedRef.current = false;
+      timeTouchedRef.current = false;
+      lotTouchedRef.current = false;
       setVaccinationDate(format(new Date(), "yyyy-MM-dd"));
       setVaccinationTime(format(new Date(), "HH:mm"));
       
@@ -720,7 +732,7 @@ export const VaccinationManagement = () => {
 
             <div className="space-y-2">
               <Label htmlFor="lot">Lot de vaccin</Label>
-              <Select value={selectedLotNumber} onValueChange={setSelectedLotNumber}>
+              <Select value={selectedLotNumber} onValueChange={(v) => { lotTouchedRef.current = true; setSelectedLotNumber(v); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un lot" />
                 </SelectTrigger>
@@ -739,7 +751,7 @@ export const VaccinationManagement = () => {
               <Input
                 type="date"
                 value={vaccinationDate}
-                onChange={(e) => setVaccinationDate(e.target.value)}
+                onChange={(e) => { dateTouchedRef.current = true; setVaccinationDate(e.target.value); }}
               />
             </div>
 
@@ -748,7 +760,7 @@ export const VaccinationManagement = () => {
               <Input
                 type="time"
                 value={vaccinationTime}
-                onChange={(e) => setVaccinationTime(e.target.value)}
+                onChange={(e) => { timeTouchedRef.current = true; setVaccinationTime(e.target.value); }}
               />
             </div>
 
