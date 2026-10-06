@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube, Biohazard, Thermometer } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Download, Filter, Check, ChevronsUpDown, PackageCheck, TestTube, Biohazard, Thermometer, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -594,6 +594,95 @@ export const VaccinationManagement = () => {
     </span>
   );
 
+  // Impression A4 de la liste des RDV du jour
+  const handlePrintTodayList = () => {
+    const todayLabel = format(new Date(todayStr), "EEEE d MMMM yyyy", { locale: fr });
+    const rows = todayPanelEntries
+      .map(({ time, patient, services }) => {
+        const types = vaccineTypesFor(patient.id, services);
+        const vaccines = types.map((t) => (t === "covid" ? "Covid" : "Grippe")).join(" + ") || "—";
+        const reserved = activeHolds[patient.id] ? "Oui" : "—";
+        const done = vaccinatedToday.has(patient.id);
+        return `<tr>
+          <td class="time">${time.slice(0, 5)}</td>
+          <td class="name${done ? " done" : ""}">${patient.last_name} ${patient.first_name}</td>
+          <td>${vaccines}</td>
+          <td class="center">${reserved}</td>
+        </tr>`;
+      })
+      .join("");
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>RDV du jour — ${todayLabel}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; }
+  h1 { font-size: 18px; margin: 0 0 2px; text-transform: capitalize; }
+  .sub { font-size: 12px; color: #444; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: middle; }
+  th { background: #eee; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  td.time, th.time { width: 55px; text-align: center; font-variant-numeric: tabular-nums; }
+  td.center, th.center { width: 70px; text-align: center; }
+  td.done { text-decoration: line-through; color: #888; }
+  .legend { margin-top: 14px; font-size: 11px; color: #555; }
+  .legend span { margin-right: 16px; }
+</style>
+</head>
+<body>
+  <h1>Rendez-vous du jour</h1>
+  <p class="sub">${todayLabel} — ${todayPanelEntries.length} entrée(s)</p>
+  ${
+    todayPanelEntries.length === 0
+      ? "<p>Aucun rendez-vous aujourd'hui.</p>"
+      : `<table>
+    <thead>
+      <tr><th class="time">Heure</th><th>Patient</th><th>Vaccins</th><th class="center">Réservé</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="legend"><span>Covid : vaccin Covid-19</span><span>Grippe : vaccin grippe saisonnière</span><span>Réservé : vaccin mis de côté</span><span>Nom barré : patient déjà vacciné</span></p>`
+  }
+</body>
+</html>`;
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    const win = iframe.contentWindow;
+    const doc = iframe.contentDocument;
+    if (!win || !doc) {
+      document.body.removeChild(iframe);
+      toast({ title: "Impression impossible", description: "Le document n'a pas pu être préparé.", variant: "destructive" });
+      return;
+    }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    const doPrint = () => {
+      try {
+        win.focus();
+        win.print();
+      } finally {
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+      }
+    };
+    if (doc.readyState === "complete") {
+      setTimeout(doPrint, 100);
+    } else {
+      iframe.onload = doPrint;
+    }
+  };
+
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
@@ -978,6 +1067,16 @@ export const VaccinationManagement = () => {
             <Badge variant="secondary" className="ml-auto tabular-nums">
               {todayPanelEntries.length}
             </Badge>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              title="Imprimer la liste (A4)"
+              aria-label="Imprimer la liste du jour"
+              onClick={handlePrintTodayList}
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
