@@ -82,6 +82,7 @@ export const VaccinationManagement = () => {
   });
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
   const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
+  const [patientQuery, setPatientQuery] = useState("");
   const { toast } = useToast();
 
   const formatExpiryDate = (dateStr: string) => {
@@ -683,6 +684,23 @@ export const VaccinationManagement = () => {
   };
 
 
+  const normalizeSearch = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const queryWords = normalizeSearch(patientQuery).split(/\s+/).filter(Boolean);
+  const matchesQuery = (p: Patient) => {
+    if (queryWords.length === 0) return true;
+    const hay = normalizeSearch(`${p.last_name} ${p.first_name}`);
+    return queryWords.every((w) => hay.includes(w));
+  };
+  const filteredToday = todayPanelEntries.filter((e) => matchesQuery(e.patient));
+  const filteredPatients: Patient[] = [];
+  for (const p of patients) {
+    if (matchesQuery(p)) {
+      filteredPatients.push(p);
+      if (filteredPatients.length >= 50) break;
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
@@ -792,14 +810,16 @@ export const VaccinationManagement = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[400px] p-0">
-                    <Command>
-                      <CommandInput placeholder="Rechercher un patient..." />
+                    <Command shouldFilter={false}>
+                      <CommandInput placeholder="Rechercher un patient..." value={patientQuery} onValueChange={setPatientQuery} />
                       <CommandList>
-                        <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
-                        {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
+                        {filteredPatients.length === 0 && filteredToday.length === 0 && (
+                          <div className="py-6 text-center text-sm">Aucun patient trouvé.</div>
+                        )}
+                        {filteredToday.length > 0 && (
                           <>
                             <CommandGroup heading="Patients du jour">
-                              {todayAppointments.map(({ time, patient, services }) => (
+                              {todayAppointments.filter((e) => matchesQuery(e.patient)).map(({ time, patient, services }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
@@ -820,7 +840,7 @@ export const VaccinationManagement = () => {
                                   )}
                                 </CommandItem>
                               ))}
-                              {todayWalkIns.map(({ time, patient }) => (
+                              {todayWalkIns.filter((e) => matchesQuery(e.patient)).map(({ time, patient }) => (
                                 <CommandItem
                                   key={`walkin-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
@@ -846,7 +866,7 @@ export const VaccinationManagement = () => {
                           </>
                         )}
                         <CommandGroup heading={todayAppointments.length > 0 ? "Tous les patients" : undefined}>
-                          {patients.map((patient) => (
+                          {filteredPatients.map((patient) => (
                             <CommandItem
                               key={patient.id}
                               value={`${patient.last_name} ${patient.first_name} ${patient.id}`}
