@@ -293,19 +293,24 @@ export const VaccinationManagement = () => {
   };
 
   const fetchPatients = async () => {
-    // Get all active patients from the database
-    const { data: allPatients, error: patientsError } = await supabase
-      .from("patients")
-      .select("id, first_name, last_name, email")
-      .eq("status", "active")
-      .order("last_name", { ascending: true });
-
-    if (patientsError) {
-      toast({ title: "Erreur", description: "Impossible de charger les patients" });
-      return;
+    // Charge tous les patients actifs par blocs de 1000 (limite serveur)
+    const all: Patient[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error: patientsError } = await supabase
+        .from("patients")
+        .select("id, first_name, last_name, email")
+        .eq("status", "active")
+        .order("last_name", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, from + 999);
+      if (patientsError) {
+        toast({ title: "Erreur", description: "Impossible de charger les patients" });
+        return;
+      }
+      all.push(...((data || []) as Patient[]));
+      if (!data || data.length < 1000) break;
     }
-
-    setPatients(allPatients || []);
+    setPatients(all);
   };
 
   const SIX_HOURS_MS = 6 * 3600 * 1000;
