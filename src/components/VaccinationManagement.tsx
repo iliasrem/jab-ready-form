@@ -178,16 +178,22 @@ export const VaccinationManagement = () => {
     const today = format(new Date(), "yyyy-MM-dd");
     const { data } = await supabase
       .from("appointments")
-      .select("appointment_time, patients:patient_id (id, first_name, last_name, email)")
+      .select("appointment_time, services, patients:patient_id (id, first_name, last_name, email)")
       .eq("appointment_date", today)
       .neq("status", "cancelled")
       .order("appointment_time", { ascending: true });
     const list = (data || [])
       .map((a) => {
         const p = (a as unknown as { patients: Patient | null }).patients;
-        return p ? { time: a.appointment_time as string, patient: p } : null;
+        return p
+          ? {
+              time: a.appointment_time as string,
+              patient: p,
+              services: ((a as unknown as { services?: string[] }).services) || [],
+            }
+          : null;
       })
-      .filter(Boolean) as { time: string; patient: Patient }[];
+      .filter(Boolean) as { time: string; patient: Patient; services?: string[] }[];
     setTodayAppointments(list);
   };
 
@@ -555,6 +561,37 @@ export const VaccinationManagement = () => {
   })();
   const todayPanelEntries = [...todayAppointments, ...todayWalkIns].sort((a, b) =>
     a.time.localeCompare(b.time)
+  );
+
+  // Icônes covid / grippe à droite des noms : type du rendez-vous, sinon nom du vaccin réservé
+  const GRIPPE_NAME_RE = /grippe|eflueida|vaxigrip|fluarix|influvac|fluad|afluria/i;
+  const COVID_NAME_RE = /covid|comirnaty|spikevax|nuvaxovid|vidprevutiv/i;
+  const vaccineTypesFor = (patientId: string, services?: string[]): ("covid" | "grippe")[] => {
+    const types = new Set<"covid" | "grippe">();
+    (services || []).forEach((s) => {
+      if (s === "covid" || s === "grippe") types.add(s);
+    });
+    if (types.size === 0) {
+      const holdName = holdVaccines[patientId];
+      if (holdName) {
+        if (GRIPPE_NAME_RE.test(holdName)) types.add("grippe");
+        if (COVID_NAME_RE.test(holdName)) types.add("covid");
+      }
+    }
+    return Array.from(types);
+  };
+  const VaccineTypeIcons = ({ types }: { types: ("covid" | "grippe")[] }) => (
+    <span
+      className="ml-1 inline-flex shrink-0 items-center gap-0.5"
+      title={types.map((t) => (t === "covid" ? "Vaccin Covid" : "Vaccin Grippe")).join(" + ")}
+    >
+      {types.includes("covid") && (
+        <Virus className="h-3.5 w-3.5 text-sky-600" aria-label="Vaccin Covid" />
+      )}
+      {types.includes("grippe") && (
+        <Thermometer className="h-3.5 w-3.5 text-orange-500" aria-label="Vaccin Grippe" />
+      )}
+    </span>
   );
 
   return (
