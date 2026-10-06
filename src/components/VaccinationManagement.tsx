@@ -586,7 +586,7 @@ export const VaccinationManagement = () => {
       title={types.map((t) => (t === "covid" ? "Vaccin Covid" : "Vaccin Grippe")).join(" + ")}
     >
       {types.includes("covid") && (
-        <Virus className="h-3.5 w-3.5 text-sky-600" aria-label="Vaccin Covid" />
+        <Biohazard className="h-3.5 w-3.5 text-sky-600" aria-label="Vaccin Covid" />
       )}
       {types.includes("grippe") && (
         <Thermometer className="h-3.5 w-3.5 text-orange-500" aria-label="Vaccin Grippe" />
