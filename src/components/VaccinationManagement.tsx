@@ -82,6 +82,7 @@ export const VaccinationManagement = () => {
   });
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
   const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
+  const [patientQuery, setPatientQuery] = useState("");
   const { toast } = useToast();
 
   const formatExpiryDate = (dateStr: string) => {
@@ -792,10 +793,12 @@ export const VaccinationManagement = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[400px] p-0">
-                    <Command>
-                      <CommandInput placeholder="Rechercher un patient..." />
+                    <Command shouldFilter={false}>
+                      <CommandInput placeholder="Rechercher un patient..." value={patientQuery} onValueChange={setPatientQuery} />
                       <CommandList>
-                        <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
+                        {filteredPatients.length === 0 && filteredToday.length === 0 && (
+                          <div className="py-6 text-center text-sm">Aucun patient trouvé.</div>
+                        )}
                         {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
                           <>
                             <CommandGroup heading="Patients du jour">
@@ -846,7 +849,7 @@ export const VaccinationManagement = () => {
                           </>
                         )}
                         <CommandGroup heading={todayAppointments.length > 0 ? "Tous les patients" : undefined}>
-                          {patients.map((patient) => (
+                          {filteredPatients.map((patient) => (
                             <CommandItem
                               key={patient.id}
                               value={`${patient.last_name} ${patient.first_name} ${patient.id}`}
