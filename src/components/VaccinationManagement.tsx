@@ -730,7 +730,7 @@ export const VaccinationManagement = () => {
 
             <div className="space-y-2">
               <Label htmlFor="lot">Lot de vaccin</Label>
-              <Select value={selectedLotNumber} onValueChange={setSelectedLotNumber}>
+              <Select value={selectedLotNumber} onValueChange={(v) => { lotTouchedRef.current = true; setSelectedLotNumber(v); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un lot" />
                 </SelectTrigger>
@@ -749,7 +749,7 @@ export const VaccinationManagement = () => {
               <Input
                 type="date"
                 value={vaccinationDate}
-                onChange={(e) => setVaccinationDate(e.target.value)}
+                onChange={(e) => { dateTouchedRef.current = true; setVaccinationDate(e.target.value); }}
               />
             </div>
 
@@ -758,7 +758,7 @@ export const VaccinationManagement = () => {
               <Input
                 type="time"
                 value={vaccinationTime}
-                onChange={(e) => setVaccinationTime(e.target.value)}
+                onChange={(e) => { timeTouchedRef.current = true; setVaccinationTime(e.target.value); }}
               />
             </div>
 
