@@ -533,6 +533,23 @@ export const VaccinationManagement = () => {
     vaccinations.filter((v) => v.vaccination_date === todayStr).map((v) => v.patient_id)
   );
 
+  // Passages du jour sans rendez-vous : patients vaccinés aujourd'hui mais absents des RDV
+  const appointmentPatientIds = new Set(todayAppointments.map((a) => a.patient.id));
+  const todayWalkIns = (() => {
+    const byPatient = new Map<string, { time: string; patient: Patient }>();
+    vaccinations
+      .filter((v) => v.vaccination_date === todayStr && !appointmentPatientIds.has(v.patient_id))
+      .forEach((v) => {
+        if (byPatient.has(v.patient_id)) return;
+        const patient = patients.find((p) => p.id === v.patient_id);
+        if (patient) byPatient.set(v.patient_id, { time: v.vaccination_time, patient });
+      });
+    return Array.from(byPatient.values()).sort((a, b) => a.time.localeCompare(b.time));
+  })();
+  const todayPanelEntries = [...todayAppointments, ...todayWalkIns].sort((a, b) =>
+    a.time.localeCompare(b.time)
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
       <div className="space-y-6 min-w-0">
@@ -646,12 +663,32 @@ export const VaccinationManagement = () => {
                       <CommandInput placeholder="Rechercher un patient..." />
                       <CommandList>
                         <CommandEmpty>Aucun patient trouvé.</CommandEmpty>
-                        {todayAppointments.length > 0 && (
+                        {(todayAppointments.length > 0 || todayWalkIns.length > 0) && (
                           <>
                             <CommandGroup heading="Patients du jour">
                               {todayAppointments.map(({ time, patient }) => (
                                 <CommandItem
                                   key={`today-${patient.id}-${time}`}
+                                  value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
+                                  onSelect={() => handleSelectPatient(patient, time)}
+                                >
+                                  <span className="mr-2 w-12 text-xs font-medium tabular-nums text-muted-foreground">
+                                    {time.slice(0, 5)}
+                                  </span>
+                                  <span className={cn(vaccinatedToday.has(patient.id) && "line-through text-muted-foreground")}>
+                                    {patient.last_name} {patient.first_name}
+                                  </span>
+                                  {activeHolds[patient.id] && (
+                                    <Badge variant="secondary" className="ml-auto gap-1">
+                                      <PackageCheck className="h-3 w-3" />
+                                      Réservé
+                                    </Badge>
+                                  )}
+                                </CommandItem>
+                              ))}
+                              {todayWalkIns.map(({ time, patient }) => (
+                                <CommandItem
+                                  key={`walkin-${patient.id}-${time}`}
                                   value={`jour ${time} ${patient.last_name} ${patient.first_name}`}
                                   onSelect={() => handleSelectPatient(patient, time)}
                                 >
@@ -892,17 +929,17 @@ export const VaccinationManagement = () => {
             <Clock className="h-4 w-4" />
             RDV du jour
             <Badge variant="secondary" className="ml-auto tabular-nums">
-              {todayAppointments.length}
+              {todayPanelEntries.length}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
-          {todayAppointments.length === 0 ? (
+          {todayPanelEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               Aucun rendez-vous aujourd'hui
             </p>
           ) : (
-            todayAppointments.map(({ time, patient }) => {
+            todayPanelEntries.map(({ time, patient }) => {
               const isSelected = selectedPatientId === patient.id;
               return (
                 <button
