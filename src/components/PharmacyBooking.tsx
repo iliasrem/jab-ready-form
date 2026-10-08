@@ -625,7 +625,7 @@ export function PharmacyBooking() {
                           mode="single"
                           selected={pendingDate ?? field.value}
                           onSelect={(date) => setPendingDate(date)}
-                          disabled={(date) => date < new Date() || !isDateAvailable(date)}
+                          disabled={(date) => { const t = new Date(); t.setHours(0,0,0,0); return date < t || !isDateAvailable(date); }}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                           classNames={{
