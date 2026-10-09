@@ -628,6 +628,10 @@ export function PharmacyBooking() {
                           disabled={(date) => { const t = new Date(); t.setHours(0,0,0,0); return date < t || !isDateAvailable(date); }}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
+                          modifiers={{
+                            booked: (date) => (bookedSlots[format(date, "yyyy-MM-dd")] || []).length > 0,
+                          }}
+                          modifiersClassNames={{ booked: "pharmacy-day-booked" }}
                           classNames={{
                             cell: "h-9 w-9 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                             day_selected:
@@ -650,7 +654,7 @@ export function PharmacyBooking() {
                                   }
                                   className={cn(
                                     "flex h-full w-full items-center justify-center",
-                                    count > 0 && "text-purple-600 font-semibold"
+                                    count > 0 && "font-semibold"
                                   )}
                                 >
                                   {format(date, "d")}
