@@ -99,7 +99,7 @@ const PatientBooking = () => {
         <div className="container mx-auto px-4 text-center space-y-2">
           <p className="text-muted-foreground">
             Besoin d&apos;aide ? Contactez-nous au{" "}
-            <a href="tel:+32064442253" className="text-primary hover:underline">
+            <a href="tel:+3264442253" className="text-primary hover:underline">
               064 44 22 53
             </a>{" "}
             ou{" "}
