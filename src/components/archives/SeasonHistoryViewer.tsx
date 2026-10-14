@@ -180,7 +180,7 @@ export function SeasonHistoryViewer() {
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Patient</TableHead>
-                        <TableHead>Lot</TableHead>
+                        <TableHead>Boîte - flacon</TableHead>
                         <TableHead>Expiration</TableHead>
                       </TableRow>
                     </TableHeader>
