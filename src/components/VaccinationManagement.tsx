@@ -39,6 +39,8 @@ interface VaccineInventoryItem {
   expiry_date: string;
   status: string;
   order_number?: number;
+  reception_date?: string;
+  doses_used?: number;
   vials_count?: number;
   opened_vials?: number[];
   discarded_vials?: number[];
@@ -501,22 +503,34 @@ export const VaccinationManagement = () => {
       return;
     }
 
+    const openedNow = selectedInventoryItem.opened_vials || [];
+    const discardedNow = selectedInventoryItem.discarded_vials || [];
+    const vialNumber = openedNow.length > 0
+      ? Math.min(...openedNow)
+      : Array.from({ length: selectedInventoryItem.vials_count || 10 }, (_, i) => i + 1).find((n) => !discardedNow.includes(n)) ?? null;
+
     const { error } = await supabase
       .from("vaccinations")
       .insert([{
         patient_id: selectedPatientId,
         vaccination_date: vaccinationDate,
         vaccination_time: vaccinationTime,
-        lot_number: selectedLotNumber,
+        lot_number: selectedInventoryItem.lot_number,
         expiry_date: selectedInventoryItem.expiry_date,
-        
-      }]);
+        inventory_id: selectedInventoryItem.id,
+        vial_number: vialNumber,
+      } as any]);
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
       // Ouvre automatiquement un flacon du lot si aucun n'est ouvert
       await autoOpenVial(selectedInventoryItem);
+      // Une dose prélevée dans cette boîte précise
+      await supabase
+        .from("vaccine_inventory")
+        .update({ doses_used: (selectedInventoryItem.doses_used || 0) + 1 })
+        .eq("id", selectedInventoryItem.id);
 
       // Le vaccin réservé est remis : on clôture la réservation
       if (activeHolds[selectedPatientId]) {
@@ -769,7 +783,7 @@ export const VaccinationManagement = () => {
               const discarded = item.discarded_vials || [];
               return (
                 <div className="flex items-center gap-1.5" title={`Flacons du lot ${item.lot_number} — 1 clic : ouvrir, 2e clic : éliminer`}>
-                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}</span>
+                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}{item.reception_date ? ` — reçu le ${format(new Date(item.reception_date), "dd/MM/yyyy")}` : ""}</span>
                   {Array.from({ length: total }, (_, idx) => {
                     const n = idx + 1;
                     const isDiscarded = discarded.includes(n);
