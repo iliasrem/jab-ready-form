@@ -358,12 +358,12 @@ export const VaccineInventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>N°</TableHead>
-                  <TableHead>Numéro de lot</TableHead>
-                  <TableHead>Date d'expiration</TableHead>
-                  <TableHead>Date de réception</TableHead>
-                  <TableHead>Doses injectées</TableHead>
-                  <TableHead>Statut</TableHead>
+                  <TableHead className="w-14">N°</TableHead>
+                  <TableHead className="w-32">Numéro de lot</TableHead>
+                  <TableHead className="w-36">Date d'expiration</TableHead>
+                  <TableHead className="w-36">Date de réception</TableHead>
+                  <TableHead className="w-28">Doses injectées</TableHead>
+                  <TableHead className="w-24">Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -512,11 +512,12 @@ export const VaccineInventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>N°</TableHead>
-                  <TableHead>Numéro de lot</TableHead>
-                  <TableHead>Date d'expiration</TableHead>
-                  <TableHead>Date de réception</TableHead>
-                  <TableHead>Doses injectées</TableHead>
+                  <TableHead className="w-14">N°</TableHead>
+                  <TableHead className="w-32">Numéro de lot</TableHead>
+                  <TableHead className="w-36">Date d'expiration</TableHead>
+                  <TableHead className="w-36">Date de réception</TableHead>
+                  <TableHead className="w-28">Doses injectées</TableHead>
+                  <TableHead className="w-24">Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
