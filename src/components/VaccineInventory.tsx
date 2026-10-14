@@ -355,16 +355,16 @@ export const VaccineInventory = () => {
               Aucune boîte ouverte dans l'inventaire
             </div>
           ) : (
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-14">N°</TableHead>
-                  <TableHead className="w-32">Numéro de lot</TableHead>
-                  <TableHead className="w-36">Date d'expiration</TableHead>
-                  <TableHead className="w-36">Date de réception</TableHead>
-                  <TableHead className="w-28">Doses injectées</TableHead>
-                  <TableHead className="w-24">Statut</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[6%]">N°</TableHead>
+                  <TableHead className="w-[18%]">Numéro de lot</TableHead>
+                  <TableHead className="w-[16%]">Date d'expiration</TableHead>
+                  <TableHead className="w-[16%]">Date de réception</TableHead>
+                  <TableHead className="w-[12%]">Doses injectées</TableHead>
+                  <TableHead className="w-[12%]">Statut</TableHead>
+                  <TableHead className="w-[20%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -376,7 +376,7 @@ export const VaccineInventory = () => {
                         <Input
                           value={editFormData.lot_number}
                           onChange={(e) => setEditFormData({...editFormData, lot_number: e.target.value})}
-                          className="w-32"
+                          className="w-full"
                         />
                       ) : (
                         item.lot_number
@@ -388,7 +388,7 @@ export const VaccineInventory = () => {
                           value={editFormData.expiry_date}
                           onChange={(e) => setEditFormData({...editFormData, expiry_date: e.target.value})}
                           placeholder="DD/MM/YYYY"
-                          className="w-32"
+                          className="w-full"
                         />
                       ) : (
                         formatExpiryDate(item.expiry_date)
@@ -400,7 +400,7 @@ export const VaccineInventory = () => {
                           type="date"
                           value={editFormData.reception_date}
                           onChange={(e) => setEditFormData({...editFormData, reception_date: e.target.value})}
-                          className="w-36"
+                          className="w-full"
                         />
                       ) : (
                         new Date(item.reception_date).toLocaleDateString('fr-FR')
@@ -509,16 +509,16 @@ export const VaccineInventory = () => {
               Aucune boîte fermée
             </div>
           ) : (
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-14">N°</TableHead>
-                  <TableHead className="w-32">Numéro de lot</TableHead>
-                  <TableHead className="w-36">Date d'expiration</TableHead>
-                  <TableHead className="w-36">Date de réception</TableHead>
-                  <TableHead className="w-28">Doses injectées</TableHead>
-                  <TableHead className="w-24">Statut</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[6%]">N°</TableHead>
+                  <TableHead className="w-[18%]">Numéro de lot</TableHead>
+                  <TableHead className="w-[16%]">Date d'expiration</TableHead>
+                  <TableHead className="w-[16%]">Date de réception</TableHead>
+                  <TableHead className="w-[12%]">Doses injectées</TableHead>
+                  <TableHead className="w-[12%]">Statut</TableHead>
+                  <TableHead className="w-[20%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -576,16 +576,16 @@ export const VaccineInventory = () => {
               Aucune boîte vide
             </div>
           ) : (
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-14">N°</TableHead>
-                  <TableHead className="w-32">Numéro de lot</TableHead>
-                  <TableHead className="w-36">Date d'expiration</TableHead>
-                  <TableHead className="w-36">Date de réception</TableHead>
-                  <TableHead className="w-28">Doses injectées</TableHead>
-                  <TableHead className="w-24">Statut</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[6%]">N°</TableHead>
+                  <TableHead className="w-[18%]">Numéro de lot</TableHead>
+                  <TableHead className="w-[16%]">Date d'expiration</TableHead>
+                  <TableHead className="w-[16%]">Date de réception</TableHead>
+                  <TableHead className="w-[12%]">Doses injectées</TableHead>
+                  <TableHead className="w-[12%]">Statut</TableHead>
+                  <TableHead className="w-[20%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
