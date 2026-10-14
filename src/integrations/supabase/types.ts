@@ -492,6 +492,53 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_messages: {
+        Row: {
+          body: string
+          created_at: string
+          error: string | null
+          id: string
+          is_test: boolean
+          patient_id: string | null
+          patient_name: string | null
+          phone: string
+          provider_message_id: string | null
+          status: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          is_test?: boolean
+          patient_id?: string | null
+          patient_name?: string | null
+          phone?: string
+          provider_message_id?: string | null
+          status?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          is_test?: boolean
+          patient_id?: string | null
+          patient_name?: string | null
+          phone?: string
+          provider_message_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specific_date_availability: {
         Row: {
           created_at: string
