@@ -22,8 +22,22 @@ const name = (p: P) => `${cap(p.last_name)} ${cap(p.first_name)}`.trim();
 const smsText = (t: string) =>
   t.replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/\S+|www\.(?!remili\.be\b)\S+)/gi, "").split("\n").map((l) => l.trimEnd()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
+const SIGNATURE = "Pharmacie Remili Bastin";
+
+// La signature est toujours ajoutée (une seule fois) à la fin du SMS.
+const signed = (t: string) => {
+  const lines = t.split("\n");
+  while (lines.length) {
+    const last = lines[lines.length - 1].trim();
+    if (last === "" || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?[.!]*$/i.test(last)) lines.pop();
+    else break;
+  }
+  const base = lines.join("\n").trim();
+  return base ? `${base}\n${SIGNATURE}` : SIGNATURE;
+};
+
 const reminder = (date: string) =>
-  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33.\nwww.remili.be\nPharmacie Remili`;
+  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33.\nwww.remili.be\n${SIGNATURE}`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
@@ -87,7 +101,7 @@ export const SmsCampaign = () => {
   });
 
   const finalText = useMemo(
-    () => smsText(message.replace(/\{prénom\}/gi, "Jean").replace(/\{nom\}/gi, "Dupont Jean").replace(/\{heure\}/gi, "10:00")),
+    () => signed(smsText(message.replace(/\{prénom\}/gi, "Jean").replace(/\{nom\}/gi, "Dupont Jean").replace(/\{heure\}/gi, "10:00"))),
     [message],
   );
   const smsCount = Math.max(1, Math.ceil(finalText.length / 160));
@@ -163,6 +177,7 @@ export const SmsCampaign = () => {
           <p className="text-xs text-muted-foreground">
             {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement (www.remili.be est conservé).
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
+            La signature « {SIGNATURE} » est ajoutée automatiquement à la fin du SMS.
           </p>
           <Button className="w-full" disabled={sending || !selected.size || !finalText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
