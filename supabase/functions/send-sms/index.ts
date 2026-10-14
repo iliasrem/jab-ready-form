@@ -16,6 +16,20 @@ function toSmsText(text: string): string {
     .trim();
 }
 
+const SIGNATURE = 'Pharmacie Remili Bastin';
+
+// La signature est toujours ajoutée (une seule fois) à la fin du SMS.
+function withSignature(text: string): string {
+  const lines = text.split('\n');
+  while (lines.length) {
+    const last = lines[lines.length - 1].trim();
+    if (last === '' || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?[.!]*$/i.test(last)) lines.pop();
+    else break;
+  }
+  const base = lines.join('\n').trim();
+  return base ? `${base}\n${SIGNATURE}` : SIGNATURE;
+}
+
 function toE164Digits(phone: string): string | null {
   const p = (phone || '').replace(/[^\d+]/g, '');
   if (!p) return null;
@@ -38,7 +52,8 @@ Deno.serve(async (req) => {
     if (userData?.user?.email?.toLowerCase() !== ADMIN_EMAIL) return json({ error: 'Non autorisé' }, 401);
 
     const body = await req.json().catch(() => null);
-    const message = toSmsText(typeof body?.message === 'string' ? body.message : '');
+    const base = toSmsText(typeof body?.message === 'string' ? body.message : '');
+    const message = withSignature(base);
     const patientIds: string[] = Array.isArray(body?.patient_ids)
       ? body.patient_ids.filter((x: unknown) => typeof x === 'string')
       : [];
@@ -46,7 +61,7 @@ Deno.serve(async (req) => {
     const isTest = testPhone.length > 0;
     const date = typeof body?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : null;
 
-    if (!message || message.length > 1000 || patientIds.length > 500 || (!isTest && patientIds.length === 0)) {
+    if (!base || base.length > 1000 || patientIds.length > 500 || (!isTest && patientIds.length === 0)) {
       return json({ error: 'Message ou liste de patients invalide' }, 400);
     }
 
