@@ -24,20 +24,15 @@ const smsText = (t: string) =>
 
 const SIGNATURE = "Pharmacie Remili Bastin www.remili.be";
 
-// La signature est toujours ajoutée (une seule fois) à la fin du SMS.
+// La signature est toujours ajoutée (une seule fois) à la suite du message, sur la même ligne.
+const SIG_TAIL = /\s*(?:[—–-]?\s*)?(?:pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?|www\.remili\.be)[.!]*\s*$/i;
 const signed = (t: string) => {
-  const lines = t.split("\n");
-  while (lines.length) {
-    const last = lines[lines.length - 1].trim();
-    if (last === "" || /^www\.remili\.be$/i.test(last) || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?[.!]*$/i.test(last)) lines.pop();
-    else break;
-  }
-  const base = lines.join("\n").trim();
-  return base ? `${base}\n\n${SIGNATURE}` : SIGNATURE;
+  const base = t.replace(SIG_TAIL, "").trim();
+  return base ? `${base} ${SIGNATURE}` : SIGNATURE;
 };
 
 const reminder = (date: string) =>
-  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33.\n\n${SIGNATURE}`;
+  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33. ${SIGNATURE}`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
@@ -178,7 +173,7 @@ export const SmsCampaign = () => {
           <p className="text-xs text-muted-foreground">
             {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement (www.remili.be est conservé).
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
-            La signature « {SIGNATURE} » est ajoutée automatiquement à la fin du SMS.
+            La signature « {SIGNATURE} » est ajoutée automatiquement à la suite du message.
           </p>
           <Button className="w-full" disabled={sending || !selected.size || !bodyText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
