@@ -1088,7 +1088,7 @@ export const VaccinationManagement = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Heure</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead>Lot N°</TableHead>
+                <TableHead>Boîte - flacon</TableHead>
                 <TableHead>Expiration</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
