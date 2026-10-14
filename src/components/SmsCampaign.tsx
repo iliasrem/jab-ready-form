@@ -108,7 +108,7 @@ export const SmsCampaign = () => {
   const smsCount = Math.max(1, Math.ceil(finalText.length / 160));
 
   const send = async (test: boolean) => {
-    if (!finalText) return;
+    if (!bodyText) return;
     const ids = [...selected.keys()];
     if (!test && !ids.length) return;
     if (!confirm(test ? `Envoyer un SMS de test au ${testPhone} ?` : `Envoyer ce SMS à ${ids.length} patient(s) ?`)) return;
@@ -180,7 +180,7 @@ export const SmsCampaign = () => {
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
             La signature « {SIGNATURE} » est ajoutée automatiquement à la fin du SMS.
           </p>
-          <Button className="w-full" disabled={sending || !selected.size || !finalText} onClick={() => send(false)}>
+          <Button className="w-full" disabled={sending || !selected.size || !bodyText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Envoyer à {selected.size} patient(s)
           </Button>
@@ -189,7 +189,7 @@ export const SmsCampaign = () => {
               <Label htmlFor="test-phone">Numéro de test</Label>
               <Input id="test-phone" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} />
             </div>
-            <Button variant="outline" disabled={sending || !testPhone || !finalText} onClick={() => send(true)}>
+            <Button variant="outline" disabled={sending || !testPhone || !bodyText} onClick={() => send(true)}>
               <FlaskConical className="mr-2 h-4 w-4" />Tester
             </Button>
           </div>
