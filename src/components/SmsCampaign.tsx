@@ -173,7 +173,7 @@ export const SmsCampaign = () => {
           <p className="text-xs text-muted-foreground">
             {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement (www.remili.be est conservé).
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
-            La signature « {SIGNATURE} » est ajoutée automatiquement à la fin du SMS.
+            La signature « {SIGNATURE} » est ajoutée automatiquement à la suite du message.
           </p>
           <Button className="w-full" disabled={sending || !selected.size || !bodyText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
