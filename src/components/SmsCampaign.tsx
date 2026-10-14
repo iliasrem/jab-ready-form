@@ -100,10 +100,11 @@ export const SmsCampaign = () => {
     return n;
   });
 
-  const finalText = useMemo(
-    () => signed(smsText(message.replace(/\{prénom\}/gi, "Jean").replace(/\{nom\}/gi, "Dupont Jean").replace(/\{heure\}/gi, "10:00"))),
+  const bodyText = useMemo(
+    () => smsText(message.replace(/\{prénom\}/gi, "Jean").replace(/\{nom\}/gi, "Dupont Jean").replace(/\{heure\}/gi, "10:00")),
     [message],
   );
+  const finalText = useMemo(() => signed(bodyText), [bodyText]);
   const smsCount = Math.max(1, Math.ceil(finalText.length / 160));
 
   const send = async (test: boolean) => {
