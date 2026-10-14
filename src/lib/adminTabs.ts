@@ -5,6 +5,7 @@ export const DEFAULT_ADMIN_TAB_ORDER = [
   "appointments",
   "pharmacy-booking",
   "inventory",
+  "sms",
   "utilities",
 ] as const;
 
@@ -17,6 +18,7 @@ export const ADMIN_TAB_LABELS: Record<AdminTabId, string> = {
   appointments: "Tous les RDV",
   "pharmacy-booking": "RDV via pharmacie",
   inventory: "Inventaire",
+  sms: "SMS",
   utilities: "Utilitaires",
 };
 
