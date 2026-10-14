@@ -157,7 +157,10 @@ export const SmsCampaign = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea rows={7} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
-          <p className="text-xs text-muted-foreground">{finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.</p>
+          <p className="text-xs text-muted-foreground">
+            {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.
+            Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
+          </p>
           <Button className="w-full" disabled={sending || !selected.size || !finalText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Envoyer à {selected.size} patient(s)
