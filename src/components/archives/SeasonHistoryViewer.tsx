@@ -189,7 +189,17 @@ export function SeasonHistoryViewer() {
                         <TableRow key={v.id}>
                           <TableCell>{v.vaccination_date}</TableCell>
                           <TableCell>{patientName(v.patient_id)}</TableCell>
-                          <TableCell>{v.lot_number}</TableCell>
+                          <TableCell>
+                            {(() => {
+                              const box = data.inventory.find((l) => l.id === v.inventory_id);
+                              return box?.order_number ? (
+                                <>
+                                  Boîte {String(box.order_number).padStart(3, "0")}
+                                  <div className="text-xs text-muted-foreground">Lot {v.lot_number} · reçu le {box.reception_date}{v.vial_number ? ` · flacon n°${v.vial_number}` : ""}</div>
+                                </>
+                              ) : v.lot_number;
+                            })()}
+                          </TableCell>
                           <TableCell>{v.expiry_date}</TableCell>
                         </TableRow>
                       ))}
@@ -247,6 +257,7 @@ export function SeasonHistoryViewer() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Boîte</TableHead>
                         <TableHead>Lot</TableHead>
                         <TableHead>Réception</TableHead>
                         <TableHead>Expiration</TableHead>
@@ -258,6 +269,7 @@ export function SeasonHistoryViewer() {
                     <TableBody>
                       {data.inventory.map((l) => (
                         <TableRow key={l.id}>
+                          <TableCell className="font-medium">{l.order_number ? String(l.order_number).padStart(3, "0") : "-"}</TableCell>
                           <TableCell>{l.lot_number}</TableCell>
                           <TableCell>{l.reception_date}</TableCell>
                           <TableCell>{l.expiry_date}</TableCell>
