@@ -73,29 +73,28 @@ export const VaccineInventory = () => {
 
       if (closedError) throw closedError;
 
-      // Récupérer le nombre de doses injectées par lot ET date d'expiration
+      // Récupérer le nombre de doses injectées par boîte (inventory_id)
       const { data: vaccinationsData, error: vaccinationsError } = await supabase
         .from('vaccinations')
-        .select('lot_number, expiry_date');
+        .select('inventory_id');
 
       if (vaccinationsError) throw vaccinationsError;
 
-      // Compter les doses par lot ET date d'expiration
+      // Compter les doses par boîte
       const dosesCount: Record<string, number> = {};
       vaccinationsData?.forEach(v => {
-        const key = `${v.lot_number}_${v.expiry_date}`;
-        dosesCount[key] = (dosesCount[key] || 0) + 1;
+        if ((v as any).inventory_id) {
+          const key = (v as any).inventory_id;
+          dosesCount[key] = (dosesCount[key] || 0) + 1;
+        }
       });
 
       // Ajouter le comptage aux données
-      const addDosesCount = (items: any[]) => 
-        items.map(item => {
-          const key = `${item.lot_number}_${item.expiry_date}`;
-          return {
-            ...item,
-            doses_injected: dosesCount[key] || 0
-          };
-        });
+      const addDosesCount = (items: any[]) =>
+        items.map(item => ({
+          ...item,
+          doses_injected: dosesCount[item.id] || 0
+        }));
 
       setInventory(addDosesCount(openData || []));
       setEmptyInventory(addDosesCount(emptyData || []));
