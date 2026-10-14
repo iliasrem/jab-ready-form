@@ -18,6 +18,7 @@ import { PatientImport } from "@/components/PatientImport";
 import { PharmacyBooking } from "@/components/PharmacyBooking";
 import { VaccineHolds } from "@/components/VaccineHolds";
 import { AdminSettings } from "@/components/AdminSettings";
+import { SmsCampaign } from "@/components/SmsCampaign";
 
 
 import Calendar from "./Calendar";
@@ -42,7 +43,8 @@ import {
   Syringe,
   Wrench,
   Copy,
-  PackageCheck
+  PackageCheck,
+  MessageSquare
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +66,7 @@ const ADMIN_TAB_ICONS: Record<AdminTabId, typeof Syringe> = {
   appointments: Clock,
   "pharmacy-booking": Store,
   inventory: Package,
+  sms: MessageSquare,
   utilities: Wrench,
 };
 
@@ -212,6 +215,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="vaccine-holds" className="mt-6">
               <VaccineHolds />
+            </TabsContent>
+
+            <TabsContent value="sms" className="mt-6">
+              <SmsCampaign />
             </TabsContent>
 
             <TabsContent value="inventory" className="mt-6">
