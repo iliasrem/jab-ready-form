@@ -195,7 +195,7 @@ export function SeasonHistoryViewer() {
                               return box?.order_number ? (
                                 <>
                                   Boîte {String(box.order_number).padStart(3, "0")}
-                                  <div className="text-xs text-muted-foreground">Lot {v.lot_number} · reçu le {box.reception_date}{v.vial_number ? ` · flacon n°${v.vial_number}` : ""}</div>
+                                  {v.vial_number ? ` - flacon ${v.vial_number}` : ""}
                                 </>
                               ) : v.lot_number;
                             })()}

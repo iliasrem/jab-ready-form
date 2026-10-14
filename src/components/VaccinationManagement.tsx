@@ -1102,10 +1102,9 @@ export const VaccinationManagement = () => {
                     {vaccination.patients?.last_name} {vaccination.patients?.first_name}
                   </TableCell>
                   <TableCell>
-                    {(vaccination as any).inventory?.order_number ? `Boîte ${boxNo((vaccination as any).inventory.order_number)}` : vaccination.lot_number}
-                    {(vaccination as any).inventory?.reception_date && (
-                      <div className="text-xs text-muted-foreground">Lot {vaccination.lot_number} · reçu le {format(new Date((vaccination as any).inventory.reception_date), "dd/MM/yyyy")}{(vaccination as any).vial_number ? ` · flacon n°${(vaccination as any).vial_number}` : ""}</div>
-                    )}
+                    {(vaccination as any).inventory?.order_number
+                      ? `Boîte ${boxNo((vaccination as any).inventory.order_number)}${(vaccination as any).vial_number ? ` - flacon ${(vaccination as any).vial_number}` : ""}`
+                      : vaccination.lot_number}
                   </TableCell>
                   <TableCell>{formatExpiryDate(vaccination.expiry_date)}</TableCell>
                   <TableCell>
