@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Send, FlaskConical, CalendarDays, Search, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { fr } from "date-fns/locale";
 
 interface P { id: string; first_name: string | null; last_name: string | null; phone: string | null; time?: string }
 
@@ -175,7 +174,7 @@ export const SmsCampaign = () => {
         <CardContent className="space-y-4">
           <Textarea rows={7} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
           <p className="text-xs text-muted-foreground">
-            {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement (www.remili.be est conservé).
+            {smsUnits(finalText)} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
             La signature « {SIGNATURE} » est ajoutée automatiquement à la suite du message.
           </p>
