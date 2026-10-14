@@ -10,7 +10,7 @@ const json = (data: unknown, status = 200) =>
 // Les liens non approuvés sont rejetés par GatewayAPI : on les retire du SMS.
 function toSmsText(text: string): string {
   return text
-    .replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/|www\.)\S+/gi, '')
+    .replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/\S+|www\.(?!remili\.be\b)\S+)/gi, '')
     .split('\n').map((l) => l.trimEnd()).join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
