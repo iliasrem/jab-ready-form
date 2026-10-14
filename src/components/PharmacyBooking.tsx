@@ -880,6 +880,9 @@ export function PharmacyBooking() {
                     );
                   })}
                 </div>
+                {confirmation.at_home && (
+                  <Badge className="mt-2">À domicile</Badge>
+                )}
               </div>
 
               {confirmation.notes && (
