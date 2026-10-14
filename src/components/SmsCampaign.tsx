@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Send, FlaskConical, CalendarDays, Search, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { fr } from "date-fns/locale";
 
 interface P { id: string; first_name: string | null; last_name: string | null; phone: string | null; time?: string }
 
@@ -22,7 +21,7 @@ const name = (p: P) => `${cap(p.last_name)} ${cap(p.first_name)}`.trim();
 const smsText = (t: string) =>
   t.replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/\S+|www\.(?!remili\.be\b)\S+)/gi, "").split("\n").map((l) => l.trimEnd()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
-const SIGNATURE = "Pharmacie Remili Bastin www.remili.be";
+const SIGNATURE = "Pharmacie Remili Bastin";
 
 // La signature est toujours ajoutée (une seule fois) à la suite du message, sur la même ligne.
 const SIG_TAIL = /\s*(?:[—–-]?\s*)?(?:pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?|www\.remili\.be)[.!]*\s*$/i;
@@ -31,8 +30,12 @@ const signed = (t: string) => {
   return base ? `${base} ${SIGNATURE}` : SIGNATURE;
 };
 
+// Les accents (é, à, ê...) comptent double chez l'opérateur : on compte les unités GSM-7.
+const GSM_EXT = new Set("à£$¥èéùìòÇØøÅåÄÖÑß¿ëîïÆæÉ".split(""));
+const smsUnits = (t: string) => [...t].reduce((n, ch) => n + (GSM_EXT.has(ch) ? 2 : 1), 0);
+
 const reminder = (date: string) =>
-  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33. ${SIGNATURE}`;
+  `Bonjour {prénom}, rappel vaccination à la Pharmacie le ${format(parseISO(date), "d/MM/yyyy")} à {heure}. 064 44 22 53 ou WhatsApp +32 491 55 98 33. ${SIGNATURE}`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
@@ -100,7 +103,7 @@ export const SmsCampaign = () => {
     [message],
   );
   const finalText = useMemo(() => signed(bodyText), [bodyText]);
-  const smsCount = Math.max(1, Math.ceil(finalText.length / 160));
+  const smsCount = Math.max(1, Math.ceil(smsUnits(finalText) / 160));
 
   const send = async (test: boolean) => {
     if (!bodyText) return;
@@ -171,7 +174,7 @@ export const SmsCampaign = () => {
         <CardContent className="space-y-4">
           <Textarea rows={7} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
           <p className="text-xs text-muted-foreground">
-            {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement (www.remili.be est conservé).
+            {smsUnits(finalText)} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.
             Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
             La signature « {SIGNATURE} » est ajoutée automatiquement à la suite du message.
           </p>
