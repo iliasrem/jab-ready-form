@@ -23,7 +23,7 @@ const smsText = (t: string) =>
   t.replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/|www\.)\S+/gi, "").split("\n").map((l) => l.trimEnd()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
 const reminder = (date: string) =>
-  `Bonjour, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })}. En cas d'empêchement, contactez-nous au 064 44 22 53.\nPharmacie Remili`;
+  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53.\nPharmacie Remili`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
@@ -86,7 +86,10 @@ export const SmsCampaign = () => {
     return n;
   });
 
-  const finalText = useMemo(() => smsText(message), [message]);
+  const finalText = useMemo(
+    () => smsText(message.replace(/\{prénom\}/gi, "Jean").replace(/\{nom\}/gi, "Dupont Jean").replace(/\{heure\}/gi, "10:00")),
+    [message],
+  );
   const smsCount = Math.max(1, Math.ceil(finalText.length / 160));
 
   const send = async (test: boolean) => {
@@ -97,7 +100,7 @@ export const SmsCampaign = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: test ? { message, test_phone: testPhone } : { message, patient_ids: ids },
+        body: test ? { message, test_phone: testPhone, date } : { message, patient_ids: ids, date },
       });
       if (error) throw new Error(await errText(error));
       toast({ title: `${data.sent} SMS envoyé(s)`, description: data.failed ? `${data.failed} échec(s)` : undefined, variant: data.failed ? "destructive" : undefined });
@@ -157,7 +160,10 @@ export const SmsCampaign = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea rows={7} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
-          <p className="text-xs text-muted-foreground">{finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.</p>
+          <p className="text-xs text-muted-foreground">
+            {finalText.length} caractères · {smsCount} SMS par patient. Les liens internet sont retirés automatiquement.
+            Écrivez {"{prénom}"} et {"{heure}"} dans le message : ils seront remplacés par le prénom du patient et l'heure de son rendez-vous.
+          </p>
           <Button className="w-full" disabled={sending || !selected.size || !finalText} onClick={() => send(false)}>
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Envoyer à {selected.size} patient(s)
