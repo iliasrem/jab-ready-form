@@ -530,36 +530,49 @@ export type Database = {
           created_at: string
           expiry_date: string
           id: string
+          inventory_id: string | null
           lot_number: string
           notes: string | null
           patient_id: string
           updated_at: string
           vaccination_date: string
           vaccination_time: string
+          vial_number: number | null
         }
         Insert: {
           created_at?: string
           expiry_date: string
           id?: string
+          inventory_id?: string | null
           lot_number: string
           notes?: string | null
           patient_id: string
           updated_at?: string
           vaccination_date?: string
           vaccination_time?: string
+          vial_number?: number | null
         }
         Update: {
           created_at?: string
           expiry_date?: string
           id?: string
+          inventory_id?: string | null
           lot_number?: string
           notes?: string | null
           patient_id?: string
           updated_at?: string
           vaccination_date?: string
           vaccination_time?: string
+          vial_number?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vaccinations_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "vaccine_inventory"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vaccinations_patient_id_fkey"
             columns: ["patient_id"]
