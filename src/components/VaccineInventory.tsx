@@ -597,6 +597,12 @@ export const VaccineInventory = () => {
                     <TableCell>{new Date(item.reception_date).toLocaleDateString('fr-FR')}</TableCell>
                     <TableCell>{item.doses_injected || 0}</TableCell>
                     <TableCell>
+                      <span className="flex items-center gap-1 text-orange-600">
+                        <Package className="h-4 w-4" />
+                        Vide
+                      </span>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex gap-1">
                         <Button
                           variant="outline"
