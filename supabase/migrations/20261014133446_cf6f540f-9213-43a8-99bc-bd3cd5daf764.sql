@@ -1,0 +1,1 @@
+UPDATE public.vaccinations SET inventory_id = 'c6544c9f-4567-4aa9-879f-e7b140e783f1' WHERE inventory_id IS NULL AND lot_number = 'RL9727/01' AND vaccination_date < '2026-10-10';
