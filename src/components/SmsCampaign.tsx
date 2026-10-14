@@ -23,7 +23,7 @@ const smsText = (t: string) =>
   t.replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/|www\.)\S+/gi, "").split("\n").map((l) => l.trimEnd()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
 const reminder = (date: string) =>
-  `Bonjour, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })}. En cas d'empêchement, contactez-nous au 064 44 22 53.\nPharmacie Remili`;
+  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53.\nPharmacie Remili`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
@@ -97,7 +97,7 @@ export const SmsCampaign = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: test ? { message, test_phone: testPhone } : { message, patient_ids: ids },
+        body: test ? { message, test_phone: testPhone, date } : { message, patient_ids: ids, date },
       });
       if (error) throw new Error(await errText(error));
       toast({ title: `${data.sent} SMS envoyé(s)`, description: data.failed ? `${data.failed} échec(s)` : undefined, variant: data.failed ? "destructive" : undefined });
