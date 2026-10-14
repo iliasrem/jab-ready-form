@@ -588,6 +588,7 @@ export type Database = {
           created_at: string | null
           expiry_date: string | null
           id: string
+          inventory_id: string | null
           lot_number: string | null
           notes: string | null
           patient_id: string | null
@@ -595,12 +596,14 @@ export type Database = {
           updated_at: string | null
           vaccination_date: string | null
           vaccination_time: string | null
+          vial_number: number | null
         }
         Insert: {
           archived_at?: string
           created_at?: string | null
           expiry_date?: string | null
           id: string
+          inventory_id?: string | null
           lot_number?: string | null
           notes?: string | null
           patient_id?: string | null
@@ -608,12 +611,14 @@ export type Database = {
           updated_at?: string | null
           vaccination_date?: string | null
           vaccination_time?: string | null
+          vial_number?: number | null
         }
         Update: {
           archived_at?: string
           created_at?: string | null
           expiry_date?: string | null
           id?: string
+          inventory_id?: string | null
           lot_number?: string | null
           notes?: string | null
           patient_id?: string | null
@@ -621,6 +626,7 @@ export type Database = {
           updated_at?: string | null
           vaccination_date?: string | null
           vaccination_time?: string | null
+          vial_number?: number | null
         }
         Relationships: []
       }
@@ -739,51 +745,60 @@ export type Database = {
         Row: {
           archived_at: string
           created_at: string | null
+          discarded_vials: number[]
           doses_lost: number | null
           doses_per_vial: number | null
           doses_used: number | null
           expiry_date: string | null
           id: string
           lot_number: string | null
+          opened_vials: number[]
           order_number: number | null
           reception_date: string | null
           season_label: string
           status: string | null
           updated_at: string | null
+          vial_opened_at: Json
           vials_count: number | null
           vials_used: number | null
         }
         Insert: {
           archived_at?: string
           created_at?: string | null
+          discarded_vials?: number[]
           doses_lost?: number | null
           doses_per_vial?: number | null
           doses_used?: number | null
           expiry_date?: string | null
           id: string
           lot_number?: string | null
+          opened_vials?: number[]
           order_number?: number | null
           reception_date?: string | null
           season_label: string
           status?: string | null
           updated_at?: string | null
+          vial_opened_at?: Json
           vials_count?: number | null
           vials_used?: number | null
         }
         Update: {
           archived_at?: string
           created_at?: string | null
+          discarded_vials?: number[]
           doses_lost?: number | null
           doses_per_vial?: number | null
           doses_used?: number | null
           expiry_date?: string | null
           id?: string
           lot_number?: string | null
+          opened_vials?: number[]
           order_number?: number | null
           reception_date?: string | null
           season_label?: string
           status?: string | null
           updated_at?: string | null
+          vial_opened_at?: Json
           vials_count?: number | null
           vials_used?: number | null
         }
