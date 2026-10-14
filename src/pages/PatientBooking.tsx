@@ -101,26 +101,6 @@ const PatientBooking = () => {
             Besoin d&apos;aide ? Contactez-nous au{" "}
             <a href="tel:+3264442253" className="text-primary hover:underline">
               064 44 22 53
-            </a>
-            {", "}
-            par WhatsApp au{" "}
-            <a
-              href="https://api.whatsapp.com/send/?phone=32491559833&text=Bonjour%2C&type=phone_number&app_absent=0"
-              className="text-primary hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              +32 491 55 98 33
-            </a>
-            {", "}
-            sur{" "}
-            <a
-              href="https://www.remili.be"
-              className="text-primary hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              www.remili.be
             </a>{" "}
             ou{" "}
             <a href="mailto:info@remili.be" className="text-primary hover:underline">
