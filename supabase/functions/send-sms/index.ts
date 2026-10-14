@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
       : [];
     const testPhone = typeof body?.test_phone === 'string' ? body.test_phone.trim() : '';
     const isTest = testPhone.length > 0;
+    const date = typeof body?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : null;
 
     if (!message || message.length > 1000 || patientIds.length > 500 || (!isTest && patientIds.length === 0)) {
       return json({ error: 'Message ou liste de patients invalide' }, 400);
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     let recipients: { id: string | null; name: string | null; phone: string }[] = [];
     if (isTest) {
-      recipients = [{ id: null, name: 'TEST', phone: testPhone }];
+      recipients = [{ id: null, name: 'TEST Jean', phone: testPhone }];
     } else {
       const { data, error } = await admin.from('patients').select('id, first_name, last_name, phone').in('id', patientIds);
       if (error) throw error;
@@ -63,9 +64,31 @@ Deno.serve(async (req) => {
       }));
     }
 
+    // Heure du rendez-vous du jour choisi, par patient (pour le tag {heure}).
+    const times = new Map<string, string>();
+    if (date && patientIds.length) {
+      const { data: appts } = await admin
+        .from('appointments')
+        .select('patient_id, appointment_time')
+        .eq('appointment_date', date)
+        .neq('status', 'cancelled')
+        .in('patient_id', patientIds)
+        .order('appointment_time');
+      for (const a of appts ?? []) {
+        if (a.patient_id && a.appointment_time && !times.has(a.patient_id)) {
+          times.set(a.patient_id, String(a.appointment_time).slice(0, 5));
+        }
+      }
+    }
+
     const results: { patient_id: string | null; ok: boolean; error?: string }[] = [];
     for (const r of recipients) {
-      const personal = message.replace(/\{prénom\}/gi, (r.name ?? '').split(' ').slice(1).join(' ') || '').replace(/\{nom\}/gi, r.name ?? '');
+      const heure = isTest ? '10:00' : (r.id ? times.get(r.id) ?? '' : '');
+      const personal = message
+        .replace(/\{prénom\}/gi, (r.name ?? '').split(' ').slice(1).join(' ') || '')
+        .replace(/\{nom\}/gi, r.name ?? '')
+        .replace(/\{heure\}/gi, heure)
+        .replace(/[ \t]+à[ \t]*(?=[.,])/g, ''); // enlève "à " resté seul si l'heure est vide
       const row: Record<string, unknown> = {
         patient_id: r.id, patient_name: r.name, phone: r.phone, body: personal, is_test: isTest, status: 'sent',
       };
