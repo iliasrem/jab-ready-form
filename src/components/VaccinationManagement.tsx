@@ -203,7 +203,7 @@ export const VaccinationManagement = () => {
     if (inventory.length === 0) return;
     const withOpenVial = inventory.find((i) => (i.opened_vials || []).length > 0);
     if (withOpenVial) {
-      setSelectedLotNumber(withOpenVial.lot_number);
+      setSelectedLotNumber(withOpenVial.id);
       return;
     }
     const today = format(new Date(), "yyyy-MM-dd");
@@ -220,7 +220,7 @@ export const VaccinationManagement = () => {
     const started = inventory.find((i) => firstUse[i.lot_number] && !expired(i.lot_number));
     const fresh = inventory.find((i) => !firstUse[i.lot_number]);
     const chosen = started || fresh || inventory[0];
-    setSelectedLotNumber(chosen.lot_number);
+    setSelectedLotNumber(chosen.id);
     if (!started && Object.keys(firstUse).some(expired)) {
       toast({
         title: "Flacon entamé depuis plus de 6h",
@@ -365,7 +365,7 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
+      .select("id, lot_number, expiry_date, status, order_number, reception_date, doses_used, vials_count, opened_vials, discarded_vials, vial_opened_at")
       .eq("status", "open")
       .order("order_number", { ascending: true });
 
@@ -386,7 +386,7 @@ export const VaccinationManagement = () => {
       if (items.length === 0) {
         const { data: next } = await supabase
           .from("vaccine_inventory")
-          .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
+          .select("id, lot_number, expiry_date, status, order_number, reception_date, doses_used, vials_count, opened_vials, discarded_vials, vial_opened_at")
           .eq("status", "closed")
           .order("order_number", { ascending: true })
           .limit(1);
@@ -495,7 +495,7 @@ export const VaccinationManagement = () => {
       return;
     }
 
-    const selectedInventoryItem = inventory.find(item => item.lot_number === selectedLotNumber);
+    const selectedInventoryItem = inventory.find(item => item.id === selectedLotNumber);
     if (!selectedInventoryItem) {
       toast({ title: "Erreur", description: "Lot de vaccin introuvable" });
       return;
@@ -762,7 +762,7 @@ export const VaccinationManagement = () => {
             </CardTitle>
             {(() => {
               const item =
-                inventory.find((i) => i.lot_number === selectedLotNumber) || inventory[0];
+                inventory.find((i) => i.id === selectedLotNumber) || inventory[0];
               if (!item) return null;
               const total = item.vials_count || 10;
               const opened = item.opened_vials || [];
@@ -963,8 +963,8 @@ export const VaccinationManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {inventory.map((item) => (
-                    <SelectItem key={item.id} value={item.lot_number}>
-                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)}
+                    <SelectItem key={item.id} value={item.id}>
+                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Reçue le {item.reception_date ? format(new Date(item.reception_date), "dd/MM/yyyy") : "?"} - Exp: {formatExpiryDate(item.expiry_date)}
                     </SelectItem>
                   ))}
                 </SelectContent>
