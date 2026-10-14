@@ -16,7 +16,7 @@ function toSmsText(text: string): string {
     .trim();
 }
 
-const SIGNATURE = 'Pharmacie Remili Bastin www.remili.be';
+const SIGNATURE = 'Pharmacie Remili Bastin';
 
 // La signature est toujours ajoutée (une seule fois) à la suite du message, sur la même ligne.
 const SIG_TAIL = /\s*(?:[—–-]?\s*)?(?:pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?|www\.remili\.be)[.!]*\s*$/i;
