@@ -372,8 +372,30 @@ export const VaccinationManagement = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger l'inventaire" });
     } else {
-      const items = (data || []) as unknown as VaccineInventoryItem[];
+      let items = (data || []) as unknown as VaccineInventoryItem[];
       await discardExpiredVials(items);
+
+      // Boîte terminée (tous les flacons éliminés) -> passe en "vide"
+      const finished = items.filter((i) => (i.discarded_vials || []).length >= (i.vials_count || 10));
+      for (const f of finished) {
+        await supabase.from("vaccine_inventory").update({ status: "empty" }).eq("id", f.id);
+      }
+      items = items.filter((i) => !finished.includes(i));
+
+      // Plus aucune boîte ouverte -> ouvre automatiquement la boîte fermée suivante
+      if (items.length === 0) {
+        const { data: next } = await supabase
+          .from("vaccine_inventory")
+          .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
+          .eq("status", "closed")
+          .order("order_number", { ascending: true })
+          .limit(1);
+        if (next && next.length > 0) {
+          await supabase.from("vaccine_inventory").update({ status: "open" }).eq("id", next[0].id);
+          items = [{ ...(next[0] as unknown as VaccineInventoryItem), status: "open" }];
+          toast({ title: "Nouvelle boîte ouverte", description: `Lot ${next[0].lot_number}` });
+        }
+      }
       setInventory([...items]);
     }
   };
