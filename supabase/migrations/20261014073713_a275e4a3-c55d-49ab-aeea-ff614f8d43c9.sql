@@ -1,0 +1,1 @@
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS at_home boolean NOT NULL DEFAULT false;
