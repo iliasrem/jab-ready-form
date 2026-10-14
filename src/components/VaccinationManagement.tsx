@@ -33,6 +33,8 @@ interface Patient {
   email?: string;
 }
 
+const boxNo = (n?: number | null) => (n ? String(n).padStart(3, "0") : "?");
+
 interface VaccineInventoryItem {
   id: string;
   lot_number: string;
@@ -130,6 +132,8 @@ export const VaccinationManagement = () => {
       'Heure': vaccination.vaccination_time,
       'Patient': `${vaccination.patients?.last_name} ${vaccination.patients?.first_name}`,
       'Email': vaccination.patients?.email || '-',
+      'Boîte': (vaccination as any).inventory?.order_number ? boxNo((vaccination as any).inventory.order_number) : '',
+      'Flacon': (vaccination as any).vial_number || '',
       'Lot N°': vaccination.lot_number,
       'Date d\'expiration': formatExpiryDate(vaccination.expiry_date)
     }));
@@ -289,7 +293,7 @@ export const VaccinationManagement = () => {
           last_name,
           email
         ),
-        inventory:inventory_id ( reception_date )
+        inventory:inventory_id ( reception_date, order_number )
       `)
       .order("vaccination_date", { ascending: false })
       .order("vaccination_time", { ascending: false });
@@ -358,7 +362,7 @@ export const VaccinationManagement = () => {
         item.vial_opened_at = nextOpenedAt;
         toast({
           title: expired.length > 1 ? "Flacons jetés (plus de 6h)" : `Flacon n°${expired[0]} jeté (plus de 6h)`,
-          description: `Lot ${item.lot_number} — déplacé dans les flacons éliminés`,
+          description: `Boîte ${boxNo(item.order_number)} — déplacé dans les flacons éliminés`,
         });
       }
     }
@@ -396,7 +400,7 @@ export const VaccinationManagement = () => {
         if (next && next.length > 0) {
           await supabase.from("vaccine_inventory").update({ status: "open" }).eq("id", next[0].id);
           items = [{ ...(next[0] as unknown as VaccineInventoryItem), status: "open" }];
-          toast({ title: "Nouvelle boîte ouverte", description: `Lot ${next[0].lot_number}` });
+          toast({ title: "Nouvelle boîte ouverte", description: `Boîte ${boxNo(next[0].order_number)}` });
         }
       }
       setInventory([...items]);
@@ -447,7 +451,7 @@ export const VaccinationManagement = () => {
       if (error) {
         toast({ title: "Erreur", description: "Impossible d'ouvrir le flacon", variant: "destructive" });
       } else {
-        toast({ title: `Flacon n°${vialNumber} ouvert`, description: `Lot ${item.lot_number}` });
+        toast({ title: `Flacon n°${vialNumber} ouvert`, description: `Boîte ${boxNo(item.order_number)}` });
         fetchInventory();
       }
     } else {
@@ -466,7 +470,7 @@ export const VaccinationManagement = () => {
       if (error) {
         toast({ title: "Erreur", description: "Impossible d'éliminer le flacon", variant: "destructive" });
       } else {
-        toast({ title: `Flacon n°${vialNumber} éliminé`, description: `Lot ${item.lot_number} — déplacé dans le cadre des flacons éliminés` });
+        toast({ title: `Flacon n°${vialNumber} éliminé`, description: `Boîte ${boxNo(item.order_number)} — déplacé dans le cadre des flacons éliminés` });
         fetchInventory();
       }
     }
@@ -783,8 +787,8 @@ export const VaccinationManagement = () => {
               const opened = item.opened_vials || [];
               const discarded = item.discarded_vials || [];
               return (
-                <div className="flex items-center gap-1.5" title={`Flacons du lot ${item.lot_number} — 1 clic : ouvrir, 2e clic : éliminer`}>
-                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}{item.reception_date ? ` — reçu le ${format(new Date(item.reception_date), "dd/MM/yyyy")}` : ""}</span>
+                <div className="flex items-center gap-1.5" title={`Flacons de la boîte ${boxNo(item.order_number)} (lot ${item.lot_number}) — 1 clic : ouvrir, 2e clic : éliminer`}>
+                  <span className="mr-1 text-xs text-muted-foreground">Boîte {boxNo(item.order_number)}</span>
                   {Array.from({ length: total }, (_, idx) => {
                     const n = idx + 1;
                     const isDiscarded = discarded.includes(n);
@@ -979,7 +983,7 @@ export const VaccinationManagement = () => {
                 <SelectContent>
                   {inventory.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
-                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Reçue le {item.reception_date ? format(new Date(item.reception_date), "dd/MM/yyyy") : "?"} - Exp: {formatExpiryDate(item.expiry_date)}
+                      Boîte {boxNo(item.order_number)} - Lot: {item.lot_number} - Reçue le {item.reception_date ? format(new Date(item.reception_date), "dd/MM/yyyy") : "?"} - Exp: {formatExpiryDate(item.expiry_date)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1098,9 +1102,9 @@ export const VaccinationManagement = () => {
                     {vaccination.patients?.last_name} {vaccination.patients?.first_name}
                   </TableCell>
                   <TableCell>
-                    {vaccination.lot_number}
+                    {(vaccination as any).inventory?.order_number ? `Boîte ${boxNo((vaccination as any).inventory.order_number)}` : vaccination.lot_number}
                     {(vaccination as any).inventory?.reception_date && (
-                      <div className="text-xs text-muted-foreground">Reçu le {format(new Date((vaccination as any).inventory.reception_date), "dd/MM/yyyy")}{(vaccination as any).vial_number ? ` · flacon n°${(vaccination as any).vial_number}` : ""}</div>
+                      <div className="text-xs text-muted-foreground">Lot {vaccination.lot_number} · reçu le {format(new Date((vaccination as any).inventory.reception_date), "dd/MM/yyyy")}{(vaccination as any).vial_number ? ` · flacon n°${(vaccination as any).vial_number}` : ""}</div>
                     )}
                   </TableCell>
                   <TableCell>{formatExpiryDate(vaccination.expiry_date)}</TableCell>
