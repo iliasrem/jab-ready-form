@@ -39,6 +39,8 @@ interface VaccineInventoryItem {
   expiry_date: string;
   status: string;
   order_number?: number;
+  reception_date?: string;
+  doses_used?: number;
   vials_count?: number;
   opened_vials?: number[];
   discarded_vials?: number[];
@@ -203,7 +205,7 @@ export const VaccinationManagement = () => {
     if (inventory.length === 0) return;
     const withOpenVial = inventory.find((i) => (i.opened_vials || []).length > 0);
     if (withOpenVial) {
-      setSelectedLotNumber(withOpenVial.lot_number);
+      setSelectedLotNumber(withOpenVial.id);
       return;
     }
     const today = format(new Date(), "yyyy-MM-dd");
@@ -220,7 +222,7 @@ export const VaccinationManagement = () => {
     const started = inventory.find((i) => firstUse[i.lot_number] && !expired(i.lot_number));
     const fresh = inventory.find((i) => !firstUse[i.lot_number]);
     const chosen = started || fresh || inventory[0];
-    setSelectedLotNumber(chosen.lot_number);
+    setSelectedLotNumber(chosen.id);
     if (!started && Object.keys(firstUse).some(expired)) {
       toast({
         title: "Flacon entamé depuis plus de 6h",
@@ -365,7 +367,7 @@ export const VaccinationManagement = () => {
   const fetchInventory = async () => {
     const { data, error } = await supabase
       .from("vaccine_inventory")
-      .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
+      .select("id, lot_number, expiry_date, status, order_number, reception_date, doses_used, vials_count, opened_vials, discarded_vials, vial_opened_at")
       .eq("status", "open")
       .order("order_number", { ascending: true });
 
@@ -386,7 +388,7 @@ export const VaccinationManagement = () => {
       if (items.length === 0) {
         const { data: next } = await supabase
           .from("vaccine_inventory")
-          .select("id, lot_number, expiry_date, status, order_number, vials_count, opened_vials, discarded_vials, vial_opened_at")
+          .select("id, lot_number, expiry_date, status, order_number, reception_date, doses_used, vials_count, opened_vials, discarded_vials, vial_opened_at")
           .eq("status", "closed")
           .order("order_number", { ascending: true })
           .limit(1);
@@ -495,11 +497,17 @@ export const VaccinationManagement = () => {
       return;
     }
 
-    const selectedInventoryItem = inventory.find(item => item.lot_number === selectedLotNumber);
+    const selectedInventoryItem = inventory.find(item => item.id === selectedLotNumber);
     if (!selectedInventoryItem) {
       toast({ title: "Erreur", description: "Lot de vaccin introuvable" });
       return;
     }
+
+    const openedNow = selectedInventoryItem.opened_vials || [];
+    const discardedNow = selectedInventoryItem.discarded_vials || [];
+    const vialNumber = openedNow.length > 0
+      ? Math.min(...openedNow)
+      : Array.from({ length: selectedInventoryItem.vials_count || 10 }, (_, i) => i + 1).find((n) => !discardedNow.includes(n)) ?? null;
 
     const { error } = await supabase
       .from("vaccinations")
@@ -507,16 +515,22 @@ export const VaccinationManagement = () => {
         patient_id: selectedPatientId,
         vaccination_date: vaccinationDate,
         vaccination_time: vaccinationTime,
-        lot_number: selectedLotNumber,
+        lot_number: selectedInventoryItem.lot_number,
         expiry_date: selectedInventoryItem.expiry_date,
-        
-      }]);
+        inventory_id: selectedInventoryItem.id,
+        vial_number: vialNumber,
+      } as any]);
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'enregistrer la vaccination" });
     } else {
       // Ouvre automatiquement un flacon du lot si aucun n'est ouvert
       await autoOpenVial(selectedInventoryItem);
+      // Une dose prélevée dans cette boîte précise
+      await supabase
+        .from("vaccine_inventory")
+        .update({ doses_used: (selectedInventoryItem.doses_used || 0) + 1 })
+        .eq("id", selectedInventoryItem.id);
 
       // Le vaccin réservé est remis : on clôture la réservation
       if (activeHolds[selectedPatientId]) {
@@ -762,14 +776,14 @@ export const VaccinationManagement = () => {
             </CardTitle>
             {(() => {
               const item =
-                inventory.find((i) => i.lot_number === selectedLotNumber) || inventory[0];
+                inventory.find((i) => i.id === selectedLotNumber) || inventory[0];
               if (!item) return null;
               const total = item.vials_count || 10;
               const opened = item.opened_vials || [];
               const discarded = item.discarded_vials || [];
               return (
                 <div className="flex items-center gap-1.5" title={`Flacons du lot ${item.lot_number} — 1 clic : ouvrir, 2e clic : éliminer`}>
-                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}</span>
+                  <span className="mr-1 text-xs text-muted-foreground">Lot {item.lot_number}{item.reception_date ? ` — reçu le ${format(new Date(item.reception_date), "dd/MM/yyyy")}` : ""}</span>
                   {Array.from({ length: total }, (_, idx) => {
                     const n = idx + 1;
                     const isDiscarded = discarded.includes(n);
@@ -963,8 +977,8 @@ export const VaccinationManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {inventory.map((item) => (
-                    <SelectItem key={item.id} value={item.lot_number}>
-                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Exp: {formatExpiryDate(item.expiry_date)}
+                    <SelectItem key={item.id} value={item.id}>
+                      Boîte N°{item.order_number || '?'} - Lot: {item.lot_number} - Reçue le {item.reception_date ? format(new Date(item.reception_date), "dd/MM/yyyy") : "?"} - Exp: {formatExpiryDate(item.expiry_date)}
                     </SelectItem>
                   ))}
                 </SelectContent>
