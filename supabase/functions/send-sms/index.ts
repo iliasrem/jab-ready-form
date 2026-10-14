@@ -16,18 +16,18 @@ function toSmsText(text: string): string {
     .trim();
 }
 
-const SIGNATURE = 'Pharmacie Remili Bastin';
+const SIGNATURE = 'Pharmacie Remili Bastin www.remili.be';
 
 // La signature est toujours ajoutée (une seule fois) à la fin du SMS.
 function withSignature(text: string): string {
   const lines = text.split('\n');
   while (lines.length) {
     const last = lines[lines.length - 1].trim();
-    if (last === '' || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?[.!]*$/i.test(last)) lines.pop();
+    if (last === '' || /^www\.remili\.be$/i.test(last) || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?[.!]*$/i.test(last)) lines.pop();
     else break;
   }
   const base = lines.join('\n').trim();
-  return base ? `${base}\n${SIGNATURE}` : SIGNATURE;
+  return base ? `${base}\n\n${SIGNATURE}` : SIGNATURE;
 }
 
 function toE164Digits(phone: string): string | null {

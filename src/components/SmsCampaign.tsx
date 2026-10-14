@@ -22,22 +22,22 @@ const name = (p: P) => `${cap(p.last_name)} ${cap(p.first_name)}`.trim();
 const smsText = (t: string) =>
   t.replace(/(?:[ \t]*·[ \t]*)?(?:https?:\/\/\S+|www\.(?!remili\.be\b)\S+)/gi, "").split("\n").map((l) => l.trimEnd()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
-const SIGNATURE = "Pharmacie Remili Bastin";
+const SIGNATURE = "Pharmacie Remili Bastin www.remili.be";
 
 // La signature est toujours ajoutée (une seule fois) à la fin du SMS.
 const signed = (t: string) => {
   const lines = t.split("\n");
   while (lines.length) {
     const last = lines[lines.length - 1].trim();
-    if (last === "" || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?[.!]*$/i.test(last)) lines.pop();
+    if (last === "" || /^www\.remili\.be$/i.test(last) || /^(?:[—–-]?\s*)?pharmacie\s+remili(?:\s*[-–\s]\s*bastin)?(?:\s+www\.remili\.be)?[.!]*$/i.test(last)) lines.pop();
     else break;
   }
   const base = lines.join("\n").trim();
-  return base ? `${base}\n${SIGNATURE}` : SIGNATURE;
+  return base ? `${base}\n\n${SIGNATURE}` : SIGNATURE;
 };
 
 const reminder = (date: string) =>
-  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33.\nwww.remili.be\n${SIGNATURE}`;
+  `Bonjour {prénom}, nous vous rappelons votre rendez-vous de vaccination à la Pharmacie Remili le ${format(parseISO(date), "EEEE d MMMM yyyy", { locale: fr })} à {heure}. En cas d'empêchement, contactez-nous au 064 44 22 53 ou par WhatsApp au +32 491 55 98 33.\n\n${SIGNATURE}`;
 
 async function errText(error: unknown) {
   return error instanceof FunctionsHttpError ? await error.context.text() : String((error as Error)?.message ?? error);
