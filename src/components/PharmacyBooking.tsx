@@ -74,6 +74,7 @@ interface ConfirmationSummary {
   date: Date;
   time: string;
   services: string[];
+  at_home?: boolean;
   notes?: string;
   emailSent: boolean;
 }
@@ -85,6 +86,7 @@ const bookingSchema = z.object({
     .array(z.string())
     .min(1, { message: "Veuillez sélectionner au moins un service." })
     .max(2, { message: "Vous pouvez sélectionner maximum 2 services." }),
+  at_home: z.boolean().optional(),
   notes: z.string().optional(),
 });
 
@@ -116,7 +118,7 @@ export function PharmacyBooking() {
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
-    defaultValues: { services: [], notes: "" },
+    defaultValues: { services: [], at_home: false, notes: "" },
   });
 
   const loadRealAvailability = async () => {
@@ -326,6 +328,7 @@ export function PharmacyBooking() {
           appointment_date: formatDateForDb(data.date),
           appointment_time: data.time,
           services: data.services as any,
+          at_home: data.at_home ?? false,
           notes: data.notes || null,
         })
         .select("id")
@@ -362,6 +365,7 @@ export function PharmacyBooking() {
         date: data.date,
         time: data.time,
         services: data.services,
+        at_home: data.at_home ?? false,
         notes: data.notes,
         emailSent,
       });
@@ -373,7 +377,7 @@ export function PharmacyBooking() {
 
   const closeConfirmation = () => {
     setConfirmation(null);
-    form.reset({ services: [], notes: "" });
+    form.reset({ services: [], at_home: false, notes: "" });
     setSelectedPatient(null);
     setSearchTerm("");
     setResults([]);
@@ -745,6 +749,21 @@ export function PharmacyBooking() {
                         )}
                       />
                     ))}
+                    <FormField
+                      control={form.control}
+                      name="at_home"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value ?? false}
+                              onCheckedChange={(checked) => field.onChange(checked === true)}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-normal">À domicile</FormLabel>
+                        </FormItem>
+                      )}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
