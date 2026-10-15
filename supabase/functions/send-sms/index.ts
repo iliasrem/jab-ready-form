@@ -61,15 +61,16 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    let recipients: { id: string | null; name: string | null; phone: string }[] = [];
+    let recipients: { id: string | null; name: string | null; firstName: string; phone: string }[] = [];
     if (isTest) {
-      recipients = [{ id: null, name: 'TEST Jean', phone: testPhone }];
+      recipients = [{ id: null, name: 'TEST Jean', firstName: 'Jean', phone: testPhone }];
     } else {
       const { data, error } = await admin.from('patients').select('id, first_name, last_name, phone').in('id', patientIds);
       if (error) throw error;
       recipients = (data ?? []).map((p: any) => ({
         id: p.id,
         name: [p.last_name, p.first_name].filter(Boolean).join(' ') || null,
+        firstName: p.first_name ?? '',
         phone: p.phone ?? '',
       }));
     }
@@ -95,7 +96,7 @@ Deno.serve(async (req) => {
     for (const r of recipients) {
       const heure = isTest ? '10:00' : (r.id ? times.get(r.id) ?? '' : '');
       const personal = message
-        .replace(/\{prénom\}/gi, (r.name ?? '').split(' ').slice(1).join(' ') || '')
+        .replace(/\{prénom\}/gi, r.firstName)
         .replace(/\{nom\}/gi, r.name ?? '')
         .replace(/\{heure\}/gi, heure)
         .replace(/[ \t]+à[ \t]*(?=[.,])/g, ''); // enlève "à " resté seul si l'heure est vide
