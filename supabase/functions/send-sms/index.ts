@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     for (const r of recipients) {
       const heure = isTest ? '10:00' : (r.id ? times.get(r.id) ?? '' : '');
       const personal = message
-        .replace(/\{prénom\}/gi, (r.name ?? '').split(' ').slice(1).join(' ') || '')
+        .replace(/\{prénom\}/gi, r.firstName)
         .replace(/\{nom\}/gi, r.name ?? '')
         .replace(/\{heure\}/gi, heure)
         .replace(/[ \t]+à[ \t]*(?=[.,])/g, ''); // enlève "à " resté seul si l'heure est vide
